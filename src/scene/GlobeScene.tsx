@@ -9,6 +9,7 @@ import { CameraRig } from './CameraRig'
 import { Effects } from './Effects'
 import { journeys } from '../journeys'
 import { useAppStore } from '../state/store'
+import { TerrainErrorBoundary } from './TerrainErrorBoundary'
 
 // Code-split so the hub never pays the 3d-tiles-renderer bundle cost.
 const TerrainLayer = lazy(() =>
@@ -52,11 +53,15 @@ export function GlobeScene() {
             return <RouteArcs key={j.id} journey={j} />
           })}
           {/* Google Photorealistic 3D Tiles — battle mode only, code-split.
-              Guard on VITE_TILES_KEY so a missing key never throws. */}
+              Guard on VITE_TILES_KEY so a missing key never throws. The error
+              boundary sits OUTSIDE the lazy Suspense so a failed chunk load of
+              TerrainLayer itself is also caught (battle degrades to plain globe). */}
           {mode === 'battle' && import.meta.env.VITE_TILES_KEY && (
-            <Suspense fallback={null}>
-              <TerrainLayer />
-            </Suspense>
+            <TerrainErrorBoundary>
+              <Suspense fallback={null}>
+                <TerrainLayer />
+              </Suspense>
+            </TerrainErrorBoundary>
           )}
         </Suspense>
         <CameraRig />

@@ -15,65 +15,47 @@
  * session tokens. TileCompressionPlugin halves geometry memory.
  * Camera registration and resolution updates are handled automatically by the
  * r3f TilesRenderer wrapper (useFrame + useLayoutEffect in the component).
+ *
+ * Known library limitation (3d-tiles-renderer 0.4.x): tiles evicted from the
+ * LRU cache mid-parse are not aborted by dispose() — acceptable, library-level;
+ * revisit if repeated battle enter/exit cycling shows memory growth.
+ *
+ * Error handling lives in TerrainErrorBoundary (separate non-lazy module),
+ * wrapped around this component at the call site in GlobeScene so chunk-load
+ * failures of this lazy module are caught too.
  */
 
-import { Component, type ErrorInfo, type ReactNode, Suspense } from 'react'
 import { TilesPlugin, TilesRenderer } from '3d-tiles-renderer/r3f'
 import { GoogleCloudAuthPlugin, TileCompressionPlugin } from '3d-tiles-renderer/plugins'
 
 // ECEF radius in metres → scene units (globe radius = 1).
 const ECEF_TO_SCENE = 1 / 6_378_137
 
-class TerrainErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: ReactNode }) {
-    super(props)
-    this.state = { hasError: false }
-  }
-
-  static getDerivedStateFromError(): { hasError: boolean } {
-    return { hasError: true }
-  }
-
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.warn('[terrain] failed, falling back to globe:', error, info)
-  }
-
-  render() {
-    if (this.state.hasError) return null
-    return this.props.children
-  }
-}
-
-function TerrainTiles() {
+export function TerrainLayer() {
   return (
     // rotation: ECEF +Z (north pole) → scene +Y; ECEF +X (lng0) → scene +X
     <group scale={ECEF_TO_SCENE} rotation={[-Math.PI / 2, 0, 0]}>
       {/*
-       * errorTarget default is 16 (set by renderer) but GoogleCloudAuthPlugin
-       * bumps it to 20 for photorealistic tiles. Lower = more detail.
-       * We pass errorTarget={12} so the camera at altitude 0.012 (~76 km)
-       * triggers finer LODs against the close-up view.
+       * errorTarget: lower = finer LODs. Ordering matters: the r3f wrapper
+       * applies the errorTarget prop via useDeepOptions BEFORE the plugin's
+       * init() runs, and GoogleCloudAuthPlugin.init() overwrites errorTarget
+       * to 20 when useRecommendedSettings is on — silently discarding the
+       * prop. useRecommendedSettings does nothing else in 0.4.28 (checked
+       * source), so we disable it and own errorTarget={12} for finer detail
+       * at battle altitude 0.012 (~76 km).
        */}
       <TilesRenderer errorTarget={12}>
         <TilesPlugin
           plugin={GoogleCloudAuthPlugin}
-          args={[{ apiToken: import.meta.env.VITE_TILES_KEY as string }]}
+          args={[
+            {
+              apiToken: import.meta.env.VITE_TILES_KEY as string,
+              useRecommendedSettings: false,
+            },
+          ]}
         />
         <TilesPlugin plugin={TileCompressionPlugin} />
       </TilesRenderer>
     </group>
-  )
-}
-
-export function TerrainLayer() {
-  return (
-    <TerrainErrorBoundary>
-      <Suspense fallback={null}>
-        <TerrainTiles />
-      </Suspense>
-    </TerrainErrorBoundary>
   )
 }
