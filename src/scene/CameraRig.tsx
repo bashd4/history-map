@@ -40,6 +40,7 @@ export function CameraRig() {
       // The rig only restores orbit RADIUS (e.g. flying back out after a journey);
       // radius-only damping composes with OrbitControls, which preserves radius
       // while rotating, so drag and autoRotate are never fought.
+      // Assumes enableZoom={false} on OrbitControls — the rig owns radius.
       const r = camera.position.length()
       const hubR = HUB_POS.length()
       if (Math.abs(r - hubR) > 1e-4) {
