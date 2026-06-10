@@ -27,7 +27,7 @@ const fragment = /* glsl */ `
     gl_FragColor = vec4(color, 1.0);
   }`
 
-export function Globe({ radius = GLOBE_RADIUS }: { radius?: number }) {
+export function Globe({ radius = GLOBE_RADIUS, scale = 1 }: { radius?: number; scale?: number }) {
   const gl = useThree((s) => s.gl)
   const map = useTexture('/textures/earth-8k.jpg')
 
@@ -38,7 +38,7 @@ export function Globe({ radius = GLOBE_RADIUS }: { radius?: number }) {
   }, [map, gl])
 
   return (
-    <mesh>
+    <mesh scale={scale}>
       <sphereGeometry args={[radius, 96, 96]} />
       <shaderMaterial vertexShader={vertex} fragmentShader={fragment} uniforms={uniforms} />
     </mesh>

@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { Suspense } from 'react'
+import { lazy, Suspense } from 'react'
 import { Atmosphere } from './Atmosphere'
 import { Globe } from './Globe'
 import { Starfield } from './Starfield'
@@ -10,9 +10,18 @@ import { Effects } from './Effects'
 import { journeys } from '../journeys'
 import { useAppStore } from '../state/store'
 
+// Code-split so the hub never pays the 3d-tiles-renderer bundle cost.
+const TerrainLayer = lazy(() =>
+  import('./TerrainLayer').then((m) => ({ default: m.TerrainLayer })),
+)
+
 export function GlobeScene() {
   const mode = useAppStore((s) => s.mode)
   const journeyId = useAppStore((s) => s.journeyId)
+  // Shrink the globe slightly in battle mode so terrain tiles don't z-fight
+  // with the coincident globe surface. 0.997 ≈ 19 km inset — invisible at
+  // journey zoom but eliminates depth-buffer conflicts at battle altitude 0.012.
+  const globeScale = mode === 'battle' ? 0.997 : 1
   return (
     <div className="canvas-fixed">
       {/* near must be far smaller than default 0.1: dwell camera sits 0.09 above the
@@ -25,7 +34,7 @@ export function GlobeScene() {
       >
         <color attach="background" args={['#0a0805']} />
         <Suspense fallback={null}>
-          <Globe />
+          <Globe scale={globeScale} />
           <Atmosphere />
           <Starfield />
           {journeys.map((j) => {
@@ -42,6 +51,13 @@ export function GlobeScene() {
             }
             return <RouteArcs key={j.id} journey={j} />
           })}
+          {/* Google Photorealistic 3D Tiles — battle mode only, code-split.
+              Guard on VITE_TILES_KEY so a missing key never throws. */}
+          {mode === 'battle' && import.meta.env.VITE_TILES_KEY && (
+            <Suspense fallback={null}>
+              <TerrainLayer />
+            </Suspense>
+          )}
         </Suspense>
         <CameraRig />
         {mode === 'hub' && (
