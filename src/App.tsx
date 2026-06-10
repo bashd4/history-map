@@ -1,5 +1,7 @@
+import { GlobeScene } from './scene/GlobeScene'
+
 function App() {
-  return <></>
+  return <GlobeScene />
 }
 
 export default App
