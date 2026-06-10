@@ -5,6 +5,7 @@ import { journeyById } from '../journeys'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
 import { useScrollProgress } from '../hooks/useScrollProgress'
 import { useAppStore } from '../state/store'
+import { BattleOverlay } from './BattleOverlay'
 
 export function JourneyRoute() {
   const { journeyId } = useParams()
@@ -15,12 +16,25 @@ export function JourneyRoute() {
 
 function JourneyStory({ journey }: { journey: Journey }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const savedScrollY = useRef<number>(0)
   const enterJourney = useAppStore((s) => s.enterJourney)
   const enterBattle = useAppStore((s) => s.enterBattle)
   const mode = useAppStore((s) => s.mode)
   const scrollT = useAppStore((s) => s.scrollT)
+  const battleStopIndex = useAppStore((s) => s.battleStopIndex)
   const [searchParams] = useSearchParams()
   const stopParam = searchParams.get('stop')
+
+  // Scroll lock when entering battle mode
+  useEffect(() => {
+    if (mode !== 'battle') return
+    savedScrollY.current = window.scrollY
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+      window.scrollTo(0, savedScrollY.current)
+    }
+  }, [mode])
 
   useEffect(() => { enterJourney(journey.id); window.scrollTo(0, 0) }, [journey.id, enterJourney])
   useScrollProgress(containerRef)
@@ -40,6 +54,8 @@ function JourneyStory({ journey }: { journey: Journey }) {
   const cam = cameraAt(scrollT, stopsForCamera(journey))
   const stop = cam.activeStop != null ? journey.stops[cam.activeStop] : null
 
+  const battleStop = battleStopIndex != null ? journey.stops[battleStopIndex] : null
+
   return (
     <div style={{ position: 'relative' }}>
       <div ref={containerRef} style={{ height: `${journey.stops.length * 100}vh`, position: 'relative' }} />
@@ -47,10 +63,12 @@ function JourneyStory({ journey }: { journey: Journey }) {
         <p className="card-date">{journey.figure} · {journey.years}</p>
         <Link to="/">← Back to the globe</Link>
       </footer>
-      <header className="overlay journey-header">
-        <span>{journey.title}</span>
-        <Link to="/" aria-label="Back to globe">✕</Link>
-      </header>
+      {mode !== 'battle' && (
+        <header className="overlay journey-header">
+          <span>{journey.title}</span>
+          <Link to="/" aria-label="Back to globe">✕</Link>
+        </header>
+      )}
       {stop && mode === 'journey' && (
         <article className="overlay story-card" style={{ opacity: cam.cardOpacity }}>
           <div className="card-date">{stop.date}</div>
@@ -63,6 +81,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
           )}
         </article>
       )}
+      {mode === 'battle' && battleStop?.battle && <BattleOverlay battle={battleStop.battle} />}
     </div>
   )
 }

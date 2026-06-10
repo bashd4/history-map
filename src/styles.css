@@ -26,3 +26,12 @@ button { font: inherit; cursor: pointer; }
 .battle-button:hover { background: rgba(232,181,74,.3); }
 .journey-outro { position: relative; height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
 .journey-outro a { color: #c9a050; text-decoration: none; font-size: 1.05rem; }
+
+.battle-overlay { position: fixed; inset: 0; z-index: 20; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+.battle-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 1.2rem 2rem; pointer-events: auto; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.battle-header h3 { font-size: 1.3rem; color: #f2e8d0; }
+.battle-header button { background: none; border: none; color: #c9a050; font-size: 1.3rem; }
+.battle-footer { margin: 0 auto 1.6rem; width: min(720px, calc(100% - 3rem)); background: rgba(20,16,10,.88); border: 1px solid rgba(232,181,74,.4); border-radius: 8px; padding: .9rem 1.2rem; display: grid; grid-template-columns: auto 1fr; gap: .4rem .9rem; align-items: center; pointer-events: auto; backdrop-filter: blur(4px); }
+.battle-play { background: none; border: 1px solid rgba(232,181,74,.5); border-radius: 4px; color: #e8b54a; width: 2.2rem; height: 2.2rem; font-size: .95rem; }
+.battle-footer input[type="range"] { width: 100%; accent-color: #e8b54a; }
+.battle-caption { grid-column: 1 / -1; font-style: italic; font-size: .9rem; line-height: 1.5; color: #cfc4ab; }
