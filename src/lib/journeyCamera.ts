@@ -1,5 +1,5 @@
 import { latLngToVector3, slerpUnit } from './geo'
-import type { LatLng } from '../data/schema'
+import type { Journey, LatLng } from '../data/schema'
 
 export const DWELL = 0.4
 export const DWELL_ALT = 0.09   // ~570 km — city framing
@@ -19,6 +19,17 @@ function vecToLatLng(v: { x: number; y: number; z: number }): LatLng {
   const lat = 90 - (Math.acos(Math.max(-1, Math.min(1, v.y))) * 180) / Math.PI
   const lng = ((Math.atan2(v.z, -v.x) * 180) / Math.PI) - 180
   return { lat, lng: ((lng + 540) % 360) - 180 }
+}
+
+/** Per-journey cache of the stop array shape cameraAt expects — avoids a per-render .map(). */
+const stopsCache = new WeakMap<Journey, Parameters<typeof cameraAt>[1]>()
+export function stopsForCamera(journey: Journey): Parameters<typeof cameraAt>[1] {
+  let stops = stopsCache.get(journey)
+  if (!stops) {
+    stops = journey.stops.map((s) => ({ ...s.coords, camera: s.camera }))
+    stopsCache.set(journey, stops)
+  }
+  return stops
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t) // smoothstep

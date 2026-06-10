@@ -2,25 +2,13 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
 import { journeyById } from '../journeys'
-import { cameraAt } from '../lib/journeyCamera'
+import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
 import { latLngToVector3 } from '../lib/geo'
 import { useAppStore } from '../state/store'
-import type { Journey } from '../data/schema'
 
 const HUB_POS = new THREE.Vector3(0, 0.4, 2.8)
 const ORIGIN = new THREE.Vector3(0, 0, 0)
 const BATTLE_ALT = 0.012 // ~75 km bird's-eye over the battlefield
-
-/** Per-journey cache of the stop array shape cameraAt expects — avoids a per-frame .map(). */
-const stopsCache = new WeakMap<Journey, Parameters<typeof cameraAt>[1]>()
-function stopsForCamera(journey: Journey): Parameters<typeof cameraAt>[1] {
-  let stops = stopsCache.get(journey)
-  if (!stops) {
-    stops = journey.stops.map((s) => ({ ...s.coords, camera: s.camera }))
-    stopsCache.set(journey, stops)
-  }
-  return stops
-}
 
 export function CameraRig() {
   const camera = useThree((s) => s.camera)

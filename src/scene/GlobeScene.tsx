@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { Atmosphere } from './Atmosphere'
 import { Globe } from './Globe'
 import { Starfield } from './Starfield'
-import { RouteArcs } from './RouteArcs'
+import { RouteArcs, RouteArcsProgress } from './RouteArcs'
 import { CameraRig } from './CameraRig'
 import { Effects } from './Effects'
 import { journeys } from '../journeys'
@@ -12,6 +12,7 @@ import { useAppStore } from '../state/store'
 
 export function GlobeScene() {
   const mode = useAppStore((s) => s.mode)
+  const journeyId = useAppStore((s) => s.journeyId)
   return (
     <div className="canvas-fixed">
       {/* near must be far smaller than default 0.1: dwell camera sits 0.09 above the
@@ -27,7 +28,20 @@ export function GlobeScene() {
           <Globe />
           <Atmosphere />
           <Starfield />
-          {journeys.map((j) => <RouteArcs key={j.id} journey={j} />)}
+          {journeys.map((j) => {
+            const isActive = journeyId === j.id && mode !== 'hub'
+            if (isActive) {
+              return (
+                <group key={j.id}>
+                  {/* Full faint route underneath */}
+                  <RouteArcs journey={j} dim />
+                  {/* Bright progressive layer on top */}
+                  <RouteArcsProgress journey={j} />
+                </group>
+              )
+            }
+            return <RouteArcs key={j.id} journey={j} />
+          })}
         </Suspense>
         <CameraRig />
         {mode === 'hub' && (
