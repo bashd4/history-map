@@ -6,6 +6,7 @@ import type { Line2 } from 'three-stdlib'
 import type { Battle, Movement } from '../data/schema'
 import { latLngToVector3, slerpUnit } from '../lib/geo'
 import { playbackAt } from '../lib/battlePlayback'
+import { screenScale } from '../lib/screenScale'
 import { useAppStore } from '../state/store'
 
 // Arrow altitude — ~3.8 km above surface, clears Austerlitz heights (~300 m)
@@ -20,20 +21,21 @@ const COLORS: Record<'french' | 'coalition', string> = {
 const SEGS_PER_LEG = 24
 
 /**
- * World-space scale for the arrowhead cone mesh — proportional to camera
- * distance so the arrowhead appears at constant screen size across zoom levels.
- * Tuned so at battle altitude (camera ~0.015 from surface) the arrowhead is
- * ~5–8% of the frustum half-height (clearly visible but not overwhelming).
+ * Arrowhead cone screen-fraction — tuned so at battle altitude (camera ~0.012
+ * from surface) the arrowhead is ~5–8% of the frustum half-height. Clamped so
+ * it never disappears (min) or dominates while the camera is still far away
+ * during the dive-in transition (max).
  */
 const CONE_FRAC = 0.035
+const CONE_MIN = 0.0003
+const CONE_MAX = 0.004
 
-function arrowheadScale(camera: THREE.Camera, tipPos: THREE.Vector3): number {
-  const d = camera.position.distanceTo(tipPos)
-  const fov = (camera as THREE.PerspectiveCamera).fov ?? 45
-  const s = d * Math.tan(THREE.MathUtils.degToRad(fov / 2)) * CONE_FRAC
-  // Clamp so it never disappears (min) or dominates when camera is far away (max)
-  return THREE.MathUtils.clamp(s, 0.0003, 0.004)
-}
+const OPACITY_CURRENT = 0.95
+const OPACITY_DONE = 0.45
+
+// Scratch objects — never allocate in the frame loop.
+const _UP = new THREE.Vector3(0, 1, 0)
+const _tangent = new THREE.Vector3()
 
 /** Build surface-hugging polyline points for a movement. */
 function buildMovementPoints(movement: Movement): THREE.Vector3[] {
@@ -77,17 +79,25 @@ function useBattleMovements(battle: Battle): TaggedMovement[] {
   }, [battle])
 }
 
-/** Single animated movement arrow. battle passed via ref so useFrame stays stable. */
+type ArrowState = 'hidden' | 'completed' | 'current'
+
+/**
+ * Single animated movement arrow. `battle` is read in useFrame via closure —
+ * safe because r3f keeps the latest frame callback per render.
+ */
 function MovementArrow({
   tagged,
-  battleRef,
+  battle,
 }: {
   tagged: TaggedMovement
-  battleRef: React.RefObject<Battle>
+  battle: Battle
 }) {
   const { movement, points, phaseIndex } = tagged
   const lineRef = useRef<Line2>(null)
   const coneRef = useRef<THREE.Mesh>(null)
+  // Last applied state — lets the static hidden/completed branches skip
+  // redundant per-frame writes (only the current phase animates).
+  const lastStateRef = useRef<ArrowState | null>(null)
   const totalSegs = points.length - 1
 
   const isDashed = movement.style === 'retreat' || movement.style === 'feint'
@@ -98,65 +108,71 @@ function MovementArrow({
     const { battleElapsed, mode } = useAppStore.getState()
     if (mode !== 'battle') return
 
-    const battle = battleRef.current
-    if (!battle) return
-
-    const { phaseIndex: currentPhase, phaseProgress } = playbackAt(battle, battleElapsed)
-
     const line = lineRef.current
     const cone = coneRef.current
     if (!line || !cone) return
 
-    if (phaseIndex > currentPhase) {
-      // Future phase — hide
+    const { phaseIndex: currentPhase, phaseProgress, done } =
+      playbackAt(battle, battleElapsed)
+
+    // When playback is done, every phase — including the last — is completed.
+    const state: ArrowState =
+      phaseIndex > currentPhase ? 'hidden'
+      : phaseIndex < currentPhase || done ? 'completed'
+      : 'current'
+
+    if (state !== 'current' && lastStateRef.current === state) {
+      // Static state already applied. The cone scale still tracks the camera
+      // (it keeps damping briefly after entering battle) — one cheap write.
+      if (state === 'completed') {
+        cone.scale.setScalar(
+          screenScale(camera, cone.position, CONE_FRAC, CONE_MIN, CONE_MAX))
+      }
+      return
+    }
+    lastStateRef.current = state
+
+    if (state === 'hidden') {
       line.geometry.instanceCount = 0
       cone.visible = false
       return
     }
 
-    if (phaseIndex < currentPhase) {
-      // Completed phase — fully drawn, faded
-      line.geometry.instanceCount = totalSegs
-      const mat = line.material as THREE.Material & { opacity?: number }
-      if (mat && 'opacity' in mat) mat.opacity = 0.45
+    const lineMat = line.material as THREE.Material
+    const coneMat = cone.material as THREE.Material
 
-      // Show arrowhead at the full tip
+    if (state === 'completed') {
+      // Fully drawn, faded
+      line.geometry.instanceCount = totalSegs
+      lineMat.opacity = OPACITY_DONE
       const tip = points[points.length - 1]
       cone.position.copy(tip)
-      const secondToLast = points[points.length - 2]
-      const tangent = tip.clone().sub(secondToLast).normalize()
-      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent)
-      cone.scale.setScalar(arrowheadScale(camera, tip))
+      _tangent.subVectors(tip, points[points.length - 2]).normalize()
+      cone.quaternion.setFromUnitVectors(_UP, _tangent)
+      cone.scale.setScalar(screenScale(camera, tip, CONE_FRAC, CONE_MIN, CONE_MAX))
       cone.visible = true
-      const coneMat = cone.material as THREE.Material & { opacity?: number }
-      if (coneMat && 'opacity' in coneMat) coneMat.opacity = 0.45
+      coneMat.opacity = OPACITY_DONE
       return
     }
 
-    // Current phase — animate progressively
+    // Current phase — animate progressively every frame
     const drawnSegs = Math.max(0, Math.floor(phaseProgress * totalSegs))
     line.geometry.instanceCount = drawnSegs
-    const mat = line.material as THREE.Material & { opacity?: number }
-    if (mat && 'opacity' in mat) mat.opacity = 0.95
+    lineMat.opacity = OPACITY_CURRENT
 
     if (drawnSegs < 2 || phaseProgress < 0.02) {
       cone.visible = false
       return
     }
 
-    // Position cone at current tip
     const tipIdx = Math.min(drawnSegs, points.length - 1)
     const tip = points[tipIdx]
-    const prevIdx = Math.max(0, tipIdx - 1)
-    const prev = points[prevIdx]
-
     cone.position.copy(tip)
-    const tangent = tip.clone().sub(prev).normalize()
-    cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent)
-    cone.scale.setScalar(arrowheadScale(camera, tip))
+    _tangent.subVectors(tip, points[Math.max(0, tipIdx - 1)]).normalize()
+    cone.quaternion.setFromUnitVectors(_UP, _tangent)
+    cone.scale.setScalar(screenScale(camera, tip, CONE_FRAC, CONE_MIN, CONE_MAX))
     cone.visible = true
-    const coneMat = cone.material as THREE.Material & { opacity?: number }
-    if (coneMat && 'opacity' in coneMat) coneMat.opacity = 0.95
+    coneMat.opacity = OPACITY_CURRENT
   })
 
   return (
@@ -169,7 +185,7 @@ function MovementArrow({
         dashed={isDashed}
         dashScale={isDashed ? 5 : undefined}
         transparent
-        opacity={0.95}
+        opacity={OPACITY_CURRENT}
         toneMapped={false}
         depthWrite={false}
         depthTest={false}
@@ -180,7 +196,7 @@ function MovementArrow({
         <meshBasicMaterial
           color={color}
           transparent
-          opacity={0.95}
+          opacity={OPACITY_CURRENT}
           toneMapped={false}
           depthWrite={false}
           depthTest={false}
@@ -192,9 +208,6 @@ function MovementArrow({
 
 export function BattleArrows({ battle }: { battle: Battle }) {
   const movements = useBattleMovements(battle)
-  // Stable ref so MovementArrow useFrame closures always see the latest battle
-  const battleRef = useRef<Battle>(battle)
-  battleRef.current = battle
 
   return (
     <group>
@@ -202,7 +215,7 @@ export function BattleArrows({ battle }: { battle: Battle }) {
         <MovementArrow
           key={`${tagged.phaseIndex}-${tagged.movIndex}`}
           tagged={tagged}
-          battleRef={battleRef}
+          battle={battle}
         />
       ))}
     </group>

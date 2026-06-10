@@ -6,6 +6,7 @@ import type { Line2 } from 'three-stdlib'
 import type { Journey } from '../data/schema'
 import { greatCirclePoints, latLngToVector3 } from '../lib/geo'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
+import { screenScale } from '../lib/screenScale'
 import { useAppStore } from '../state/store'
 
 /** Shared geometry builder — returns raw arc points (Vector3[]) for drei <Line>. */
@@ -27,15 +28,9 @@ function useMarkerPositions(journey: Journey): THREE.Vector3[] {
 /** Marker radius as a fraction of frustum half-height — constant screen size at any zoom. */
 const MARKER_FRAC = 0.01
 
-/**
- * World-space radius giving a constant screen-space size: scales with camera
- * distance and the perspective frustum half-height. Clamped as a safety net.
- */
+/** Marker scale via the shared screen-size helper (see src/lib/screenScale.ts). */
 function markerScale(camera: THREE.Camera, markerPos: THREE.Vector3): number {
-  const d = camera.position.distanceTo(markerPos)
-  const fov = (camera as THREE.PerspectiveCamera).fov ?? 45
-  const s = d * Math.tan(THREE.MathUtils.degToRad(fov / 2)) * MARKER_FRAC
-  return THREE.MathUtils.clamp(s, 0.0006, 0.012)
+  return screenScale(camera, markerPos, MARKER_FRAC, 0.0006, 0.012)
 }
 
 /**
