@@ -16,13 +16,26 @@ function useRouteGeometry(journey: Journey): THREE.Vector3[] {
   }, [journey])
 }
 
+/** Precomputed stop marker world positions — avoids per-frame Vector3 allocs. */
+function useMarkerPositions(journey: Journey): THREE.Vector3[] {
+  return useMemo(
+    () => journey.stops.map((s) => latLngToVector3(s.coords.lat, s.coords.lng, 1.004)),
+    [journey],
+  )
+}
+
+/** Marker radius as a fraction of frustum half-height — constant screen size at any zoom. */
+const MARKER_FRAC = 0.01
+
 /**
- * Scale a sphere mesh to a constant screen size based on camera distance.
- * factor: pixels-per-unit-distance approximation; tune clamps for comfort.
+ * World-space radius giving a constant screen-space size: scales with camera
+ * distance and the perspective frustum half-height. Clamped as a safety net.
  */
-function markerScale(camPos: THREE.Vector3, markerPos: THREE.Vector3): number {
-  const d = camPos.distanceTo(markerPos)
-  return THREE.MathUtils.clamp(d * 0.004, 0.0008, 0.009)
+function markerScale(camera: THREE.Camera, markerPos: THREE.Vector3): number {
+  const d = camera.position.distanceTo(markerPos)
+  const fov = (camera as THREE.PerspectiveCamera).fov ?? 45
+  const s = d * Math.tan(THREE.MathUtils.degToRad(fov / 2)) * MARKER_FRAC
+  return THREE.MathUtils.clamp(s, 0.0006, 0.012)
 }
 
 /**
@@ -34,18 +47,16 @@ export function RouteArcs({ journey, dim: dimProp }:
   const hoverDim = useAppStore((s) => s.hoveredJourneyId !== journey.id)
   const dim = dimProp ?? hoverDim
   const pts = useRouteGeometry(journey)
+  const markerPositions = useMarkerPositions(journey)
 
   // Refs for marker meshes — one per stop
   const markerRefs = useRef<(THREE.Mesh | null)[]>([])
 
   useFrame(({ camera }) => {
-    const camPos = camera.position
-    journey.stops.forEach((s, i) => {
+    markerPositions.forEach((pos, i) => {
       const mesh = markerRefs.current[i]
       if (!mesh) return
-      const pos = latLngToVector3(s.coords.lat, s.coords.lng, 1.004)
-      const sc = markerScale(camPos, pos)
-      mesh.scale.setScalar(sc)
+      mesh.scale.setScalar(markerScale(camera, pos))
     })
   })
 
@@ -61,11 +72,11 @@ export function RouteArcs({ journey, dim: dimProp }:
         depthWrite={false}
         toneMapped={false}
       />
-      {journey.stops.map((s, i) => (
+      {markerPositions.map((pos, i) => (
         <mesh
           key={i}
           ref={(el) => { markerRefs.current[i] = el }}
-          position={latLngToVector3(s.coords.lat, s.coords.lng, 1.004)}
+          position={pos}
         >
           <sphereGeometry args={[1, 24, 24]} />
           <meshBasicMaterial
@@ -85,12 +96,13 @@ export function RouteArcs({ journey, dim: dimProp }:
  */
 export function RouteArcsProgress({ journey }: { journey: Journey }) {
   const pts = useRouteGeometry(journey)
+  const markerPositions = useMarkerPositions(journey)
   const lineRef = useRef<Line2>(null)
   const pulseRef = useRef<THREE.Mesh>(null)
   // Total segments = pts.length - 1
   const totalSegments = pts.length - 1
 
-  const stops = stopsForCamera(journey)
+  const stops = useMemo(() => stopsForCamera(journey), [journey])
 
   useFrame(({ clock, camera }) => {
     const { scrollT: t, mode } = useAppStore.getState()
@@ -112,11 +124,10 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
     if (pulseRef.current) {
       const cam = cameraAt(safeT, stops)
       if (cam.activeStop != null) {
-        const stop = journey.stops[cam.activeStop]
-        const markerPos = latLngToVector3(stop.coords.lat, stop.coords.lng, 1.004)
+        const markerPos = markerPositions[cam.activeStop]
         pulseRef.current.position.copy(markerPos)
         const pulseFactor = 1 + 0.3 * Math.sin(clock.elapsedTime * 3)
-        const sc = markerScale(camera.position, markerPos) * pulseFactor
+        const sc = markerScale(camera, markerPos) * pulseFactor
         pulseRef.current.scale.setScalar(sc)
         pulseRef.current.visible = true
       } else {
