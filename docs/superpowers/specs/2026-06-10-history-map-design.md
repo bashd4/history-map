@@ -120,6 +120,13 @@ One file per journey in `src/journeys/`, validated by Zod schema at build time.
 
 Static build → Vercel. Tile API key is a domain-restricted public client key (Cesium ion free non-commercial tier, or Google Photorealistic 3D Tiles within monthly free credit — chosen during implementation after a quick spike). `.env` and `.superpowers/` gitignored.
 
+## Implementation Clarifications
+
+- **Battle mode scrolling**: battle mode is a modal state — body scroll is locked while active (not hijacked scrolling; the page simply stops being a scroll surface). Scroll position is saved on entry and restored on exit.
+- **Battle phase timing**: phases auto-advance with a default duration (~6s, proportional to movement path length), with the scrubber allowing manual jump/pause. `phases[].duration?` may override.
+- **Data validation mechanism**: the Zod schema check runs as a Vitest test over all journey files (`journeys.test.ts`), executed in CI/build so bad data fails the pipeline.
+- **Routing**: hub at `/`, each journey at `/:journeyId` (e.g., `/napoleon`) so journeys are shareable; `?stop=n` / `?battle=phase` remain dev-only params.
+
 ## Out of Scope (v1)
 
 - Additional journeys (Darwin, Ibn Battuta, Magellan, Grant) — data format supports them; content later.
