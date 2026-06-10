@@ -14,7 +14,10 @@ export function latLngToVector3(lat: number, lng: number, radius = GLOBE_RADIUS)
   )
 }
 
-/** Spherical interpolation between two unit vectors. */
+/**
+ * Spherical interpolation between two unit vectors (assumes |a| = |b| = 1).
+ * Undefined for antipodal inputs (angle ≈ π) — no v1 route needs one.
+ */
 export function slerpUnit(a: THREE.Vector3, b: THREE.Vector3, t: number): THREE.Vector3 {
   const angle = a.angleTo(b)
   if (angle < 1e-6) return a.clone()
