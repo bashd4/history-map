@@ -1258,7 +1258,7 @@ export function BattleArrows({ battle }: { battle: Battle }) {
 
 **This is the riskiest task — timebox the spike to ~half a day before falling back.** Decision from spec: try **Google Photorealistic 3D Tiles** via NASA `3d-tiles-renderer` first; fall back to Cesium ion (`CesiumIonAuthPlugin`, asset 2275207 — Google tiles via ion — or World Terrain); if both fight back, ship the degrade path (battle over plain globe — already working since Task 13) and file a follow-up.
 
-- [ ] **Step 1: Get a key** — Google Maps Platform → enable "Map Tiles API" → API key restricted to localhost + production domain. Put in `.env.local` as `VITE_TILES_KEY=...`; commit `.env.example` with the variable name only. **This needs the user — ask, don't fake it.**
+- [ ] **Step 1: Get a key** — Google Maps Platform → enable "Map Tiles API" → API key restricted to localhost + production domain. Put in `.env.local` as `VITE_TILES_KEY=...`; verify `.gitignore` covers `.env.local` (the Vite scaffold's ignore file may have replaced the repo's original — re-add `.superpowers/` and `.env*` if so); commit `.env.example` with the variable name only. **This needs the user — ask, don't fake it.**
 
 - [ ] **Step 2: Spike `TerrainLayer`**
 
