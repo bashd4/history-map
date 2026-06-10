@@ -1,0 +1,8 @@
+:root { color-scheme: dark; }
+* { margin: 0; box-sizing: border-box; }
+html, body { background: #0a0805; color: #e8dcc3; font-family: Georgia, 'Times New Roman', serif; }
+#root { width: 100%; }
+.canvas-fixed { position: fixed; inset: 0; z-index: 0; }
+.overlay { position: fixed; z-index: 10; }
+h1, h2, h3 { font-weight: 700; letter-spacing: 0.04em; }
+button { font: inherit; cursor: pointer; }
