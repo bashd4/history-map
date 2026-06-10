@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 
 const STAR_COUNT = 600
@@ -23,6 +23,9 @@ export function Starfield() {
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     return geo
   }, [])
+
+  // R3F does not dispose objects passed as props — clean up manually
+  useEffect(() => () => geometry.dispose(), [geometry])
 
   return (
     <points geometry={geometry}>

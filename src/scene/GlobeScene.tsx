@@ -22,6 +22,7 @@ export function GlobeScene() {
           <Atmosphere />
           <Starfield />
         </Suspense>
+        {/* TODO: remove autoRotate when CameraRig scopes controls to hub (Task 9) */}
         <OrbitControls
           enablePan={false}
           enableZoom={false}

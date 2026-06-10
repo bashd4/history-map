@@ -28,12 +28,11 @@ const fragment = /* glsl */ `
 
 export function Globe({ radius = GLOBE_RADIUS }: { radius?: number }) {
   const map = useTexture('/textures/earth-blue-marble.jpg')
-  map.colorSpace = THREE.SRGBColorSpace
 
-  const uniforms = useMemo(
-    () => ({ uMap: { value: map }, uSepia: { value: 0.82 } }),
-    [map],
-  )
+  const uniforms = useMemo(() => {
+    map.colorSpace = THREE.SRGBColorSpace
+    return { uMap: { value: map }, uSepia: { value: 0.82 } }
+  }, [map])
 
   return (
     <mesh>
