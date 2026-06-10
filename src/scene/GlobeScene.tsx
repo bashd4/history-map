@@ -6,6 +6,7 @@ import { Globe } from './Globe'
 import { Starfield } from './Starfield'
 import { RouteArcs } from './RouteArcs'
 import { CameraRig } from './CameraRig'
+import { Effects } from './Effects'
 import { journeys } from '../journeys'
 import { useAppStore } from '../state/store'
 
@@ -38,6 +39,7 @@ export function GlobeScene() {
             autoRotateSpeed={0.35}
           />
         )}
+        <Effects />
       </Canvas>
     </div>
   )
