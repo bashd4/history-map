@@ -18,7 +18,7 @@ export function RouteArcs({ journey, progress = 1, dim = false }:
     [curve, totalLen])
 
   // TubeGeometry index count scales linearly with tubularSegments — drawRange clips the head.
-  const indexCount = geometry.index!.count
+  const indexCount = geometry.index!.count // TubeGeometry always sets an index buffer
   geometry.setDrawRange(0, Math.floor(indexCount * Math.min(1, Math.max(0, progress))))
 
   // Dispose memoized geometry on unmount (or when journey changes and geometry is recreated)
