@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import type { Journey } from '../data/schema'
 import { journeyById } from '../journeys'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
@@ -19,6 +19,8 @@ function JourneyStory({ journey }: { journey: Journey }) {
   const enterBattle = useAppStore((s) => s.enterBattle)
   const mode = useAppStore((s) => s.mode)
   const scrollT = useAppStore((s) => s.scrollT)
+  const [searchParams] = useSearchParams()
+  const stopParam = searchParams.get('stop')
 
   useEffect(() => { enterJourney(journey.id); window.scrollTo(0, 0) }, [journey.id, enterJourney])
   useScrollProgress(containerRef)
@@ -26,14 +28,14 @@ function JourneyStory({ journey }: { journey: Journey }) {
   // dev jump: /napoleon?stop=8 scrolls to stop 8's dwell
   useEffect(() => {
     if (!import.meta.env.DEV) return
-    const n = Number(new URLSearchParams(location.search).get('stop'))
-    if (!Number.isFinite(n) || !containerRef.current) return
+    const n = Number(stopParam)
+    if (stopParam == null || !Number.isFinite(n) || !containerRef.current) return
     const el = containerRef.current
     requestAnimationFrame(() => {
       const scrollable = el.scrollHeight - window.innerHeight
       window.scrollTo(0, ((n + 0.2) / journey.stops.length) * scrollable)
     })
-  }, [journey])
+  }, [journey, stopParam])
 
   const cam = cameraAt(scrollT, stopsForCamera(journey))
   const stop = cam.activeStop != null ? journey.stops[cam.activeStop] : null

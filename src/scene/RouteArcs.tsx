@@ -29,8 +29,9 @@ export function RouteArcs({ journey, dim: dimProp }:
   const dim = dimProp ?? hoverDim
   const { geometry, indexCount } = useRouteGeometry(journey)
 
-  // Full route (progress=1 always)
-  geometry.setDrawRange(0, indexCount)
+  // Full route (progress=1 always) — effect, not render body: RouteArcs
+  // re-renders on hover and render-phase mutation of three objects is unsafe.
+  useEffect(() => { geometry.setDrawRange(0, indexCount) }, [geometry, indexCount])
 
   useEffect(() => () => geometry.dispose(), [geometry])
 
@@ -64,7 +65,13 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
   const stops = stopsForCamera(journey)
 
   useFrame(({ clock }) => {
-    const t = useAppStore.getState().scrollT
+    const { scrollT: t, mode } = useAppStore.getState()
+    // Battle mode owns the camera near the surface — hide the pulse so it
+    // doesn't keep animating under the battle view.
+    if (mode === 'battle') {
+      if (pulseRef.current) pulseRef.current.visible = false
+      return
+    }
     const safeT = Number.isFinite(t) ? Math.min(1, Math.max(0, t)) : 0
 
     // Update draw range imperatively
