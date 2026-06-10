@@ -4,6 +4,7 @@ import type { LatLng } from '../data/schema'
 export const DWELL = 0.4
 export const DWELL_ALT = 0.09   // ~570 km — city framing
 export const CRUISE_ALT = 0.45  // pulled out for travel
+const CARD_FADE = 0.25 // fraction of dwell window for opacity ramp in/out
 
 export interface CameraState {
   lat: number
@@ -13,8 +14,9 @@ export interface CameraState {
   cardOpacity: number
 }
 
+/** Assumes a unit vector input; y is clamped against floating-point drift from slerp. */
 function vecToLatLng(v: { x: number; y: number; z: number }): LatLng {
-  const lat = 90 - (Math.acos(v.y) * 180) / Math.PI
+  const lat = 90 - (Math.acos(Math.max(-1, Math.min(1, v.y))) * 180) / Math.PI
   const lng = ((Math.atan2(v.z, -v.x) * 180) / Math.PI) - 180
   return { lat, lng: ((lng + 540) % 360) - 180 }
 }
@@ -35,8 +37,8 @@ export function cameraAt(
 
   if (isLast || local < DWELL) {
     const d = isLast ? local : local / DWELL // 0..1 through the dwell window
-    const fadeIn = Math.min(1, d / 0.25)
-    const fadeOut = isLast ? 1 : Math.min(1, (1 - d) / 0.25)
+    const fadeIn = Math.min(1, d / CARD_FADE)
+    const fadeOut = isLast ? 1 : Math.min(1, (1 - d) / CARD_FADE)
     return { lat: stop.lat, lng: stop.lng, altitude: dwellAlt, activeStop: seg,
       cardOpacity: Math.min(fadeIn, fadeOut) }
   }
