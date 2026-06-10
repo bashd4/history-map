@@ -18,3 +18,7 @@ npm run build  # production build
 ## Stack
 
 Vite, React 19, TypeScript, three.js + @react-three/fiber, GSAP ScrollTrigger, Zustand, Zod, 3d-tiles-renderer, Vitest.
+
+## Attributions
+
+Earth texture: [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0)

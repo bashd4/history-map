@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useTexture } from '@react-three/drei'
+import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { GLOBE_RADIUS } from '../lib/geo'
 
@@ -27,12 +28,14 @@ const fragment = /* glsl */ `
   }`
 
 export function Globe({ radius = GLOBE_RADIUS }: { radius?: number }) {
-  const map = useTexture('/textures/earth-blue-marble.jpg')
+  const gl = useThree((s) => s.gl)
+  const map = useTexture('/textures/earth-8k.jpg')
 
   const uniforms = useMemo(() => {
     map.colorSpace = THREE.SRGBColorSpace
+    map.anisotropy = gl.capabilities.getMaxAnisotropy()
     return { uMap: { value: map }, uSepia: { value: 0.82 } }
-  }, [map])
+  }, [map, gl])
 
   return (
     <mesh>

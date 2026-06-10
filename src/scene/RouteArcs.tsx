@@ -1,50 +1,78 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { Line } from '@react-three/drei'
+import type { Line2 } from 'three-stdlib'
 import type { Journey } from '../data/schema'
 import { greatCirclePoints, latLngToVector3 } from '../lib/geo'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
 import { useAppStore } from '../state/store'
 
-/** Shared geometry builder — avoids duplicating the arc/pts logic. */
-function useRouteGeometry(journey: Journey) {
+/** Shared geometry builder — returns raw arc points (Vector3[]) for drei <Line>. */
+function useRouteGeometry(journey: Journey): THREE.Vector3[] {
   return useMemo(() => {
-    const pts = journey.stops.slice(0, -1).flatMap((s, i) =>
+    return journey.stops.slice(0, -1).flatMap((s, i) =>
       greatCirclePoints(s.coords, journey.stops[i + 1].coords, 48).slice(i ? 1 : 0))
-    const curve = new THREE.CatmullRomCurve3(pts)
-    const totalLen = pts.length
-    const geometry = new THREE.TubeGeometry(curve, totalLen * 2, 0.0035, 8, false)
-    return { geometry, indexCount: geometry.index!.count }
   }, [journey])
 }
 
 /**
+ * Scale a sphere mesh to a constant screen size based on camera distance.
+ * factor: pixels-per-unit-distance approximation; tune clamps for comfort.
+ */
+function markerScale(camPos: THREE.Vector3, markerPos: THREE.Vector3): number {
+  const d = camPos.distanceTo(markerPos)
+  return THREE.MathUtils.clamp(d * 0.004, 0.0008, 0.009)
+}
+
+/**
  * progress: 0..1 portion of the route drawn solid (1 = all).
- * dim: optional override for hub-mode faintness. When omitted, hover state drives it:
- * the hovered journey renders bright, everything else (including hub at rest) dim.
+ * dim: optional override for hub-mode faintness. When omitted, hover state drives it.
  */
 export function RouteArcs({ journey, dim: dimProp }:
   { journey: Journey; dim?: boolean }) {
   const hoverDim = useAppStore((s) => s.hoveredJourneyId !== journey.id)
   const dim = dimProp ?? hoverDim
-  const { geometry, indexCount } = useRouteGeometry(journey)
+  const pts = useRouteGeometry(journey)
 
-  // Full route (progress=1 always) — effect, not render body: RouteArcs
-  // re-renders on hover and render-phase mutation of three objects is unsafe.
-  useEffect(() => { geometry.setDrawRange(0, indexCount) }, [geometry, indexCount])
+  // Refs for marker meshes — one per stop
+  const markerRefs = useRef<(THREE.Mesh | null)[]>([])
 
-  useEffect(() => () => geometry.dispose(), [geometry])
+  useFrame(({ camera }) => {
+    const camPos = camera.position
+    journey.stops.forEach((s, i) => {
+      const mesh = markerRefs.current[i]
+      if (!mesh) return
+      const pos = latLngToVector3(s.coords.lat, s.coords.lng, 1.004)
+      const sc = markerScale(camPos, pos)
+      mesh.scale.setScalar(sc)
+    })
+  })
 
   return (
     <group>
-      <mesh geometry={geometry}>
-        <meshBasicMaterial color={journey.color} transparent
-          opacity={dim ? 0.25 : 1} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
+      <Line
+        points={pts}
+        color={journey.color}
+        lineWidth={dim ? 1.5 : 2.5}
+        transparent
+        opacity={dim ? 0.3 : 1}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        toneMapped={false}
+      />
       {journey.stops.map((s, i) => (
-        <mesh key={i} position={latLngToVector3(s.coords.lat, s.coords.lng, 1.004)}>
-          <sphereGeometry args={[0.008, 16, 16]} />
-          <meshBasicMaterial color={journey.color} transparent opacity={dim ? 0.4 : 1} />
+        <mesh
+          key={i}
+          ref={(el) => { markerRefs.current[i] = el }}
+          position={latLngToVector3(s.coords.lat, s.coords.lng, 1.004)}
+        >
+          <sphereGeometry args={[1, 24, 24]} />
+          <meshBasicMaterial
+            color={journey.color}
+            transparent
+            opacity={dim ? 0.4 : 1}
+          />
         </mesh>
       ))}
     </group>
@@ -56,15 +84,15 @@ export function RouteArcs({ journey, dim: dimProp }:
  * at the active stop. Imperative useFrame reads scrollT — no per-frame React props.
  */
 export function RouteArcsProgress({ journey }: { journey: Journey }) {
-  const { geometry, indexCount } = useRouteGeometry(journey)
-  const meshRef = useRef<THREE.Mesh>(null)
+  const pts = useRouteGeometry(journey)
+  const lineRef = useRef<Line2>(null)
   const pulseRef = useRef<THREE.Mesh>(null)
-
-  useEffect(() => () => geometry.dispose(), [geometry])
+  // Total segments = pts.length - 1
+  const totalSegments = pts.length - 1
 
   const stops = stopsForCamera(journey)
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock, camera }) => {
     const { scrollT: t, mode } = useAppStore.getState()
     // Battle mode owns the camera near the surface — hide the pulse so it
     // doesn't keep animating under the battle view.
@@ -74,10 +102,10 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
     }
     const safeT = Number.isFinite(t) ? Math.min(1, Math.max(0, t)) : 0
 
-    // Update draw range imperatively
-    if (meshRef.current) {
-      const drawn = Math.floor(indexCount * safeT)
-      meshRef.current.geometry.setDrawRange(0, drawn)
+    // Control how many segments are drawn via instanceCount
+    if (lineRef.current) {
+      const drawnSegments = Math.max(0, Math.floor(safeT * totalSegments))
+      lineRef.current.geometry.instanceCount = drawnSegments
     }
 
     // Pulse the active stop marker
@@ -85,10 +113,11 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
       const cam = cameraAt(safeT, stops)
       if (cam.activeStop != null) {
         const stop = journey.stops[cam.activeStop]
-        const pos = latLngToVector3(stop.coords.lat, stop.coords.lng, 1.004)
-        pulseRef.current.position.copy(pos)
-        const scale = 1 + 0.3 * Math.sin(clock.elapsedTime * 3)
-        pulseRef.current.scale.setScalar(scale)
+        const markerPos = latLngToVector3(stop.coords.lat, stop.coords.lng, 1.004)
+        pulseRef.current.position.copy(markerPos)
+        const pulseFactor = 1 + 0.3 * Math.sin(clock.elapsedTime * 3)
+        const sc = markerScale(camera.position, markerPos) * pulseFactor
+        pulseRef.current.scale.setScalar(sc)
         pulseRef.current.visible = true
       } else {
         pulseRef.current.visible = false
@@ -98,13 +127,26 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
 
   return (
     <group>
-      <mesh ref={meshRef} geometry={geometry}>
-        <meshBasicMaterial color={journey.color} transparent
-          opacity={1} blending={THREE.AdditiveBlending} depthWrite={false} />
-      </mesh>
+      <Line
+        ref={lineRef}
+        points={pts}
+        color={journey.color}
+        lineWidth={3}
+        transparent
+        opacity={1}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        toneMapped={false}
+      />
       <mesh ref={pulseRef} visible={false}>
-        <sphereGeometry args={[0.012, 16, 16]} />
-        <meshBasicMaterial color={journey.color} transparent opacity={0.9} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <sphereGeometry args={[1, 24, 24]} />
+        <meshBasicMaterial
+          color={journey.color}
+          transparent
+          opacity={0.9}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
       </mesh>
     </group>
   )
