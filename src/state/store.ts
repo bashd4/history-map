@@ -9,6 +9,7 @@ interface AppState {
   battleStopIndex: number | null
   battleElapsed: number
   battlePlaying: boolean
+  hoveredJourneyId: string | null
   enterJourney: (id: string) => void
   exitJourney: () => void
   setScrollT: (t: number) => void
@@ -16,12 +17,14 @@ interface AppState {
   exitBattle: () => void
   setBattleElapsed: (s: number) => void
   setBattlePlaying: (p: boolean) => void
+  setHoveredJourneyId: (id: string | null) => void
   reset: () => void
 }
 
 const initial = {
   mode: 'hub' as Mode, journeyId: null, scrollT: 0,
   battleStopIndex: null, battleElapsed: 0, battlePlaying: false,
+  hoveredJourneyId: null,
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -34,5 +37,6 @@ export const useAppStore = create<AppState>((set) => ({
   exitBattle: () => set({ mode: 'journey', battleStopIndex: null, battlePlaying: false }),
   setBattleElapsed: (battleElapsed) => set({ battleElapsed }),
   setBattlePlaying: (battlePlaying) => set({ battlePlaying }),
+  setHoveredJourneyId: (hoveredJourneyId) => set({ hoveredJourneyId }),
   reset: () => set({ ...initial }),
 }))
