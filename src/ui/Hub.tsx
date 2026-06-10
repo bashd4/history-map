@@ -5,7 +5,10 @@ import { useAppStore } from '../state/store'
 
 export function Hub() {
   const exitJourney = useAppStore((s) => s.exitJourney)
-  useEffect(() => { exitJourney() }, [exitJourney]) // arriving at / always resets to hub mode
+  useEffect(() => {
+    exitJourney() // arriving at / always resets to hub mode
+    return () => useAppStore.getState().setHoveredJourneyId(null) // clicking a card unmounts before mouseleave fires
+  }, [exitJourney])
 
   return (
     <div className="overlay hub">

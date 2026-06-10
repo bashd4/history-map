@@ -2,10 +2,17 @@ import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import type { Journey } from '../data/schema'
 import { greatCirclePoints, latLngToVector3 } from '../lib/geo'
+import { useAppStore } from '../state/store'
 
-/** progress: 0..1 portion of the route drawn solid (1 = all). dim: hub-mode faintness. */
-export function RouteArcs({ journey, progress = 1, dim = false }:
+/**
+ * progress: 0..1 portion of the route drawn solid (1 = all).
+ * dim: optional override for hub-mode faintness. When omitted, hover state drives it:
+ * the hovered journey renders bright, everything else (including hub at rest) dim.
+ */
+export function RouteArcs({ journey, progress = 1, dim: dimProp }:
   { journey: Journey; progress?: number; dim?: boolean }) {
+  const hoverDim = useAppStore((s) => s.hoveredJourneyId !== journey.id)
+  const dim = dimProp ?? hoverDim
   const { curve, totalLen } = useMemo(() => {
     const pts = journey.stops.slice(0, -1).flatMap((s, i) =>
       greatCirclePoints(s.coords, journey.stops[i + 1].coords, 48).slice(i ? 1 : 0))

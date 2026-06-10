@@ -12,7 +12,6 @@ import { useAppStore } from '../state/store'
 
 export function GlobeScene() {
   const mode = useAppStore((s) => s.mode)
-  const hovered = useAppStore((s) => s.hoveredJourneyId)
   return (
     <div className="canvas-fixed">
       {/* near must be far smaller than default 0.1: dwell camera sits 0.09 above the
@@ -28,7 +27,7 @@ export function GlobeScene() {
           <Globe />
           <Atmosphere />
           <Starfield />
-          {journeys.map((j) => <RouteArcs key={j.id} journey={j} dim={hovered !== j.id} />)}
+          {journeys.map((j) => <RouteArcs key={j.id} journey={j} />)}
         </Suspense>
         <CameraRig />
         {mode === 'hub' && (
