@@ -108,7 +108,7 @@ git add -A && git commit -m "chore: scaffold vite + react + three stack"
 
 ### Task 1: Journey schema (Zod)
 
-**Files:** Create: `src/data/schema.ts`, Test: `src/data/journeys.test.ts` (validation of real data comes in Task 3; here we test the schema itself).
+**Files:** Create: `src/data/schema.ts`, Test: `src/data/schema.test.ts` (the schema itself; validation of real data comes in Task 3's `journeys.test.ts`).
 
 - [ ] **Step 1: Write failing test** — `src/data/schema.test.ts`
 
@@ -572,6 +572,8 @@ describe('playbackAt', () => {
 ```ts
 import type { Battle } from '../data/schema'
 
+// Deliberate simplification vs spec ("proportional to path length"): a flat default.
+// Austerlitz sets explicit durations anyway; revisit if a future battle omits them.
 export const DEFAULT_PHASE_SECONDS = 6
 
 export interface PlaybackState { phaseIndex: number; phaseProgress: number; done: boolean }
@@ -781,15 +783,19 @@ import { Starfield } from './Starfield'
 export function GlobeScene() {
   return (
     <div className="canvas-fixed">
-      <Canvas dpr={[1, 2]} camera={{ position: [0, 0.4, 2.8], fov: 45 }}
-        gl={{ antialias: true }}>
+      {/* near must be far smaller than default 0.1: dwell camera sits 0.09 above the
+          surface and battle mode 0.012 — default near clips the globe entirely.
+          logarithmicDepthBuffer compensates for the depth precision loss. */}
+      <Canvas dpr={[1, 2]} camera={{ position: [0, 0.4, 2.8], fov: 45, near: 0.0008, far: 100 }}
+        gl={{ antialias: true, logarithmicDepthBuffer: true }}>
         <color attach="background" args={['#0a0805']} />
         <Suspense fallback={null}>
           <Globe />
           <Atmosphere />
           <Starfield />
         </Suspense>
-        <OrbitControls enablePan={false} enableZoom={false} rotateSpeed={0.4} />
+        <OrbitControls enablePan={false} enableZoom={false} rotateSpeed={0.4}
+          autoRotate autoRotateSpeed={0.35} />
       </Canvas>
     </div>
   )
@@ -1097,9 +1103,11 @@ function JourneyStory({ journey }: { journey: NonNullable<ReturnType<typeof jour
 
 Styles: `.journey-header { top:0; left:0; right:0; display:flex; justify-content:space-between; padding:1.2rem 2rem; }`, `.story-card { right:4rem; top:30vh; width:21rem; background:rgba(20,16,10,.88); border:1px solid rgba(232,181,74,.35); border-radius:6px; padding:1.4rem; backdrop-filter:blur(4px); transition:opacity .2s; }`, `.card-date { font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:#c9a050; }`.
 
-- [ ] **Step 3: Wire active journey into GlobeScene** — subscribe to `journeyId`/`scrollT`/`mode`; the active journey's `RouteArcs` gets `dim={false}` and `progress={scrollT}` (the route draws as you travel — `cameraAt`'s piecewise t maps closely enough to route fraction for v1); inactive journeys stay dim.
+- [ ] **Step 3: Wire active journey into GlobeScene** — for the active journey render **two** arc layers: a full-length dim one underneath (`<RouteArcs journey dim />`, the spec's "faint ahead") and the progressive bright one on top (`dim={false} progress={scrollT}` — `cameraAt`'s piecewise t maps closely enough to route fraction for v1); inactive journeys stay dim only. Read `journeyId`/`mode` via React subscription, but read `scrollT` imperatively (`useAppStore.getState()` inside `useFrame`, updating `drawRange` directly) so scroll doesn't re-render the React tree every frame. Also pass the active stop index to `RouteArcs` and pulse that marker's scale in a `useFrame` (`1 + 0.3 * Math.sin(clock.elapsedTime * 3)`) — the spec's "active stop pulses".
 
 - [ ] **Step 4: Dev jump param** — in `JourneyStory`, on mount read `new URLSearchParams(location.search).get('stop')`; if present, `window.scrollTo(0, (n / stops.length) * (container.scrollHeight - innerHeight))` after layout. Guard with `import.meta.env.DEV`.
+
+- [ ] **Step 4b: Journey outro** — after the scroll container, a final 60vh section: "{figure}, {years}" epitaph line and a "← Back to the globe" link to `/`. Deliberate deviation from the spec's "scrolling past the end exits": an explicit link avoids surprise navigation; the outro IS the past-the-end state.
 
 - [ ] **Step 5: Visual verify** — `/napoleon`: camera flies to Ajaccio, card fades in. Scrolling: card fades out → camera cruises along the gold arc (drawing as it goes) → descends into Brienne → next card. Scroll up rewinds. Austerlitz card (`?stop=8`) shows the ⚔ button. `✕` returns to the spinning hub. **This is the core feel — spend time scrubbing here; tune `DWELL`, `CRUISE_ALT`, damping `k` if motion feels wrong, and note tuned values in the commit message.**
 - [ ] **Step 6: Commit** — `git commit -am "feat: scroll-driven journey story with cards"`
@@ -1165,6 +1173,8 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
 ```
 
 Render from `JourneyStory` when `mode === 'battle'` with the active stop's battle. Style footer as the parchment playback bar from the battle mockup (`.superpowers/brainstorm/*/battle-view.html`): bottom-anchored, caption italic serif.
+
+Dev jump param (`import.meta.env.DEV` only): on `BattleOverlay` mount, if `?battle=<phaseIndex>` is present, `setBattleElapsed(sum of phaseSeconds up to that index)` and `setBattlePlaying(false)` — the tuning tool for Tasks 14–15.
 
 - [ ] **Step 3: Visual verify** — `/napoleon?stop=8` → ⚔ → camera dives to bird's-eye over Austerlitz (blurry low-res globe, expected); page scroll locked; captions auto-advance through 4 phases; scrubber drags; pause works; ✕ returns to the story at the exact same scroll position with camera climbing back out.
 - [ ] **Step 4: Commit** — `git commit -am "feat: battle mode with playback overlay and scroll lock"`
