@@ -7,9 +7,10 @@ import { Starfield } from './Starfield'
 import { RouteArcs, RouteArcsProgress } from './RouteArcs'
 import { CameraRig } from './CameraRig'
 import { Effects } from './Effects'
-import { journeys } from '../journeys'
+import { journeys, journeyById } from '../journeys'
 import { useAppStore } from '../state/store'
 import { TerrainErrorBoundary } from './TerrainErrorBoundary'
+import { BattleArrows } from './BattleArrows'
 
 // Code-split so the hub never pays the 3d-tiles-renderer bundle cost.
 const TerrainLayer = lazy(() =>
@@ -19,10 +20,18 @@ const TerrainLayer = lazy(() =>
 export function GlobeScene() {
   const mode = useAppStore((s) => s.mode)
   const journeyId = useAppStore((s) => s.journeyId)
+  const battleStopIndex = useAppStore((s) => s.battleStopIndex)
   // Shrink the globe slightly in battle mode so terrain tiles don't z-fight
   // with the coincident globe surface. 0.997 ≈ 19 km inset — invisible at
   // journey zoom but eliminates depth-buffer conflicts at battle altitude 0.012.
   const globeScale = mode === 'battle' ? 0.997 : 1
+
+  // Resolve battle data from active journey stop (null if not in battle mode)
+  const activeBattle =
+    mode === 'battle' && journeyId != null && battleStopIndex != null
+      ? (journeyById(journeyId)?.stops[battleStopIndex]?.battle ?? null)
+      : null
+
   return (
     <div className="canvas-fixed">
       {/* near must be far smaller than default 0.1: dwell camera sits 0.09 above the
@@ -63,6 +72,9 @@ export function GlobeScene() {
               </Suspense>
             </TerrainErrorBoundary>
           )}
+          {/* Battle movement arrows — outside terrain error boundary so they
+              work even when terrain degrades. Mounted only in battle mode. */}
+          {activeBattle && <BattleArrows battle={activeBattle} />}
         </Suspense>
         <CameraRig />
         {mode === 'hub' && (
