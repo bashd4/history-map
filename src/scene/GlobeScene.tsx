@@ -4,6 +4,8 @@ import { Suspense } from 'react'
 import { Atmosphere } from './Atmosphere'
 import { Globe } from './Globe'
 import { Starfield } from './Starfield'
+import { RouteArcs } from './RouteArcs'
+import { journeys } from '../journeys'
 
 export function GlobeScene() {
   return (
@@ -21,6 +23,7 @@ export function GlobeScene() {
           <Globe />
           <Atmosphere />
           <Starfield />
+          {journeys.map((j) => <RouteArcs key={j.id} journey={j} dim />)}
         </Suspense>
         {/* TODO: remove autoRotate when CameraRig scopes controls to hub (Task 9) */}
         <OrbitControls
