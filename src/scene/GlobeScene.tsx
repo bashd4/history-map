@@ -5,9 +5,12 @@ import { Atmosphere } from './Atmosphere'
 import { Globe } from './Globe'
 import { Starfield } from './Starfield'
 import { RouteArcs } from './RouteArcs'
+import { CameraRig } from './CameraRig'
 import { journeys } from '../journeys'
+import { useAppStore } from '../state/store'
 
 export function GlobeScene() {
+  const mode = useAppStore((s) => s.mode)
   return (
     <div className="canvas-fixed">
       {/* near must be far smaller than default 0.1: dwell camera sits 0.09 above the
@@ -25,14 +28,16 @@ export function GlobeScene() {
           <Starfield />
           {journeys.map((j) => <RouteArcs key={j.id} journey={j} dim />)}
         </Suspense>
-        {/* TODO: remove autoRotate when CameraRig scopes controls to hub (Task 9) */}
-        <OrbitControls
-          enablePan={false}
-          enableZoom={false}
-          rotateSpeed={0.4}
-          autoRotate
-          autoRotateSpeed={0.35}
-        />
+        <CameraRig />
+        {mode === 'hub' && (
+          <OrbitControls
+            enablePan={false}
+            enableZoom={false}
+            rotateSpeed={0.4}
+            autoRotate
+            autoRotateSpeed={0.35}
+          />
+        )}
       </Canvas>
     </div>
   )
