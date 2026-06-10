@@ -53,9 +53,14 @@ export function RouteArcs({ journey, dim: dimProp }:
   const markerRefs = useRef<(THREE.Mesh | null)[]>([])
 
   useFrame(({ camera }) => {
+    // Battle mode dives the camera to the surface — even clamped markers
+    // dominate the frame there, so hide them outright.
+    const inBattle = useAppStore.getState().mode === 'battle'
     markerPositions.forEach((pos, i) => {
       const mesh = markerRefs.current[i]
       if (!mesh) return
+      mesh.visible = !inBattle
+      if (inBattle) return
       mesh.scale.setScalar(markerScale(camera, pos))
     })
   })

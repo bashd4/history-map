@@ -22,6 +22,14 @@ describe('app store', () => {
     s = useAppStore.getState()
     expect(s.mode).toBe('journey'); expect(s.scrollT).toBe(0.57)
   })
+  it('replayBattle resets elapsed and resumes playing', () => {
+    useAppStore.getState().enterBattle(8)
+    useAppStore.getState().setBattleElapsed(30)
+    useAppStore.getState().setBattlePlaying(false)
+    useAppStore.getState().replayBattle()
+    const s = useAppStore.getState()
+    expect(s.battleElapsed).toBe(0); expect(s.battlePlaying).toBe(true)
+  })
   it('exitJourney returns to hub', () => {
     useAppStore.getState().enterJourney('napoleon')
     useAppStore.getState().exitJourney()

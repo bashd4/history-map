@@ -8,6 +8,7 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
   const battlePlaying = useAppStore((s) => s.battlePlaying)
   const setBattleElapsed = useAppStore((s) => s.setBattleElapsed)
   const setBattlePlaying = useAppStore((s) => s.setBattlePlaying)
+  const replayBattle = useAppStore((s) => s.replayBattle)
   const exitBattle = useAppStore((s) => s.exitBattle)
   const total = totalDuration(battle)
   const { phaseIndex, done } = playbackAt(battle, battleElapsed)
@@ -19,7 +20,9 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
     let last = performance.now()
     const tick = (now: number) => {
       const e = useAppStore.getState().battleElapsed
-      const next = Math.min(total, e + (now - last) / 1000)
+      // Cap the delta so a backgrounded tab doesn't fast-forward on return.
+      const dt = Math.min((now - last) / 1000, 0.1)
+      const next = Math.min(total, e + dt)
       last = now
       setBattleElapsed(next)
       if (next < total) raf = requestAnimationFrame(tick)
@@ -39,8 +42,7 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
     const offset = phaseSeconds(battle).slice(0, idx).reduce((a, x) => a + x, 0)
     setBattleElapsed(offset)
     setBattlePlaying(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [battle])
+  }, [battle, setBattleElapsed, setBattlePlaying])
 
   return (
     <div className="battle-overlay">
@@ -53,10 +55,11 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
       </header>
       <footer className="battle-footer">
         <button className="battle-play" onClick={() =>
-          done ? (setBattleElapsed(0), setBattlePlaying(true)) : setBattlePlaying(!battlePlaying)}>
+          done ? replayBattle() : setBattlePlaying(!battlePlaying)}>
           {done ? '↻' : battlePlaying ? '❚❚' : '▶'}
         </button>
         <input type="range" min={0} max={total} step={0.05} value={battleElapsed}
+          aria-label="Battle timeline"
           onChange={(e) => { setBattlePlaying(false); setBattleElapsed(Number(e.target.value)) }} />
         <p className="battle-caption">{battle.phases[phaseIndex].caption}</p>
       </footer>
