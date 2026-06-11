@@ -31,6 +31,10 @@ export default function App() {
   useEffect(() => {
     const handleVisibility = () => setTabVisible(!document.hidden)
     document.addEventListener('visibilitychange', handleVisibility)
+    // Reconcile once synchronously: a visibility toggle in the render→effect
+    // gap would otherwise be missed, leaving the frameloop stuck on 'never'
+    // (or running while hidden).
+    handleVisibility()
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 

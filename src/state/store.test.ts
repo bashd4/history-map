@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { useAppStore } from './store'
 
 describe('app store', () => {
-  beforeEach(() => useAppStore.getState().reset())
+  beforeEach(() => {
+    useAppStore.getState().reset()
+    // reset() preserves lowPerf by design — clear it explicitly so tests
+    // are order-independent (e.g. under --sequence.shuffle).
+    useAppStore.getState().setLowPerf(false)
+  })
 
   it('starts in hub mode', () => {
     expect(useAppStore.getState().mode).toBe('hub')

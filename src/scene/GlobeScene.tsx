@@ -1,6 +1,6 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { lazy, Suspense, useRef } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Atmosphere } from './Atmosphere'
 import { Globe } from './Globe'
 import { Starfield } from './Starfield'
@@ -18,6 +18,42 @@ const TerrainLayer = lazy(() =>
   import('./TerrainLayer').then((m) => ({ default: m.TerrainLayer })),
 )
 
+// Module-level strike counter: survives component remounts (incl. StrictMode
+// double-mount, which would reset a ref) — losing the context twice in one
+// page lifetime means the GPU/driver is unhappy; only a reload truly recovers.
+let contextLossCount = 0
+
+/** Registers WebGL context-loss listeners on the canvas with proper cleanup.
+ *  First loss: preventDefault lets the browser restore and three re-init.
+ *  Second loss: calls onContextLost so the app swaps to the NoWebGL page. */
+function ContextLossGuard({ onContextLost }: { onContextLost: () => void }) {
+  const gl = useThree((s) => s.gl)
+
+  useEffect(() => {
+    const canvas = gl.domElement
+    const handleLost = (e: Event) => {
+      e.preventDefault()
+      contextLossCount += 1
+      if (contextLossCount >= 2) {
+        // Second loss — give up and show NoWebGL fallback.
+        onContextLost()
+      }
+      // First loss: preventDefault above lets the browser restore context.
+    }
+    const handleRestored = () => {
+      // Context restored after first loss — three.js re-inits automatically.
+    }
+    canvas.addEventListener('webglcontextlost', handleLost)
+    canvas.addEventListener('webglcontextrestored', handleRestored)
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleLost)
+      canvas.removeEventListener('webglcontextrestored', handleRestored)
+    }
+  }, [gl, onContextLost])
+
+  return null
+}
+
 interface GlobeSceneProps {
   tabVisible: boolean
   onContextLost: () => void
@@ -28,9 +64,6 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
   const journeyId = useAppStore((s) => s.journeyId)
   const battleStopIndex = useAppStore((s) => s.battleStopIndex)
   const nearBattleStopIndex = useAppStore((s) => s.nearBattleStopIndex)
-
-  // Track how many times context has been lost so we can stop restoring after 1.
-  const contextLossCount = useRef(0)
 
   // Shrink the globe slightly in battle mode so terrain tiles don't z-fight
   // with the coincident globe surface. 0.997 ≈ 19 km inset — invisible at
@@ -72,23 +105,9 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
         camera={{ position: [0, 0.4, 2.8], fov: 45, near: 0.0008, far: 100 }}
         gl={{ antialias: true, logarithmicDepthBuffer: true }}
         frameloop={tabVisible ? 'always' : 'never'}
-        onCreated={({ gl }) => {
-          const canvas = gl.domElement
-          canvas.addEventListener('webglcontextlost', (e) => {
-            e.preventDefault()
-            contextLossCount.current += 1
-            if (contextLossCount.current >= 2) {
-              // Second loss — give up and show NoWebGL fallback.
-              onContextLost()
-            }
-            // First loss: preventDefault above lets the browser restore context.
-          })
-          canvas.addEventListener('webglcontextrestored', () => {
-            // Context restored after first loss — three.js re-inits automatically.
-          })
-        }}
       >
         <color attach="background" args={['#0a0805']} />
+        <ContextLossGuard onContextLost={onContextLost} />
         <Suspense fallback={null}>
           <Globe scale={globeScale} />
           <Atmosphere />
