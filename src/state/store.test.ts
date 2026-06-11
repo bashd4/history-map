@@ -15,17 +15,32 @@ describe('app store', () => {
   it('enterJourney sets mode and journey id', () => {
     useAppStore.getState().enterJourney('napoleon')
     const s = useAppStore.getState()
-    expect(s.mode).toBe('journey'); expect(s.journeyId).toBe('napoleon'); expect(s.scrollT).toBe(0)
+    expect(s.mode).toBe('journey'); expect(s.journeyId).toBe('napoleon'); expect(s.journeyT).toBe(0)
   })
-  it('enterBattle saves scroll position; exitBattle restores mode', () => {
+  it('navigating starts false', () => {
+    expect(useAppStore.getState().navigating).toBe(false)
+  })
+  it('setNavigating toggles navigating flag', () => {
+    useAppStore.getState().setNavigating(true)
+    expect(useAppStore.getState().navigating).toBe(true)
+    useAppStore.getState().setNavigating(false)
+    expect(useAppStore.getState().navigating).toBe(false)
+  })
+  it('navigating resets on exitJourney', () => {
     useAppStore.getState().enterJourney('napoleon')
-    useAppStore.getState().setScrollT(0.57)
+    useAppStore.getState().setNavigating(true)
+    useAppStore.getState().exitJourney()
+    expect(useAppStore.getState().navigating).toBe(false)
+  })
+  it('enterBattle saves journey position; exitBattle restores mode', () => {
+    useAppStore.getState().enterJourney('napoleon')
+    useAppStore.getState().setJourneyT(0.57)
     useAppStore.getState().enterBattle(8)
     let s = useAppStore.getState()
     expect(s.mode).toBe('battle'); expect(s.battleStopIndex).toBe(8); expect(s.battleElapsed).toBe(0)
     useAppStore.getState().exitBattle()
     s = useAppStore.getState()
-    expect(s.mode).toBe('journey'); expect(s.scrollT).toBe(0.57)
+    expect(s.mode).toBe('journey'); expect(s.journeyT).toBe(0.57)
   })
   it('replayBattle resets elapsed and resumes playing', () => {
     useAppStore.getState().enterBattle(8)
@@ -68,5 +83,20 @@ describe('app store', () => {
     useAppStore.getState().exitJourney()
     expect(useAppStore.getState().lowPerf).toBe(true)
     expect(useAppStore.getState().mode).toBe('hub')
+  })
+  it('requestStop sets requestedStopIndex', () => {
+    useAppStore.getState().requestStop(5)
+    expect(useAppStore.getState().requestedStopIndex).toBe(5)
+  })
+  it('clearRequestedStop nulls requestedStopIndex', () => {
+    useAppStore.getState().requestStop(5)
+    useAppStore.getState().clearRequestedStop()
+    expect(useAppStore.getState().requestedStopIndex).toBeNull()
+  })
+  it('requestedStopIndex resets on exitJourney', () => {
+    useAppStore.getState().enterJourney('napoleon')
+    useAppStore.getState().requestStop(3)
+    useAppStore.getState().exitJourney()
+    expect(useAppStore.getState().requestedStopIndex).toBeNull()
   })
 })

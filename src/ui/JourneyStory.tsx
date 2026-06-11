@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import type { Journey } from '../data/schema'
 import { journeyById } from '../journeys'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
-import { useScrollProgress } from '../hooks/useScrollProgress'
+import { useJourneyNavigation, dwellCenterT } from '../hooks/useJourneyNavigation'
 import { useAppStore } from '../state/store'
 import { BattleOverlay } from './BattleOverlay'
 
@@ -15,60 +15,93 @@ export function JourneyRoute() {
 }
 
 function JourneyStory({ journey }: { journey: Journey }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const savedScrollY = useRef<number>(0)
   const enterJourney = useAppStore((s) => s.enterJourney)
+  const setJourneyT = useAppStore((s) => s.setJourneyT)
   const enterBattle = useAppStore((s) => s.enterBattle)
   const mode = useAppStore((s) => s.mode)
-  const scrollT = useAppStore((s) => s.scrollT)
-  const battleStopIndex = useAppStore((s) => s.battleStopIndex)
+  const journeyT = useAppStore((s) => s.journeyT)
   const [searchParams] = useSearchParams()
   const stopParam = searchParams.get('stop')
 
-  // Scroll lock when entering battle mode
+  const { goToStop, activeStopIndex } = useJourneyNavigation(journey)
+  const n = journey.stops.length
+
+  // Enter journey on mount and position camera at stop 0 dwell center.
   useEffect(() => {
-    if (mode !== 'battle') return
-    savedScrollY.current = window.scrollY
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
-      window.scrollTo(0, savedScrollY.current)
+    enterJourney(journey.id)
+    // DEV: ?stop=N jumps instantly, no tween.
+    if (import.meta.env.DEV && stopParam != null) {
+      const idx = Number(stopParam)
+      if (Number.isFinite(idx)) {
+        setJourneyT(dwellCenterT(Math.max(0, Math.min(n - 1, idx)), n))
+        return
+      }
     }
-  }, [mode])
+    setJourneyT(dwellCenterT(0, n))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [journey.id])
 
-  useEffect(() => { enterJourney(journey.id); window.scrollTo(0, 0) }, [journey.id, enterJourney])
-  useScrollProgress(containerRef, journey)
-
-  // dev jump: /napoleon?stop=8 scrolls to stop 8's dwell
-  useEffect(() => {
-    if (!import.meta.env.DEV) return
-    const n = Number(stopParam)
-    if (stopParam == null || !Number.isFinite(n) || !containerRef.current) return
-    const el = containerRef.current
-    requestAnimationFrame(() => {
-      const scrollable = el.scrollHeight - window.innerHeight
-      window.scrollTo(0, ((n + 0.2) / journey.stops.length) * scrollable)
-    })
-  }, [journey, stopParam])
-
-  const cam = cameraAt(scrollT, stopsForCamera(journey))
+  const cam = cameraAt(journeyT, stopsForCamera(journey))
   const stop = cam.activeStop != null ? journey.stops[cam.activeStop] : null
-
-  const battleStop = battleStopIndex != null ? journey.stops[battleStopIndex] : null
+  const battleStop = useAppStore((s) =>
+    s.battleStopIndex != null ? journey.stops[s.battleStopIndex] : null,
+  )
 
   return (
-    <div style={{ position: 'relative' }}>
-      <div ref={containerRef} style={{ height: `${journey.stops.length * 100}vh`, position: 'relative' }} />
-      <footer className="journey-outro">
-        <p className="card-date">{journey.figure} · {journey.years}</p>
-        <Link to="/">← Back to the globe</Link>
-      </footer>
+    <div>
+      {/* Journey header — hidden during battle */}
       {mode !== 'battle' && (
         <header className="overlay journey-header">
           <span>{journey.title}</span>
           <Link to="/" aria-label="Back to globe">✕</Link>
         </header>
       )}
+
+      {/* Timeline panel — left side, hidden during battle */}
+      {mode !== 'battle' && (
+        <nav className="overlay timeline-panel" aria-label="Journey stops">
+          <ul className="timeline-list">
+            {journey.stops.map((s, i) => (
+              <li
+                key={i}
+                className={`timeline-item${activeStopIndex === i ? ' timeline-item--active' : ''}`}
+                onClick={() => goToStop(i)}
+              >
+                <span className="timeline-bullet">{i + 1}</span>
+                <span className="timeline-info">
+                  <span className="timeline-name">{s.name}</span>
+                  <span className="timeline-date">{s.date}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="timeline-nav">
+            <button
+              className="timeline-nav-btn"
+              onClick={() => {
+                const base = activeStopIndex ?? 0
+                goToStop(base - 1)
+              }}
+              aria-label="Previous stop"
+            >
+              ◀
+            </button>
+            <span className="timeline-nav-hint">← → keys</span>
+            <button
+              className="timeline-nav-btn"
+              onClick={() => {
+                const base = activeStopIndex ?? 0
+                goToStop(base + 1)
+              }}
+              aria-label="Next stop"
+            >
+              ▶
+            </button>
+          </div>
+        </nav>
+      )}
+
+      {/* Story card — right side */}
       {stop && mode === 'journey' && (
         <article className="overlay story-card" style={{ opacity: cam.cardOpacity }}>
           <div className="card-date">{stop.date}</div>
@@ -81,6 +114,8 @@ function JourneyStory({ journey }: { journey: Journey }) {
           )}
         </article>
       )}
+
+      {/* Battle overlay */}
       {mode === 'battle' && battleStop?.battle && <BattleOverlay battle={battleStop.battle} />}
     </div>
   )

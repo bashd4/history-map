@@ -5,22 +5,29 @@ export type Mode = 'hub' | 'journey' | 'battle'
 interface AppState {
   mode: Mode
   journeyId: string | null
-  scrollT: number
+  journeyT: number
+  navigating: boolean
   battleStopIndex: number | null
   battleElapsed: number
   battlePlaying: boolean
   hoveredJourneyId: string | null
-  /** Index of the battle stop the scroll position is currently dwelling at, or null
-   *  when the active stop has no battle. Used to preload the terrain layer (and aim
-   *  the preheat camera) before the user clicks ⚔. Only written when the value
-   *  changes (change-detected in useScrollProgress) so subscribers re-render rarely. */
+  /** Index of the battle stop currently being dwelled at, or null when the
+   *  active stop has no battle. Used to preload the terrain layer (and aim
+   *  the preheat camera) before the user clicks ⚔. Only written when the
+   *  value changes (change-detected in useJourneyNavigation) so subscribers
+   *  re-render rarely. */
   nearBattleStopIndex: number | null
   /** One-way latch: set when median frame dt > 22 ms (~<45 fps) during warmup.
    *  Persists through reset/exitJourney because hardware capability doesn't change. */
   lowPerf: boolean
+  /** When set, the navigation hook picks this up, runs goToStop, then clears it.
+   *  This allows 3-D marker clicks (RouteArcs) to request navigation without
+   *  holding a direct reference to the hook. */
+  requestedStopIndex: number | null
   enterJourney: (id: string) => void
   exitJourney: () => void
-  setScrollT: (t: number) => void
+  setJourneyT: (t: number) => void
+  setNavigating: (v: boolean) => void
   enterBattle: (stopIndex: number) => void
   exitBattle: () => void
   replayBattle: () => void
@@ -29,22 +36,26 @@ interface AppState {
   setHoveredJourneyId: (id: string | null) => void
   setNearBattleStopIndex: (index: number | null) => void
   setLowPerf: (v: boolean) => void
+  requestStop: (index: number) => void
+  clearRequestedStop: () => void
   reset: () => void
 }
 
 const initial = {
-  mode: 'hub' as Mode, journeyId: null, scrollT: 0,
+  mode: 'hub' as Mode, journeyId: null, journeyT: 0, navigating: false,
   battleStopIndex: null, battleElapsed: 0, battlePlaying: false,
   hoveredJourneyId: null, nearBattleStopIndex: null as number | null,
+  requestedStopIndex: null as number | null,
   // NOTE: lowPerf is intentionally NOT in initial — it's preserved across resets.
 }
 
 export const useAppStore = create<AppState>((set) => ({
   ...initial,
   lowPerf: false,
-  enterJourney: (id) => set({ mode: 'journey', journeyId: id, scrollT: 0 }),
+  enterJourney: (id) => set({ mode: 'journey', journeyId: id, journeyT: 0 }),
   exitJourney: () => set((s) => ({ ...initial, lowPerf: s.lowPerf })),
-  setScrollT: (scrollT) => set({ scrollT }),
+  setJourneyT: (journeyT) => set({ journeyT }),
+  setNavigating: (navigating) => set({ navigating }),
   enterBattle: (battleStopIndex) =>
     set({ mode: 'battle', battleStopIndex, battleElapsed: 0, battlePlaying: true }),
   exitBattle: () => set({ mode: 'journey', battleStopIndex: null, battlePlaying: false }),
@@ -54,5 +65,7 @@ export const useAppStore = create<AppState>((set) => ({
   setHoveredJourneyId: (hoveredJourneyId) => set({ hoveredJourneyId }),
   setNearBattleStopIndex: (nearBattleStopIndex) => set({ nearBattleStopIndex }),
   setLowPerf: (lowPerf) => set({ lowPerf }),
+  requestStop: (requestedStopIndex) => set({ requestedStopIndex }),
+  clearRequestedStop: () => set({ requestedStopIndex: null }),
   reset: () => set((s) => ({ ...initial, lowPerf: s.lowPerf })),
 }))

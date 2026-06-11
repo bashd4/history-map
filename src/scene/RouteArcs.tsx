@@ -36,9 +36,10 @@ function markerScale(camera: THREE.Camera, markerPos: THREE.Vector3): number {
 /**
  * progress: 0..1 portion of the route drawn solid (1 = all).
  * dim: optional override for hub-mode faintness. When omitted, hover state drives it.
+ * onStopClick: when provided, markers become clickable and show pointer cursor on hover.
  */
-export function RouteArcs({ journey, dim: dimProp }:
-  { journey: Journey; dim?: boolean }) {
+export function RouteArcs({ journey, dim: dimProp, onStopClick }:
+  { journey: Journey; dim?: boolean; onStopClick?: (i: number) => void }) {
   const hoverDim = useAppStore((s) => s.hoveredJourneyId !== journey.id)
   const dim = dimProp ?? hoverDim
   const pts = useRouteGeometry(journey)
@@ -78,6 +79,9 @@ export function RouteArcs({ journey, dim: dimProp }:
           key={i}
           ref={(el) => { markerRefs.current[i] = el }}
           position={pos}
+          onClick={onStopClick ? (e) => { e.stopPropagation(); onStopClick(i) } : undefined}
+          onPointerOver={onStopClick ? () => { document.body.style.cursor = 'pointer' } : undefined}
+          onPointerOut={onStopClick ? () => { document.body.style.cursor = '' } : undefined}
         >
           <sphereGeometry args={[1, 24, 24]} />
           <meshBasicMaterial
@@ -93,7 +97,7 @@ export function RouteArcs({ journey, dim: dimProp }:
 
 /**
  * Bright progressive arc drawn up to scroll position, with a pulsing marker
- * at the active stop. Imperative useFrame reads scrollT — no per-frame React props.
+ * at the active stop. Imperative useFrame reads journeyT — no per-frame React props.
  */
 export function RouteArcsProgress({ journey }: { journey: Journey }) {
   const pts = useRouteGeometry(journey)
@@ -106,7 +110,7 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
   const stops = useMemo(() => stopsForCamera(journey), [journey])
 
   useFrame(({ clock, camera }) => {
-    const { scrollT: t, mode } = useAppStore.getState()
+    const { journeyT: t, mode } = useAppStore.getState()
     // Battle mode owns the camera near the surface — hide the pulse so it
     // doesn't keep animating under the battle view.
     if (mode === 'battle') {

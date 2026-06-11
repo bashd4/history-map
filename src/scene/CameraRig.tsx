@@ -18,7 +18,7 @@ export function CameraRig() {
 
   useFrame((_, dt) => {
     const dtc = Math.min(dt, 0.1) // cap against tab-resume teleport
-    const { mode, journeyId, scrollT, battleStopIndex } = useAppStore.getState()
+    const { mode, journeyId, journeyT, battleStopIndex } = useAppStore.getState()
     const journey = journeyId ? journeyById(journeyId) : null
     const k = 3.2 // damping stiffness
 
@@ -39,7 +39,7 @@ export function CameraRig() {
       look.current.copy(ORIGIN)
       return
     } else if (mode === 'journey') {
-      const c = cameraAt(scrollT, stopsForCamera(journey))
+      const c = cameraAt(journeyT, stopsForCamera(journey))
       targetPos.current.copy(latLngToVector3(c.lat, c.lng, 1 + c.altitude))
       targetLook.current.copy(ORIGIN)
     } else if (mode === 'battle' && battleStopIndex != null) {

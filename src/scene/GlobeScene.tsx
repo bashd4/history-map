@@ -119,8 +119,8 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
             if (isActive) {
               return (
                 <group key={j.id}>
-                  {/* Full faint route underneath */}
-                  <RouteArcs journey={j} dim />
+                  {/* Full faint route underneath — markers are clickable on the active journey */}
+                  <RouteArcs journey={j} dim onStopClick={(i) => useAppStore.getState().requestStop(i)} />
                   {/* Bright progressive layer on top */}
                   <RouteArcsProgress journey={j} />
                 </group>
