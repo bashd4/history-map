@@ -65,10 +65,19 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
   const battleStopIndex = useAppStore((s) => s.battleStopIndex)
   const nearBattleStopIndex = useAppStore((s) => s.nearBattleStopIndex)
 
-  // Shrink the globe slightly in battle mode so terrain tiles don't z-fight
-  // with the coincident globe surface. 0.997 ≈ 19 km inset — invisible at
-  // journey zoom but eliminates depth-buffer conflicts at battle altitude 0.012.
-  const globeScale = mode === 'battle' ? 0.997 : 1
+  // When tiles are enabled the sepia Globe sphere is always rendered as an
+  // under-layer at scale 0.997 (≈19 km inset). Tiles stream on top; where they
+  // haven't arrived yet the sepia sphere shows through the gaps — graceful
+  // loading with zero fade choreography. Also eliminates z-fighting at battle
+  // altitude (0.012). Without a key (or after TerrainErrorBoundary trips) the
+  // sphere stays at scale 1 and is the full globe. The error-boundary-tripped
+  // case leaves the sphere at 0.997 — an acceptable minor inset on degrade.
+  const tilesEnabled = Boolean(import.meta.env.VITE_TILES_KEY)
+  const globeScale = tilesEnabled ? 0.997 : 1
+
+  // Mode-aware LOD budget: hub auto-rotation churns fine LODs needlessly;
+  // journey dwell benefits from medium detail; battle needs maximum detail.
+  const errorTarget = mode === 'hub' ? 20 : mode === 'journey' ? 10 : 8
 
   // Resolve battle data from active journey stop (null if not in battle mode)
   const activeBattle =
@@ -85,16 +94,6 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
       ? (journey.stops[nearBattleStopIndex]?.coords ?? null)
       : null
 
-  // Mount terrain when:
-  //   a) battle mode is active — tiles are visible and the globe is shrunk
-  //   b) journey mode + dwelling at a battle stop — preload phase: tile meshes
-  //      are hidden (group visible=false inside TerrainLayer) so they stream
-  //      without rendering against the full-size globe at dwell altitude 0.09.
-  //      The globe must stay full size during preload.
-  const showTerrain =
-    (mode === 'battle' || (mode === 'journey' && nearBattleStopIndex != null))
-    && Boolean(import.meta.env.VITE_TILES_KEY)
-
   return (
     <div className="canvas-fixed">
       {/* near must be far smaller than default 0.1: dwell camera sits 0.09 above the
@@ -109,6 +108,8 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
         <color attach="background" args={['#0a0805']} />
         <ContextLossGuard onContextLost={onContextLost} />
         <Suspense fallback={null}>
+          {/* Sepia sphere: under-layer when tiles are enabled (scale 0.997),
+              full globe when tiles are absent or boundary trips (scale 1). */}
           <Globe scale={globeScale} />
           <Atmosphere />
           <Starfield />
@@ -126,17 +127,18 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
             }
             return <RouteArcs key={j.id} journey={j} />
           })}
-          {/* Google Photorealistic 3D Tiles — battle mode + preload, code-split.
-              Guard on VITE_TILES_KEY so a missing key never throws. The error
-              boundary sits OUTSIDE the lazy Suspense so a failed chunk load of
-              TerrainLayer itself is also caught (battle degrades to plain globe).
-              During journey preload (hidden=true) the tiles.group itself is made
-              invisible so tiles stream without rendering over the globe. */}
-          {showTerrain && (
+          {/* Google Photorealistic 3D Tiles — always mounted when key exists,
+              at all zoom levels (hub, journey, battle). Tiles stream on top of
+              the sepia sphere under-layer. The error boundary sits OUTSIDE the
+              lazy Suspense so a failed chunk load of TerrainLayer is also caught
+              (app degrades to plain sepia globe — error-boundary-tripped case
+              leaves globe at scale 0.997, which is acceptable).
+              PreheatCamera preheats battle LODs during journey dwell. */}
+          {tilesEnabled && (
             <TerrainErrorBoundary>
               <Suspense fallback={null}>
                 <TerrainLayer
-                  hidden={mode !== 'battle'}
+                  errorTarget={errorTarget}
                   preheat={battleStopCoords ?? undefined}
                 />
               </Suspense>

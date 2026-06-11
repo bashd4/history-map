@@ -1,6 +1,7 @@
 /**
- * TerrainLayer — streams Google Photorealistic 3D Tiles in battle mode,
- * and also during journey-mode dwell at a battle stop (preload).
+ * TerrainLayer — streams Google Photorealistic 3D Tiles as the PRIMARY globe
+ * at every zoom level (hub, journey, battle). The sepia sphere renders beneath
+ * (scale 0.997) as a placeholder where tiles haven't streamed yet.
  *
  * ECEF alignment: ECEF +Z is the north pole, +X is (lat0, lng0).
  * Our scene has +Y north (latLngToVector3(0,0) = (1,0,0), latLngToVector3(90,0) = (0,1,0)).
@@ -42,12 +43,27 @@ import { useContext, useEffect, useRef } from 'react'
 import { PerspectiveCamera } from 'three'
 import { useFrame } from '@react-three/fiber'
 import { TilesPlugin, TilesRenderer, TilesRendererContext } from '3d-tiles-renderer/r3f'
-import type { TilesGroup } from '3d-tiles-renderer/three'
 import { GoogleCloudAuthPlugin } from '3d-tiles-renderer/plugins'
 import { latLngToVector3 } from '../lib/geo'
 
 // ECEF radius in metres → scene units (globe radius = 1).
 const ECEF_TO_SCENE = 1 / 6_378_137
+
+// Constructor args for GoogleCloudAuthPlugin — MUST be a stable module-level
+// reference. The r3f TilesPlugin keys plugin recreation on useObjectDep(args),
+// which only shallow-compares the FIRST level: an inline `[{...}]` literal puts
+// a fresh object at index 0 every render, so any TerrainLayer re-render (e.g.
+// the mode-aware errorTarget prop changing on battle enter/exit) would
+// unregister + reconstruct the auth plugin mid-stream. That path is buggy in
+// the library (0.4.x): init() → resetFailedTiles() throws on a loaded tileset
+// (tile.internal undefined) and dispose() throws (removeEventListener on null)
+// — tripping TerrainErrorBoundary and permanently killing the tiles globe.
+const AUTH_PLUGIN_ARGS = [
+  {
+    apiToken: import.meta.env.VITE_TILES_KEY as string,
+    useRecommendedSettings: false,
+  },
+]
 
 export interface PreheatCoords {
   lat: number
@@ -112,13 +128,15 @@ export interface TerrainLayerProps {
    *  while the main camera is still at journey dwell altitude. Pass undefined
    *  (or omit) once battle mode is active — the virtual cam is removed. */
   preheat?: PreheatCoords
-  /** When true the tile meshes are invisible (tiles still stream). Used during
-   *  journey-mode preload so terrain never renders under/through the full-size
-   *  globe at dwell altitude. */
-  hidden?: boolean
+  /** LOD error target — lower = finer tiles. Mode-aware:
+   *  hub → 20 (coarser; auto-rotation churns fine LODs unnecessarily)
+   *  journey → 10 (medium; dwell alt ~0.09 benefits from decent detail)
+   *  battle → 8 (fine; close altitude ~0.012 needs maximum resolution)
+   *  useDeepOptions applies this reactively via useLayoutEffect on prop change. */
+  errorTarget?: number
 }
 
-export function TerrainLayer({ preheat, hidden = false }: TerrainLayerProps) {
+export function TerrainLayer({ preheat, errorTarget = 8 }: TerrainLayerProps) {
   return (
     // rotation: ECEF +Z (north pole) → scene +Y; ECEF +X (lng0) → scene +X
     <group scale={ECEF_TO_SCENE} rotation={[-Math.PI / 2, 0, 0]}>
@@ -128,27 +146,13 @@ export function TerrainLayer({ preheat, hidden = false }: TerrainLayerProps) {
        * init() runs, and GoogleCloudAuthPlugin.init() overwrites errorTarget
        * to 20 when useRecommendedSettings is on — silently discarding the
        * prop. useRecommendedSettings does nothing else in 0.4.28 (checked
-       * source), so we disable it and own errorTarget={8} for finer detail
-       * at battle altitude 0.012 (~76 km). Dropped from 12 → 8 for better
-       * peripheral resolution.
-       *
-       * group prop: spread onto <primitive object={tiles.group}> inside the
-       * r3f wrapper (TilesRenderer.jsx ~line 346) — setting visible there
-       * hides the actual tile meshes during preload while they keep streaming.
-       * (A visible flag on our wrapper group would NOT work: the d.ts types
-       * `group` as the TilesGroup instance, but the JS wrapper treats it as
-       * JSX props for the primitive — hence the cast.)
+       * source), so we disable it and own errorTarget for finer detail.
+       * useDeepOptions re-applies on prop change (verified: useLayoutEffect
+       * with useObjectDep dependency — reactive to prop changes).
        */}
-      <TilesRenderer errorTarget={8} group={{ visible: !hidden } as unknown as TilesGroup}>
-        <TilesPlugin
-          plugin={GoogleCloudAuthPlugin}
-          args={[
-            {
-              apiToken: import.meta.env.VITE_TILES_KEY as string,
-              useRecommendedSettings: false,
-            },
-          ]}
-        />
+      <TilesRenderer errorTarget={errorTarget}>
+        {/* args must be the stable module-level reference — see AUTH_PLUGIN_ARGS */}
+        <TilesPlugin plugin={GoogleCloudAuthPlugin} args={AUTH_PLUGIN_ARGS} />
         {/* Virtual preheat camera — only active during journey preload phase */}
         {preheat && <PreheatCamera lat={preheat.lat} lng={preheat.lng} />}
       </TilesRenderer>
