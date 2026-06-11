@@ -65,6 +65,8 @@ export function useJourneyNavigation(journey: Journey) {
     const diff = Math.abs(targetT - currentT)
     const duration = Math.min(4.5, 1.2 + 1.1 * diff * n)
 
+    // A flight always arrives at the curated framing — clear any wheel zoom.
+    useAppStore.getState().setZoom(1)
     setNavigating(true)
     tweenRef.current = gsap.to(proxy.current, {
       t: targetT,

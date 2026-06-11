@@ -78,7 +78,10 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
 
   // Mode-aware LOD budget: hub auto-rotation churns fine LODs needlessly;
   // journey dwell benefits from medium detail; battle needs maximum detail.
-  const errorTarget = mode === 'hub' ? 20 : mode === 'journey' ? 10 : 8
+  // When the user wheel-zooms in close (zoom < 0.5) during a journey, grant
+  // battle-grade detail. Boolean selector → re-render only on threshold cross.
+  const fineDetail = useAppStore((s) => s.mode === 'journey' && s.zoom < 0.5)
+  const errorTarget = mode === 'hub' ? 20 : mode === 'battle' ? 8 : fineDetail ? 8 : 10
 
   // Resolve battle data from active journey stop (null if not in battle mode)
   const activeBattle =

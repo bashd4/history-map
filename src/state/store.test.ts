@@ -99,4 +99,27 @@ describe('app store', () => {
     useAppStore.getState().exitJourney()
     expect(useAppStore.getState().requestedStopIndex).toBeNull()
   })
+  it('zoom starts at 1', () => {
+    expect(useAppStore.getState().zoom).toBe(1)
+  })
+  it('setZoom updates zoom', () => {
+    useAppStore.getState().setZoom(2.5)
+    expect(useAppStore.getState().zoom).toBe(2.5)
+  })
+  it('zoom resets to 1 on enterBattle', () => {
+    useAppStore.getState().setZoom(2)
+    useAppStore.getState().enterBattle(3)
+    expect(useAppStore.getState().zoom).toBe(1)
+  })
+  it('zoom resets to 1 on exitBattle', () => {
+    useAppStore.getState().enterBattle(3)
+    useAppStore.getState().setZoom(0.5)
+    useAppStore.getState().exitBattle()
+    expect(useAppStore.getState().zoom).toBe(1)
+  })
+  it('zoom resets to 1 on reset()', () => {
+    useAppStore.getState().setZoom(3)
+    useAppStore.getState().reset()
+    expect(useAppStore.getState().zoom).toBe(1)
+  })
 })

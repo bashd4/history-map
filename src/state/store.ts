@@ -24,6 +24,10 @@ interface AppState {
    *  This allows 3-D marker clicks (RouteArcs) to request navigation without
    *  holding a direct reference to the hook. */
   requestedStopIndex: number | null
+  /** Camera altitude multiplier driven by wheel/pinch while focused on a stop
+   *  or battle. 1 = curated framing; <1 closer, >1 further out. Reset to 1 on
+   *  enterBattle/exitBattle and when a stop flight starts (goToStop). */
+  zoom: number
   enterJourney: (id: string) => void
   exitJourney: () => void
   setJourneyT: (t: number) => void
@@ -36,6 +40,7 @@ interface AppState {
   setHoveredJourneyId: (id: string | null) => void
   setNearBattleStopIndex: (index: number | null) => void
   setLowPerf: (v: boolean) => void
+  setZoom: (z: number) => void
   requestStop: (index: number) => void
   clearRequestedStop: () => void
   reset: () => void
@@ -46,6 +51,7 @@ const initial = {
   battleStopIndex: null, battleElapsed: 0, battlePlaying: false,
   hoveredJourneyId: null, nearBattleStopIndex: null as number | null,
   requestedStopIndex: null as number | null,
+  zoom: 1,
   // NOTE: lowPerf is intentionally NOT in initial — it's preserved across resets.
 }
 
@@ -57,14 +63,15 @@ export const useAppStore = create<AppState>((set) => ({
   setJourneyT: (journeyT) => set({ journeyT }),
   setNavigating: (navigating) => set({ navigating }),
   enterBattle: (battleStopIndex) =>
-    set({ mode: 'battle', battleStopIndex, battleElapsed: 0, battlePlaying: true }),
-  exitBattle: () => set({ mode: 'journey', battleStopIndex: null, battlePlaying: false }),
+    set({ mode: 'battle', battleStopIndex, battleElapsed: 0, battlePlaying: true, zoom: 1 }),
+  exitBattle: () => set({ mode: 'journey', battleStopIndex: null, battlePlaying: false, zoom: 1 }),
   replayBattle: () => set({ battleElapsed: 0, battlePlaying: true }),
   setBattleElapsed: (battleElapsed) => set({ battleElapsed }),
   setBattlePlaying: (battlePlaying) => set({ battlePlaying }),
   setHoveredJourneyId: (hoveredJourneyId) => set({ hoveredJourneyId }),
   setNearBattleStopIndex: (nearBattleStopIndex) => set({ nearBattleStopIndex }),
   setLowPerf: (lowPerf) => set({ lowPerf }),
+  setZoom: (zoom) => set({ zoom }),
   requestStop: (requestedStopIndex) => set({ requestedStopIndex }),
   clearRequestedStop: () => set({ requestedStopIndex: null }),
   reset: () => set((s) => ({ ...initial, lowPerf: s.lowPerf })),

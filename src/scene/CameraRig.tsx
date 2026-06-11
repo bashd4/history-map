@@ -18,7 +18,7 @@ export function CameraRig() {
 
   useFrame((_, dt) => {
     const dtc = Math.min(dt, 0.1) // cap against tab-resume teleport
-    const { mode, journeyId, journeyT, battleStopIndex } = useAppStore.getState()
+    const { mode, journeyId, journeyT, battleStopIndex, zoom } = useAppStore.getState()
     const journey = journeyId ? journeyById(journeyId) : null
     const k = 3.2 // damping stiffness
 
@@ -40,13 +40,14 @@ export function CameraRig() {
       return
     } else if (mode === 'journey') {
       const c = cameraAt(journeyT, stopsForCamera(journey))
-      targetPos.current.copy(latLngToVector3(c.lat, c.lng, 1 + c.altitude))
+      // zoom multiplies altitude (wheel/pinch); the damping below smooths it.
+      targetPos.current.copy(latLngToVector3(c.lat, c.lng, 1 + c.altitude * zoom))
       targetLook.current.copy(ORIGIN)
     } else if (mode === 'battle' && battleStopIndex != null) {
       const stop = journey.stops[battleStopIndex]
       if (!stop) return
       const site = stop.coords
-      targetPos.current.copy(latLngToVector3(site.lat, site.lng, 1 + BATTLE_ALT))
+      targetPos.current.copy(latLngToVector3(site.lat, site.lng, 1 + BATTLE_ALT * zoom))
       targetLook.current.copy(latLngToVector3(site.lat, site.lng, 1)) // straight down
     }
 

@@ -4,6 +4,7 @@ import type { Journey } from '../data/schema'
 import { journeyById } from '../journeys'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
 import { useJourneyNavigation, dwellCenterT } from '../hooks/useJourneyNavigation'
+import { useWheelZoom } from '../hooks/useWheelZoom'
 import { useAppStore } from '../state/store'
 import { BattleOverlay } from './BattleOverlay'
 
@@ -25,6 +26,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
 
   const navigating = useAppStore((s) => s.navigating)
   const { goToStop, activeStopIndex } = useJourneyNavigation(journey)
+  useWheelZoom()
   const n = journey.stops.length
   const activeItemRef = useRef<HTMLLIElement | null>(null)
 
