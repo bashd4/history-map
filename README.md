@@ -1,4 +1,4 @@
-# History Map
+# Paths of History
 
 Journeys of historical figures told as scroll-driven stories on a vintage three.js globe. v1: Napoleon, with the Battle of Austerlitz watchable from bird's-eye view.
 
