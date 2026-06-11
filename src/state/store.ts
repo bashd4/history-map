@@ -58,7 +58,7 @@ const initial = {
 export const useAppStore = create<AppState>((set) => ({
   ...initial,
   lowPerf: false,
-  enterJourney: (id) => set({ mode: 'journey', journeyId: id, journeyT: 0 }),
+  enterJourney: (id) => set({ mode: 'journey', journeyId: id, journeyT: 0, zoom: 1 }),
   exitJourney: () => set((s) => ({ ...initial, lowPerf: s.lowPerf })),
   setJourneyT: (journeyT) => set({ journeyT }),
   setNavigating: (navigating) => set({ navigating }),

@@ -122,4 +122,9 @@ describe('app store', () => {
     useAppStore.getState().reset()
     expect(useAppStore.getState().zoom).toBe(1)
   })
+  it('zoom resets to 1 on enterJourney', () => {
+    useAppStore.getState().setZoom(4)
+    useAppStore.getState().enterJourney('napoleon')
+    expect(useAppStore.getState().zoom).toBe(1)
+  })
 })
