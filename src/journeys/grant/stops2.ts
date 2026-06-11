@@ -27,14 +27,14 @@ export const grantStopsVol2: Stop[] = [
     coords: { lat: 35.0032, lng: -85.3414 },
     date: 'Nov 24, 1863',
     story:
-      '"Sherman carried the end of Missionary Ridge, and his right is now at the tunnel, and his left at Chickamauga Creek." Grant\'s dispatch to Washington after the first day of battle.',
+      '"At four o\'clock Hooker reported his position as impregnable." Hooker\'s Nov 24 report to Grant after taking Lookout Mountain\'s eastern slope in the Battle Above the Clouds.',
   },
   {
     name: 'Ch. 44 — Missionary Ridge',
     coords: { lat: 35.0222, lng: -85.2710 },
     date: 'Nov 25, 1863',
     story:
-      '"My God, Mr. Bragg, you have quarrelled with every officer in the army, and now you are quarrelling with yourself!" A Confederate general\'s reported rebuke of Bragg after the rout.',
+      '"Without awaiting further orders or stopping to reform, on our troops went to the second line of works; over that and on for the crest." Thomas\'s men storm Missionary Ridge without orders, Nov 25.',
   },
   {
     name: 'Ch. 45 — Relief of Knoxville',

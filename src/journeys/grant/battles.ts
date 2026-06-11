@@ -1,5 +1,6 @@
 import type { Battle } from '../../data/schema'
 
+// NOTE: All phases must set an explicit `duration` — the 6s playback default is tuned for city-scale battles, not campaign-scale phases.
 const SIDES = { union: '#4d8fdb', confederate: '#c0392b' }
 
 // ─── Fort Donelson ──────────────────────────────────────────────────────────

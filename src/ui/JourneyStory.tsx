@@ -43,12 +43,13 @@ function JourneyStory({ journey }: { journey: Journey }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journey.id])
 
-  // Scroll the active timeline item into view whenever it changes
+  // Scroll the active timeline item into view whenever it changes.
+  // During navigation tweens use 'instant' (or 'auto') to avoid jitter on long flights.
   useEffect(() => {
     if (activeItemRef.current) {
-      activeItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      activeItemRef.current.scrollIntoView({ block: 'nearest', behavior: navigating ? 'auto' : 'smooth' })
     }
-  }, [activeStopIndex])
+  }, [activeStopIndex, navigating])
 
   const cam = cameraAt(journeyT, stopsForCamera(journey))
   const stop = cam.activeStop != null ? journey.stops[cam.activeStop] : null

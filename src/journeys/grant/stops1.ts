@@ -213,7 +213,7 @@ export const grantStopsVol1: Stop[] = [
   },
   {
     name: "Ch. 31 — Young's Point, Louisiana",
-    coords: { lat: 32.3526, lng: -90.8779 },
+    coords: { lat: 32.36, lng: -91.0 },
     date: 'January–March 1863',
     story:
       '"There was nothing left to be done but to go FORWARD TO A DECISIVE VICTORY." Grant takes personal command below Vicksburg; canal and bayou schemes fail; resolve to press on.',
@@ -248,7 +248,7 @@ export const grantStopsVol1: Stop[] = [
   },
   {
     name: "Ch. 36 — Champion's Hill, Mississippi",
-    coords: { lat: 32.3200, lng: -90.5200 },
+    coords: { lat: 32.326, lng: -90.574 },
     date: 'May 16, 1863',
     story:
       '"While a battle is raging one can see his enemy mowed down by the thousand, or the ten thousand, with great composure; but after the battle these scenes are distressing." After Champion\'s Hill.',
@@ -270,7 +270,7 @@ export const grantStopsVol1: Stop[] = [
   {
     name: 'Ch. 39 — Vicksburg, Mississippi',
     coords: { lat: 32.3526, lng: -90.8779 },
-    date: 'July 4, 1863',
+    date: 'Jul–Oct 1863',
     story:
       '"The fate of the Confederacy was sealed when Vicksburg fell. Much hard fighting was to be done afterwards and many precious lives were to be sacrificed; but the MORALE was with the supporters of the Union ever after." Horse fall in New Orleans; Grant injured; ordered to Chattanooga.',
   },
