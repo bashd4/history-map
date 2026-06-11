@@ -121,6 +121,7 @@ export function useJourneyNavigation(journey: Journey) {
     const unsub = useAppStore.subscribe((state, prev) => {
       if (state.requestedStopIndex !== prev.requestedStopIndex &&
           state.requestedStopIndex !== null) {
+        if (useAppStore.getState().mode === 'battle') { useAppStore.getState().clearRequestedStop(); return }
         const idx = state.requestedStopIndex
         useAppStore.getState().clearRequestedStop()
         goToStop(idx)

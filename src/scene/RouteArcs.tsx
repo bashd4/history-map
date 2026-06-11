@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Line } from '@react-three/drei'
@@ -48,6 +48,9 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
 
   // Refs for marker meshes — one per stop
   const markerRefs = useRef<(THREE.Mesh | null)[]>([])
+
+  // Clear any stuck pointer cursor if the component unmounts while hovering.
+  useEffect(() => () => { document.body.style.cursor = '' }, [])
 
   useFrame(({ camera }) => {
     // Battle mode dives the camera to the surface — even clamped markers

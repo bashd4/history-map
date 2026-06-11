@@ -23,6 +23,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
   const [searchParams] = useSearchParams()
   const stopParam = searchParams.get('stop')
 
+  const navigating = useAppStore((s) => s.navigating)
   const { goToStop, activeStopIndex } = useJourneyNavigation(journey)
   const n = journey.stops.length
 
@@ -65,7 +66,15 @@ function JourneyStory({ journey }: { journey: Journey }) {
               <li
                 key={i}
                 className={`timeline-item${activeStopIndex === i ? ' timeline-item--active' : ''}`}
+                role="button"
+                tabIndex={0}
                 onClick={() => goToStop(i)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.key === ' ') e.preventDefault()
+                    goToStop(i)
+                  }
+                }}
               >
                 <span className="timeline-bullet">{i + 1}</span>
                 <span className="timeline-info">
@@ -78,6 +87,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
           <div className="timeline-nav">
             <button
               className="timeline-nav-btn"
+              disabled={navigating}
               onClick={() => {
                 const base = activeStopIndex ?? 0
                 goToStop(base - 1)
@@ -89,6 +99,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
             <span className="timeline-nav-hint">← → keys</span>
             <button
               className="timeline-nav-btn"
+              disabled={navigating}
               onClick={() => {
                 const base = activeStopIndex ?? 0
                 goToStop(base + 1)
