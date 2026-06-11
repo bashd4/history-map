@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import type { Journey } from '../data/schema'
 import { journeyById } from '../journeys'
@@ -26,6 +26,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
   const navigating = useAppStore((s) => s.navigating)
   const { goToStop, activeStopIndex } = useJourneyNavigation(journey)
   const n = journey.stops.length
+  const activeItemRef = useRef<HTMLLIElement | null>(null)
 
   // Enter journey on mount and position camera at stop 0 dwell center.
   useEffect(() => {
@@ -41,6 +42,13 @@ function JourneyStory({ journey }: { journey: Journey }) {
     setJourneyT(dwellCenterT(0, n))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journey.id])
+
+  // Scroll the active timeline item into view whenever it changes
+  useEffect(() => {
+    if (activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [activeStopIndex])
 
   const cam = cameraAt(journeyT, stopsForCamera(journey))
   const stop = cam.activeStop != null ? journey.stops[cam.activeStop] : null
@@ -65,6 +73,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
             {journey.stops.map((s, i) => (
               <li
                 key={i}
+                ref={activeStopIndex === i ? activeItemRef : null}
                 className={`timeline-item${activeStopIndex === i ? ' timeline-item--active' : ''}`}
                 role="button"
                 tabIndex={0}

@@ -6,7 +6,7 @@ export const grantStopsVol2: Stop[] = [
     coords: { lat: 35.0456, lng: -85.3097 },
     date: 'Oct 1863',
     story:
-      '"We will hold the town till we starve." Thomas's defiant pledge, reported by Grant, after Grant arrived in Chattanooga to take command of the besieged Army of the Cumberland.',
+      '"We will hold the town till we starve." Thomas\'s defiant pledge, reported by Grant, after Grant arrived in Chattanooga to take command of the besieged Army of the Cumberland.',
   },
   {
     name: 'Ch. 41 — Bridgeport Line',
