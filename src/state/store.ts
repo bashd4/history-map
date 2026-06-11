@@ -10,10 +10,11 @@ interface AppState {
   battleElapsed: number
   battlePlaying: boolean
   hoveredJourneyId: string | null
-  /** True when the scroll position is dwelling at a stop that has a battle — used to
-   *  preload the terrain layer before the user clicks ⚔. Only changes when the stop
-   *  type changes (battle vs non-battle) so components subscribing to it re-render rarely. */
-  nearBattleStop: boolean
+  /** Index of the battle stop the scroll position is currently dwelling at, or null
+   *  when the active stop has no battle. Used to preload the terrain layer (and aim
+   *  the preheat camera) before the user clicks ⚔. Only written when the value
+   *  changes (change-detected in useScrollProgress) so subscribers re-render rarely. */
+  nearBattleStopIndex: number | null
   enterJourney: (id: string) => void
   exitJourney: () => void
   setScrollT: (t: number) => void
@@ -23,14 +24,14 @@ interface AppState {
   setBattleElapsed: (s: number) => void
   setBattlePlaying: (p: boolean) => void
   setHoveredJourneyId: (id: string | null) => void
-  setNearBattleStop: (near: boolean) => void
+  setNearBattleStopIndex: (index: number | null) => void
   reset: () => void
 }
 
 const initial = {
   mode: 'hub' as Mode, journeyId: null, scrollT: 0,
   battleStopIndex: null, battleElapsed: 0, battlePlaying: false,
-  hoveredJourneyId: null, nearBattleStop: false,
+  hoveredJourneyId: null, nearBattleStopIndex: null as number | null,
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -45,6 +46,6 @@ export const useAppStore = create<AppState>((set) => ({
   setBattleElapsed: (battleElapsed) => set({ battleElapsed }),
   setBattlePlaying: (battlePlaying) => set({ battlePlaying }),
   setHoveredJourneyId: (hoveredJourneyId) => set({ hoveredJourneyId }),
-  setNearBattleStop: (nearBattleStop) => set({ nearBattleStop }),
+  setNearBattleStopIndex: (nearBattleStopIndex) => set({ nearBattleStopIndex }),
   reset: () => set({ ...initial }),
 }))

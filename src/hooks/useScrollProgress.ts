@@ -8,8 +8,9 @@ import { useAppStore } from '../state/store'
 gsap.registerPlugin(ScrollTrigger)
 
 /** Maps document scroll over the journey container to store.scrollT (0..1).
- *  Also cheaply computes whether the active stop has a battle and updates
- *  store.nearBattleStop — only written when the value changes (no 60/s churn). */
+ *  Also cheaply derives the active dwell stop and, when it has a battle, writes
+ *  its index to store.nearBattleStopIndex — only when the value changes
+ *  (no 60/s churn). */
 export function useScrollProgress(
   containerRef: React.RefObject<HTMLElement | null>,
   journey: Journey,
@@ -23,11 +24,13 @@ export function useScrollProgress(
       onUpdate: (self) => {
         const t = self.progress
         useAppStore.getState().setScrollT(t)
-        // Derive whether the active dwell stop has a battle, update store flag only on change.
+        // Derive the active battle-stop index (null if the active stop has no
+        // battle), update the store only on change.
         const activeStop = cameraAt(t, stops).activeStop
-        const isBattle = activeStop != null && Boolean(journey.stops[activeStop]?.battle)
-        if (useAppStore.getState().nearBattleStop !== isBattle) {
-          useAppStore.getState().setNearBattleStop(isBattle)
+        const index =
+          activeStop != null && journey.stops[activeStop]?.battle != null ? activeStop : null
+        if (useAppStore.getState().nearBattleStopIndex !== index) {
+          useAppStore.getState().setNearBattleStopIndex(index)
         }
       },
     })
@@ -36,8 +39,8 @@ export function useScrollProgress(
     ScrollTrigger.refresh()
     return () => {
       st.kill()
-      // Reset flag when leaving the journey so GlobeScene doesn't keep terrain mounted.
-      useAppStore.getState().setNearBattleStop(false)
+      // Reset when leaving the journey so GlobeScene doesn't keep terrain mounted.
+      useAppStore.getState().setNearBattleStopIndex(null)
     }
   }, [containerRef, journey])
 }
