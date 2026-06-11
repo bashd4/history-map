@@ -12,11 +12,6 @@ import { useAppStore } from '../state/store'
 // Arrow altitude — ~3.8 km above surface, clears Austerlitz heights (~300 m)
 const ARROW_ALT = 1.0006
 
-const COLORS: Record<'french' | 'coalition', string> = {
-  french: '#4d8fdb',
-  coalition: '#c0392b',
-}
-
 /** Number of slerp segments per leg of a movement path */
 const SEGS_PER_LEG = 24
 
@@ -101,7 +96,7 @@ function MovementArrow({
   const totalSegs = points.length - 1
 
   const isDashed = movement.style === 'retreat' || movement.style === 'feint'
-  const color = COLORS[movement.side]
+  const color = battle.sides[movement.side] ?? '#ffffff'
   const lineWidth = movement.style === 'advance' ? 5 : 4
 
   useFrame(({ camera }) => {

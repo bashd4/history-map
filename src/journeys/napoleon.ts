@@ -29,6 +29,7 @@ export const napoleon: Journey = {
       story: 'His masterpiece. Outnumbered, he feigns weakness, surrenders the high ground, and destroys a Russo-Austrian army in a single morning.',
       battle: {
         name: 'Battle of Austerlitz', date: '2 December 1805',
+        sides: { french: '#4d8fdb', coalition: '#c0392b' },
         phases: [
           { caption: 'The trap is set: Napoleon deliberately abandons the Pratzen Heights and weakens his right flank, inviting attack.',
             duration: 7,

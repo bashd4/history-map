@@ -23,6 +23,7 @@ describe('journeySchema', () => {
       ...validStop,
       battle: {
         name: 'Austerlitz', date: '2 Dec 1805',
+        sides: { french: '#4d8fdb', coalition: '#c0392b' },
         phases: [{
           caption: 'The trap.',
           movements: [{ side: 'french', style: 'feint', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
@@ -31,5 +32,33 @@ describe('journeySchema', () => {
     }
     const j = journeySchema.parse({ ...validJourney, stops: [battleStop, validStop] })
     expect(j.stops[0].battle?.phases[0].movements[0].side).toBe('french')
+  })
+  it('rejects a movement whose side is not a key in battle.sides', () => {
+    const battleStop = {
+      ...validStop,
+      battle: {
+        name: 'Austerlitz', date: '2 Dec 1805',
+        sides: { french: '#4d8fdb' },
+        phases: [{
+          caption: 'The trap.',
+          movements: [{ side: 'unknown-side', style: 'advance', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+        }],
+      },
+    }
+    expect(() => journeySchema.parse({ ...validJourney, stops: [battleStop, validStop] })).toThrow(/unknown-side/)
+  })
+  it('rejects sides with a bad hex color', () => {
+    const battleStop = {
+      ...validStop,
+      battle: {
+        name: 'Austerlitz', date: '2 Dec 1805',
+        sides: { french: 'blue' },
+        phases: [{
+          caption: 'The trap.',
+          movements: [{ side: 'french', style: 'advance', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+        }],
+      },
+    }
+    expect(() => journeySchema.parse({ ...validJourney, stops: [battleStop, validStop] })).toThrow()
   })
 })

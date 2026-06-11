@@ -3,7 +3,7 @@ import { z } from 'zod'
 const latLng = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) })
 
 const movement = z.object({
-  side: z.enum(['french', 'coalition']), // v1; widen to z.string() when journey #2 needs it
+  side: z.string(),
   style: z.enum(['advance', 'retreat', 'feint']),
   path: z.array(latLng).min(2),
 })
@@ -14,7 +14,28 @@ const phase = z.object({
   movements: z.array(movement).min(1),
 })
 
-const battle = z.object({ name: z.string().min(1), date: z.string().min(1), phases: z.array(phase).min(1) })
+const battle = z
+  .object({
+    name: z.string().min(1),
+    date: z.string().min(1),
+    sides: z
+      .record(z.string(), z.string().regex(/^#[0-9a-fA-F]{6}$/))
+      .refine((s) => Object.keys(s).length > 0, { message: 'sides must have at least one entry' }),
+    phases: z.array(phase).min(1),
+  })
+  .superRefine((battle, ctx) => {
+    battle.phases.forEach((phase, phaseIdx) => {
+      phase.movements.forEach((movement, movIdx) => {
+        if (!(movement.side in battle.sides)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `movement side "${movement.side}" is not a key in battle.sides`,
+            path: ['phases', phaseIdx, 'movements', movIdx, 'side'],
+          })
+        }
+      })
+    })
+  })
 
 const stop = z.object({
   name: z.string().min(1),
