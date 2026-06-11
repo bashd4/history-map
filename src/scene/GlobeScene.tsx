@@ -1,6 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useRef } from 'react'
 import { Atmosphere } from './Atmosphere'
 import { Globe } from './Globe'
 import { Starfield } from './Starfield'
@@ -11,17 +11,26 @@ import { journeys, journeyById } from '../journeys'
 import { useAppStore } from '../state/store'
 import { TerrainErrorBoundary } from './TerrainErrorBoundary'
 import { BattleArrows } from './BattleArrows'
+import { PerfSampler } from './PerfSampler'
 
 // Code-split so the hub never pays the 3d-tiles-renderer bundle cost.
 const TerrainLayer = lazy(() =>
   import('./TerrainLayer').then((m) => ({ default: m.TerrainLayer })),
 )
 
-export function GlobeScene() {
+interface GlobeSceneProps {
+  tabVisible: boolean
+  onContextLost: () => void
+}
+
+export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
   const mode = useAppStore((s) => s.mode)
   const journeyId = useAppStore((s) => s.journeyId)
   const battleStopIndex = useAppStore((s) => s.battleStopIndex)
   const nearBattleStopIndex = useAppStore((s) => s.nearBattleStopIndex)
+
+  // Track how many times context has been lost so we can stop restoring after 1.
+  const contextLossCount = useRef(0)
 
   // Shrink the globe slightly in battle mode so terrain tiles don't z-fight
   // with the coincident globe surface. 0.997 ≈ 19 km inset — invisible at
@@ -62,6 +71,22 @@ export function GlobeScene() {
         dpr={[1, 2]}
         camera={{ position: [0, 0.4, 2.8], fov: 45, near: 0.0008, far: 100 }}
         gl={{ antialias: true, logarithmicDepthBuffer: true }}
+        frameloop={tabVisible ? 'always' : 'never'}
+        onCreated={({ gl }) => {
+          const canvas = gl.domElement
+          canvas.addEventListener('webglcontextlost', (e) => {
+            e.preventDefault()
+            contextLossCount.current += 1
+            if (contextLossCount.current >= 2) {
+              // Second loss — give up and show NoWebGL fallback.
+              onContextLost()
+            }
+            // First loss: preventDefault above lets the browser restore context.
+          })
+          canvas.addEventListener('webglcontextrestored', () => {
+            // Context restored after first loss — three.js re-inits automatically.
+          })
+        }}
       >
         <color attach="background" args={['#0a0805']} />
         <Suspense fallback={null}>
@@ -112,6 +137,7 @@ export function GlobeScene() {
             autoRotateSpeed={0.35}
           />
         )}
+        <PerfSampler />
         <Effects />
       </Canvas>
     </div>

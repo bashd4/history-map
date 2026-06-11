@@ -45,4 +45,23 @@ describe('app store', () => {
     useAppStore.getState().exitJourney()
     expect(useAppStore.getState().nearBattleStopIndex).toBeNull()
   })
+  it('lowPerf starts false', () => {
+    expect(useAppStore.getState().lowPerf).toBe(false)
+  })
+  it('setLowPerf latches to true', () => {
+    useAppStore.getState().setLowPerf(true)
+    expect(useAppStore.getState().lowPerf).toBe(true)
+  })
+  it('lowPerf persists through reset()', () => {
+    useAppStore.getState().setLowPerf(true)
+    useAppStore.getState().reset()
+    expect(useAppStore.getState().lowPerf).toBe(true)
+  })
+  it('lowPerf persists through exitJourney()', () => {
+    useAppStore.getState().enterJourney('napoleon')
+    useAppStore.getState().setLowPerf(true)
+    useAppStore.getState().exitJourney()
+    expect(useAppStore.getState().lowPerf).toBe(true)
+    expect(useAppStore.getState().mode).toBe('hub')
+  })
 })
