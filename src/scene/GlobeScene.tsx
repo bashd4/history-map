@@ -59,21 +59,22 @@ interface GlobeSceneProps {
   onContextLost: () => void
 }
 
+// Build-time constant: Vite substitutes the env var at compile time, so this
+// can never change at runtime. When tiles are enabled the sepia Globe sphere
+// is always rendered as an under-layer at scale 0.997 (≈19 km inset). Tiles
+// stream on top; where they haven't arrived yet the sepia sphere shows through
+// the gaps — graceful loading with zero fade choreography. Also eliminates
+// z-fighting at battle altitude (0.012). Without a key the sphere stays at
+// scale 1 and is the full globe. The error-boundary-tripped case leaves the
+// sphere at 0.997 — an acceptable minor inset on degrade.
+const TILES_ENABLED = Boolean(import.meta.env.VITE_TILES_KEY)
+const GLOBE_SCALE = TILES_ENABLED ? 0.997 : 1
+
 export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
   const mode = useAppStore((s) => s.mode)
   const journeyId = useAppStore((s) => s.journeyId)
   const battleStopIndex = useAppStore((s) => s.battleStopIndex)
   const nearBattleStopIndex = useAppStore((s) => s.nearBattleStopIndex)
-
-  // When tiles are enabled the sepia Globe sphere is always rendered as an
-  // under-layer at scale 0.997 (≈19 km inset). Tiles stream on top; where they
-  // haven't arrived yet the sepia sphere shows through the gaps — graceful
-  // loading with zero fade choreography. Also eliminates z-fighting at battle
-  // altitude (0.012). Without a key (or after TerrainErrorBoundary trips) the
-  // sphere stays at scale 1 and is the full globe. The error-boundary-tripped
-  // case leaves the sphere at 0.997 — an acceptable minor inset on degrade.
-  const tilesEnabled = Boolean(import.meta.env.VITE_TILES_KEY)
-  const globeScale = tilesEnabled ? 0.997 : 1
 
   // Mode-aware LOD budget: hub auto-rotation churns fine LODs needlessly;
   // journey dwell benefits from medium detail; battle needs maximum detail.
@@ -110,7 +111,7 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
         <Suspense fallback={null}>
           {/* Sepia sphere: under-layer when tiles are enabled (scale 0.997),
               full globe when tiles are absent or boundary trips (scale 1). */}
-          <Globe scale={globeScale} />
+          <Globe scale={GLOBE_SCALE} />
           <Atmosphere />
           <Starfield />
           {journeys.map((j) => {
@@ -134,7 +135,7 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
               (app degrades to plain sepia globe — error-boundary-tripped case
               leaves globe at scale 0.997, which is acceptable).
               PreheatCamera preheats battle LODs during journey dwell. */}
-          {tilesEnabled && (
+          {TILES_ENABLED && (
             <TerrainErrorBoundary>
               <Suspense fallback={null}>
                 <TerrainLayer
