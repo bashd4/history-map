@@ -26,11 +26,11 @@ function useMarkerPositions(journey: Journey): THREE.Vector3[] {
 }
 
 /** Marker radius as a fraction of frustum half-height — constant screen size at any zoom. */
-const MARKER_FRAC = 0.01
+const MARKER_FRAC = 0.0135
 
 /** Marker scale via the shared screen-size helper (see src/lib/screenScale.ts). */
 function markerScale(camera: THREE.Camera, markerPos: THREE.Vector3): number {
-  return screenScale(camera, markerPos, MARKER_FRAC, 0.0006, 0.012)
+  return screenScale(camera, markerPos, MARKER_FRAC, 0.0006, 0.016)
 }
 
 /**
@@ -65,12 +65,13 @@ export function RouteArcs({ journey, dim: dimProp }:
       <Line
         points={pts}
         color={journey.color}
-        lineWidth={dim ? 1.5 : 2.5}
+        lineWidth={dim ? 2 : 2.5}
         transparent
         opacity={dim ? 0.3 : 1}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
         toneMapped={false}
+        alphaToCoverage
       />
       {markerPositions.map((pos, i) => (
         <mesh
@@ -142,12 +143,13 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
         ref={lineRef}
         points={pts}
         color={journey.color}
-        lineWidth={3}
+        lineWidth={3.5}
         transparent
         opacity={1}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
         toneMapped={false}
+        alphaToCoverage
       />
       <mesh ref={pulseRef} visible={false}>
         <sphereGeometry args={[1, 24, 24]} />

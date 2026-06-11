@@ -21,5 +21,5 @@ export function Effects() {
     <Noise key="noise" opacity={0.045} blendFunction={BlendFunction.OVERLAY} />,
   )
 
-  return <EffectComposer>{passes}</EffectComposer>
+  return <EffectComposer multisampling={lowPerf ? 0 : 8}>{passes}</EffectComposer>
 }
