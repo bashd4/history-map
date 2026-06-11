@@ -41,6 +41,7 @@ function markerScale(camera: THREE.Camera, markerPos: THREE.Vector3): number {
 export function RouteArcs({ journey, dim: dimProp, onStopClick }:
   { journey: Journey; dim?: boolean; onStopClick?: (i: number) => void }) {
   const hoverDim = useAppStore((s) => s.hoveredJourneyId !== journey.id)
+  const lowPerf = useAppStore((s) => s.lowPerf)
   const dim = dimProp ?? hoverDim
   const pts = useRouteGeometry(journey)
   const markerPositions = useMarkerPositions(journey)
@@ -72,7 +73,7 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
         blending={THREE.AdditiveBlending}
         depthWrite={false}
         toneMapped={false}
-        alphaToCoverage
+        alphaToCoverage={!lowPerf} // A2C needs MSAA; without it (lowPerf) it dithers
       />
       {markerPositions.map((pos, i) => (
         <mesh
@@ -102,6 +103,7 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
 export function RouteArcsProgress({ journey }: { journey: Journey }) {
   const pts = useRouteGeometry(journey)
   const markerPositions = useMarkerPositions(journey)
+  const lowPerf = useAppStore((s) => s.lowPerf)
   const lineRef = useRef<Line2>(null)
   const pulseRef = useRef<THREE.Mesh>(null)
   // Total segments = pts.length - 1
@@ -153,7 +155,7 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
         blending={THREE.AdditiveBlending}
         depthWrite={false}
         toneMapped={false}
-        alphaToCoverage
+        alphaToCoverage={!lowPerf} // A2C needs MSAA; without it (lowPerf) it dithers
       />
       <mesh ref={pulseRef} visible={false}>
         <sphereGeometry args={[1, 24, 24]} />
