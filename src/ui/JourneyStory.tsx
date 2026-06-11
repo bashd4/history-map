@@ -37,7 +37,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
   }, [mode])
 
   useEffect(() => { enterJourney(journey.id); window.scrollTo(0, 0) }, [journey.id, enterJourney])
-  useScrollProgress(containerRef)
+  useScrollProgress(containerRef, journey)
 
   // dev jump: /napoleon?stop=8 scrolls to stop 8's dwell
   useEffect(() => {

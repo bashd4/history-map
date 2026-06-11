@@ -21,6 +21,8 @@ export function GlobeScene() {
   const mode = useAppStore((s) => s.mode)
   const journeyId = useAppStore((s) => s.journeyId)
   const battleStopIndex = useAppStore((s) => s.battleStopIndex)
+  const nearBattleStop = useAppStore((s) => s.nearBattleStop)
+
   // Shrink the globe slightly in battle mode so terrain tiles don't z-fight
   // with the coincident globe surface. 0.997 ≈ 19 km inset — invisible at
   // journey zoom but eliminates depth-buffer conflicts at battle altitude 0.012.
@@ -31,6 +33,27 @@ export function GlobeScene() {
     mode === 'battle' && journeyId != null && battleStopIndex != null
       ? (journeyById(journeyId)?.stops[battleStopIndex]?.battle ?? null)
       : null
+
+  // Resolve the battle stop coords for the preheat virtual camera.
+  // During journey preload (nearBattleStop) we need the coords of the upcoming
+  // battle stop so we can register a virtual camera there.  We derive this from
+  // the journey's stops list — find the first stop that has a battle.
+  // (For now napoleon only has one battle stop; if a journey had multiple, this
+  // would warm the nearest one — acceptable heuristic.)
+  const journey = journeyId != null ? journeyById(journeyId) : null
+  const battleStopCoords =
+    mode === 'journey' && nearBattleStop && journey != null
+      ? journey.stops.find((s) => s.battle != null)?.coords ?? null
+      : null
+
+  // Mount terrain when:
+  //   a) battle mode is active — tiles are visible and the globe is shrunk
+  //   b) journey mode + nearBattleStop — preload phase: tiles are hidden
+  //      (visible={false} on the group inside TerrainLayer) so they stream
+  //      without z-fighting with the full-size globe at dwell altitude 0.09.
+  //      The globe must stay full size during preload (terrain renders under it).
+  const showTerrain = (mode === 'battle' || (mode === 'journey' && nearBattleStop))
+    && Boolean(import.meta.env.VITE_TILES_KEY)
 
   return (
     <div className="canvas-fixed">
@@ -61,14 +84,19 @@ export function GlobeScene() {
             }
             return <RouteArcs key={j.id} journey={j} />
           })}
-          {/* Google Photorealistic 3D Tiles — battle mode only, code-split.
+          {/* Google Photorealistic 3D Tiles — battle mode + preload, code-split.
               Guard on VITE_TILES_KEY so a missing key never throws. The error
               boundary sits OUTSIDE the lazy Suspense so a failed chunk load of
-              TerrainLayer itself is also caught (battle degrades to plain globe). */}
-          {mode === 'battle' && import.meta.env.VITE_TILES_KEY && (
+              TerrainLayer itself is also caught (battle degrades to plain globe).
+              During journey preload (hidden=true) the group is invisible so tiles
+              stream without z-fighting with the full-size globe. */}
+          {showTerrain && (
             <TerrainErrorBoundary>
               <Suspense fallback={null}>
-                <TerrainLayer />
+                <TerrainLayer
+                  hidden={mode !== 'battle'}
+                  preheat={battleStopCoords ?? undefined}
+                />
               </Suspense>
             </TerrainErrorBoundary>
           )}
