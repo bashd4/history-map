@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { journeyById } from '../journeys'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
 import { latLngToVector3, offsetLatLng } from '../lib/geo'
+import { battleFrameAltitude } from '../lib/battleExtent'
 import { useAppStore } from '../state/store'
 
 const HUB_POS = new THREE.Vector3(0, 0.4, 2.8)
@@ -55,8 +56,12 @@ export function CameraRig() {
       const stop = journey.stops[battleStopIndex]
       if (!stop) return
       const site = stop.coords
+      // Auto-frame: compact battles (Shiloh ~5 km) get a close view, campaign-
+      // scale ones (Vicksburg ~200 km) a wide one — derived from the battle's
+      // own waypoints/landmarks rather than a fixed altitude.
+      const frameAlt = stop.battle ? battleFrameAltitude(stop.battle, site) : BATTLE_ALT
       if (battleView === 'map') {
-        targetPos.current.copy(latLngToVector3(site.lat, site.lng, 1 + BATTLE_ALT * zoom))
+        targetPos.current.copy(latLngToVector3(site.lat, site.lng, 1 + frameAlt * zoom))
         targetLook.current.copy(latLngToVector3(site.lat, site.lng, 1)) // straight down
         targetUp.current.copy(WORLD_UP)
       } else {
@@ -67,10 +72,13 @@ export function CameraRig() {
           battleView === 'orbit'
             ? azimuth + state.clock.elapsedTime * 4 // slow circle, 4°/s
             : azimuth
-        const groundDist = BATTLE_ALT * 1.4 * zoom // angular standoff (radians)
+        // Stand off ~0.9× the frame radius and rise ~0.55× — a ~30° oblique
+        // that fills the frame with the battlefield instead of parking it at
+        // the horizon. zoom scales the whole standoff triangle.
+        const groundDist = frameAlt * 0.9 * zoom // angular standoff (radians)
         const camLL = offsetLatLng(site, ((bearing % 360) + 360) % 360, groundDist)
         targetPos.current.copy(
-          latLngToVector3(camLL.lat, camLL.lng, 1 + BATTLE_ALT * 0.45 * zoom))
+          latLngToVector3(camLL.lat, camLL.lng, 1 + frameAlt * 0.55 * zoom))
         targetLook.current.copy(latLngToVector3(site.lat, site.lng, 1))
         targetUp.current.copy(latLngToVector3(site.lat, site.lng, 1)) // radial up: level horizon
       }

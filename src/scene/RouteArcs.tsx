@@ -42,6 +42,9 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
   { journey: Journey; dim?: boolean; onStopClick?: (i: number) => void }) {
   const hoverDim = useAppStore((s) => s.hoveredJourneyId !== journey.id)
   const lowPerf = useAppStore((s) => s.lowPerf)
+  // Hide the route entirely during battles — a journey line slicing across
+  // the battlefield is distracting at battle framing.
+  const inBattle = useAppStore((s) => s.mode === 'battle')
   const dim = dimProp ?? hoverDim
   const pts = useRouteGeometry(journey)
   const markerPositions = useMarkerPositions(journey)
@@ -77,6 +80,7 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
         depthWrite={false}
         toneMapped={false}
         alphaToCoverage={!lowPerf} // A2C needs MSAA; without it (lowPerf) it dithers
+        visible={!inBattle}
       />
       {markerPositions.map((pos, i) => (
         <mesh
@@ -107,6 +111,7 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
   const pts = useRouteGeometry(journey)
   const markerPositions = useMarkerPositions(journey)
   const lowPerf = useAppStore((s) => s.lowPerf)
+  const inBattle = useAppStore((s) => s.mode === 'battle')
   const lineRef = useRef<Line2>(null)
   const pulseRef = useRef<THREE.Mesh>(null)
   // Total segments = pts.length - 1
@@ -162,6 +167,7 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
         depthWrite={false}
         toneMapped={false}
         alphaToCoverage={!lowPerf} // A2C needs MSAA; without it (lowPerf) it dithers
+        visible={!inBattle}
       />
       <mesh ref={pulseRef} visible={false}>
         <sphereGeometry args={[1, 24, 24]} />
