@@ -107,7 +107,7 @@ function outlineCentroid(outline: Array<{ lat: number; lng: number }>): THREE.Ve
  */
 export function BattleAnnotations({ battle }: { battle: Battle }) {
   const battleElapsed = useAppStore((s) => s.battleElapsed)
-  const { phaseIndex: currentPhase, done } = playbackAt(battle, battleElapsed)
+  const { phaseIndex: currentPhase } = playbackAt(battle, battleElapsed)
   const heightsVersion = useTerrainHeightsVersion()
 
   // Pre-register area and event points with the terrain sampler so they stay cached.
@@ -175,6 +175,7 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
                 fontStyle: 'italic',
                 fontSize: '11px',
                 color: area.color,
+                opacity: 0.7,
                 display: 'inline-block',
               }}>
                 {area.name}
@@ -184,10 +185,11 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
         </group>
       ))}
 
-      {/* Events — visible once their phase is current or past; past fades to 60% */}
+      {/* Events — current phase only; past events are hidden to reduce clutter.
+          When done=true (playback finished), show only the final phase's events. */}
       {events.map((ev, i) => {
-        if (ev.phaseIndex > currentPhase) return null
-        const isPast = ev.phaseIndex < currentPhase || done
+        // Only show events belonging to the current phase
+        if (ev.phaseIndex !== currentPhase) return null
         return (
           <group key={`${ev.phaseIndex}-${i}`} position={ev.pos}>
             <Html zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
@@ -195,7 +197,7 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
                 ...baseLabelStyle,
                 fontSize: '11px',
                 color: '#e8b54a',
-                opacity: isPast ? 0.6 : 1,
+                opacity: 1,
                 display: 'inline-block',
                 transform: 'translate(6px, -50%)',
               }}>

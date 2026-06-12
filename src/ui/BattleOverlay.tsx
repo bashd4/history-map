@@ -102,7 +102,7 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
         </div>
         {battleBasemap === 'topo' && (
           <div className="topo-attribution">
-            Basemap &copy; Esri — World Topographic Map
+            Basemap &copy; Esri — World Terrain Base
           </div>
         )}
       </header>

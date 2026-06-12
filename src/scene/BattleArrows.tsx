@@ -31,6 +31,8 @@ const CONE_MAX = 0.002
 
 const OPACITY_CURRENT = 0.95
 const OPACITY_DONE = 0.4
+const CASING_OPACITY = 0.85
+const CASING_COLOR = '#1a140c'
 
 // Scratch objects — never allocate in the frame loop.
 const _UP = new THREE.Vector3(0, 1, 0)
@@ -134,10 +136,9 @@ function arrowStateAt(battle: Battle, phaseIndex: number, elapsed: number): Arro
 }
 
 /**
- * Unit name at the path midpoint, colored by side. Matches the arrow's
- * visibility/fade: full when current, dimmed when completed, hidden when
- * future. React subscription to battleElapsed is acceptable here —
- * BattleOverlay already re-renders at that frequency.
+ * Unit name at the path midpoint, colored by side.
+ * Visible ONLY for the current phase — completed phases hide their labels
+ * to reduce visual clutter.
  */
 function UnitLabel({
   battle,
@@ -154,7 +155,8 @@ function UnitLabel({
 }) {
   const battleElapsed = useAppStore((s) => s.battleElapsed)
   const state = arrowStateAt(battle, phaseIndex, battleElapsed)
-  if (state === 'hidden') return null
+  // Only show for current phase — hide completed and future phases
+  if (state !== 'current') return null
 
   return (
     <Html position={position} zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
@@ -164,7 +166,7 @@ function UnitLabel({
         fontSize: '10px',
         letterSpacing: '0.04em',
         color,
-        opacity: state === 'completed' ? OPACITY_DONE : OPACITY_CURRENT,
+        opacity: OPACITY_CURRENT,
         whiteSpace: 'nowrap',
         textShadow: '0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.7)',
         userSelect: 'none',
@@ -178,8 +180,9 @@ function UnitLabel({
 }
 
 /**
- * Single animated movement arrow. `battle` is read in useFrame via closure —
- * safe because r3f keeps the latest frame callback per render.
+ * Single animated movement arrow with dark casing for legibility.
+ * Renders a casing (near-black, slightly wider) below the colored arrow.
+ * Both lines animate in sync via shared instanceCount writes.
  */
 function MovementArrow({
   tagged,
@@ -190,6 +193,7 @@ function MovementArrow({
 }) {
   const { movement, points, phaseIndex } = tagged
   const lineRef = useRef<Line2>(null)
+  const casingRef = useRef<Line2>(null)
   const coneRef = useRef<THREE.Mesh>(null)
   // Last applied state — lets the static hidden/completed branches skip
   // redundant per-frame writes (only the current phase animates).
@@ -199,14 +203,16 @@ function MovementArrow({
   const isDashed = movement.style === 'retreat' || movement.style === 'feint'
   const color = battle.sides[movement.side] ?? '#ffffff'
   const lineWidth = movement.style === 'advance' ? 2.5 : 2
+  const casingWidth = lineWidth + 2
 
   useFrame(({ camera }) => {
     const { battleElapsed, mode } = useAppStore.getState()
     if (mode !== 'battle') return
 
     const line = lineRef.current
+    const casing = casingRef.current
     const cone = coneRef.current
-    if (!line || !cone) return
+    if (!line || !casing || !cone) return
 
     const { phaseIndex: currentPhase, phaseProgress, done } =
       playbackAt(battle, battleElapsed)
@@ -230,17 +236,21 @@ function MovementArrow({
 
     if (state === 'hidden') {
       line.geometry.instanceCount = 0
+      casing.geometry.instanceCount = 0
       cone.visible = false
       return
     }
 
     const lineMat = line.material as THREE.Material
+    const casingMat = casing.material as THREE.Material
     const coneMat = cone.material as THREE.Material
 
     if (state === 'completed') {
-      // Fully drawn, faded
+      // Fully drawn, faded — label hidden (handled in UnitLabel)
       line.geometry.instanceCount = totalSegs
+      casing.geometry.instanceCount = totalSegs
       lineMat.opacity = OPACITY_DONE
+      casingMat.opacity = CASING_OPACITY * 0.3 // casing dims proportionally
       const tip = points[points.length - 1]
       cone.position.copy(tip)
       _tangent.subVectors(tip, points[points.length - 2]).normalize()
@@ -253,8 +263,11 @@ function MovementArrow({
 
     // Current phase — animate progressively every frame
     const drawnSegs = Math.max(0, Math.floor(phaseProgress * totalSegs))
+    // Write both refs in sync
     line.geometry.instanceCount = drawnSegs
+    casing.geometry.instanceCount = drawnSegs
     lineMat.opacity = OPACITY_CURRENT
+    casingMat.opacity = CASING_OPACITY
 
     if (drawnSegs < 2 || phaseProgress < 0.02) {
       cone.visible = false
@@ -273,6 +286,22 @@ function MovementArrow({
 
   return (
     <group>
+      {/* Casing — rendered below the colored arrow for legibility */}
+      <Line
+        ref={casingRef}
+        points={points}
+        color={CASING_COLOR}
+        lineWidth={casingWidth}
+        dashed={isDashed}
+        dashScale={isDashed ? 5 : undefined}
+        transparent
+        opacity={CASING_OPACITY}
+        toneMapped={false}
+        depthWrite={false}
+        depthTest={false}
+        renderOrder={9}
+      />
+      {/* Colored arrow — on top of casing */}
       <Line
         ref={lineRef}
         points={points}

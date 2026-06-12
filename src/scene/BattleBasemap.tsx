@@ -1,5 +1,5 @@
 /**
- * BattleBasemap — stitches Esri World Topo XYZ tiles into a THREE.CanvasTexture
+ * BattleBasemap — stitches Esri World Terrain Base XYZ tiles into a THREE.CanvasTexture
  * and drapes them onto a lat/lng grid patch on the globe, providing a clean
  * cartographic alternative to the Google Photorealistic 3D Tiles.
  *
@@ -7,12 +7,19 @@
  * On mount: enables flat mode so arrows/annotations sit on the ellipsoid surface.
  * On unmount: disables flat mode so terrain draping resumes.
  *
- * Tile source: Esri World Topo Map (z/y/x order).
- * Fallback: OpenTopoMap (z/x/y order) if Esri tiles fail CORS.
+ * Tile source: Esri World Terrain Base (shaded relief + water, no labels).
+ * Fallback: Esri World Hillshade (pure relief, no water) if Terrain Base fails.
  * Attribution is shown in BattleOverlay when topo is active.
  *
  * Mercator UV mapping: the patch geometry maps V using web-mercator Y so that
  * tiles (which are mercator-projected) align without visible distortion.
+ *
+ * Performance:
+ * - Module-level canvas/texture cache keyed by `${battleName}:${z}` — re-toggling is instant.
+ * - Tiles load in parallel (Promise.allSettled); each tile draws into canvas as it arrives.
+ * - texture.needsUpdate is throttled to ≤4 updates/sec so we don't thrash the GPU.
+ * - Mesh mounts immediately with a parchment placeholder (#d9c9a8); fills in progressively.
+ * - `prefetchBasemap(battle, site)` is exported for background pre-warming on battle entry.
  */
 
 import { useEffect, useMemo, useRef } from 'react'
@@ -56,12 +63,12 @@ function tileYToLat(y: number, z: number): number {
   return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))
 }
 
-/** Pick a zoom level so that the angular coverage spans ~6 tiles horizontally.
+/** Pick a zoom level so that the angular coverage spans ~5 tiles horizontally.
  *  tile lng-span at z = 360 / 2^z. Clamped to [7, 15]. */
 function pickZoom(coverageLngDeg: number): number {
-  // We want ~6 tiles across: tileLngSpan * 6 ≈ coverageLngDeg
-  // → 360 / 2^z * 6 ≈ coverageLngDeg → z ≈ log2(360 * 6 / coverageLngDeg)
-  const z = Math.round(Math.log2((360 * 6) / coverageLngDeg))
+  // We want ~5 tiles across: tileLngSpan * 5 ≈ coverageLngDeg
+  // → 360 / 2^z * 5 ≈ coverageLngDeg → z ≈ log2(360 * 5 / coverageLngDeg)
+  const z = Math.round(Math.log2((360 * 5) / coverageLngDeg))
   return Math.max(7, Math.min(15, z))
 }
 
@@ -118,12 +125,14 @@ function buildPatchGeometry(
 // ─── Tile fetching + stitching ────────────────────────────────────────────────
 
 const TILE_SIZE = 256
+const PLACEHOLDER_COLOR = '#d9c9a8'
 
-const ESRI_TOPO = (z: number, y: number, x: number) =>
-  `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/${z}/${y}/${x}`
+// Tile URL builders
+const ESRI_TERRAIN_BASE = (z: number, y: number, x: number) =>
+  `https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/${z}/${y}/${x}`
 
-const OPEN_TOPO = (z: number, x: number, y: number) =>
-  `https://tile.opentopomap.org/${z}/${x}/${y}.png`
+const ESRI_HILLSHADE = (z: number, y: number, x: number) =>
+  `https://server.arcgisonline.com/ArcGIS/rest/services/World_Hillshade/MapServer/tile/${z}/${y}/${x}`
 
 interface TileCoverage {
   z: number
@@ -135,8 +144,6 @@ interface TileCoverage {
 }
 
 function computeCoverage(center: LatLng, angularRadius: number): TileCoverage {
-  // Angular radius (radians) → degrees on the sphere at this latitude is
-  // approximately equal for lng, but we need to account for lat.
   const latDelta = angularRadius * (180 / Math.PI)
   const lngDelta = angularRadius * (180 / Math.PI) / Math.cos(center.lat * (Math.PI / 180))
   const z = pickZoom(lngDelta * 2)
@@ -159,13 +166,68 @@ function computeCoverage(center: LatLng, angularRadius: number): TileCoverage {
   return { z, xMin, xMax, yMin, yMax, lngMin: tileLngMin, lngMax: tileLngMax, latMin: tileLatMin, latMax: tileLatMax }
 }
 
-async function fetchAndStitch(cov: TileCoverage): Promise<HTMLCanvasElement> {
-  const cols = cov.xMax - cov.xMin + 1
-  const rows = cov.yMax - cov.yMin + 1
+// ─── Module-level tile cache ──────────────────────────────────────────────────
+
+interface CacheEntry {
+  canvas: HTMLCanvasElement
+  texture: THREE.CanvasTexture | null
+  provider: string
+  complete: boolean
+}
+
+const MAX_CACHE = 4
+// Order of insertion (oldest first) for eviction
+const cacheKeys: string[] = []
+const tileCache = new Map<string, CacheEntry>()
+
+function cacheKey(battleName: string, z: number): string {
+  return `${battleName}:${z}`
+}
+
+function evictOldestIfNeeded(): void {
+  while (tileCache.size >= MAX_CACHE && cacheKeys.length > 0) {
+    const oldest = cacheKeys.shift()!
+    const entry = tileCache.get(oldest)
+    if (entry?.texture) entry.texture.dispose()
+    tileCache.delete(oldest)
+  }
+}
+
+function getOrCreateCacheEntry(key: string, cols: number, rows: number): CacheEntry {
+  if (tileCache.has(key)) return tileCache.get(key)!
+
+  evictOldestIfNeeded()
+
   const canvas = document.createElement('canvas')
   canvas.width = cols * TILE_SIZE
   canvas.height = rows * TILE_SIZE
+  // Fill with parchment placeholder so unfilled tiles show as neutral
   const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = PLACEHOLDER_COLOR
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  const entry: CacheEntry = { canvas, texture: null, provider: 'esri-terrain', complete: false }
+  tileCache.set(key, entry)
+  cacheKeys.push(key)
+  return entry
+}
+
+// Track in-flight fetches so StrictMode double-invocation doesn't double-fetch
+const inFlight = new Set<string>()
+
+/**
+ * Fetch all tiles in parallel, drawing each into the canvas as it arrives.
+ * Calls onTileDrawn after each successful tile paint (throttled by caller).
+ * Returns the provider string ('esri-terrain' | 'esri-hillshade').
+ */
+async function fetchAndStitchProgressive(
+  cov: TileCoverage,
+  canvas: HTMLCanvasElement,
+  onTileDrawn: () => void,
+): Promise<string> {
+  const ctx = canvas.getContext('2d')!
+  let provider = 'esri-terrain'
+  let triedFallback = false
 
   const loadImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
@@ -176,35 +238,72 @@ async function fetchAndStitch(cov: TileCoverage): Promise<HTMLCanvasElement> {
       img.src = url
     })
 
-  const tiles: Array<{ x: number; y: number; img: HTMLImageElement }> = []
-  let useOpenTopo = false
+  const fetchTile = async (tx: number, ty: number): Promise<void> => {
+    const dx = (tx - cov.xMin) * TILE_SIZE
+    const dy = (ty - cov.yMin) * TILE_SIZE
 
-  for (let ty = cov.yMin; ty <= cov.yMax; ty++) {
-    for (let tx = cov.xMin; tx <= cov.xMax; tx++) {
-      let img: HTMLImageElement
-      try {
-        const url = ESRI_TOPO(cov.z, ty, tx)
-        img = await loadImage(url)
-      } catch {
-        // Esri CORS failure — fall back to OpenTopoMap
-        useOpenTopo = true
-        const url = OPEN_TOPO(cov.z, tx, ty)
-        img = await loadImage(url)
+    try {
+      const img = await loadImage(ESRI_TERRAIN_BASE(cov.z, ty, tx))
+      ctx.drawImage(img, dx, dy)
+      onTileDrawn()
+    } catch {
+      // Esri Terrain Base failed — try hillshade fallback
+      if (!triedFallback) {
+        triedFallback = true
+        provider = 'esri-hillshade'
       }
-      tiles.push({ x: tx, y: ty, img })
+      try {
+        const img = await loadImage(ESRI_HILLSHADE(cov.z, ty, tx))
+        ctx.drawImage(img, dx, dy)
+        onTileDrawn()
+      } catch {
+        console.warn(`[BattleBasemap] tile ${cov.z}/${ty}/${tx} failed on both providers`)
+      }
     }
   }
 
-  for (const { x, y, img } of tiles) {
-    const dx = (x - cov.xMin) * TILE_SIZE
-    const dy = (y - cov.yMin) * TILE_SIZE
-    ctx.drawImage(img, dx, dy)
+  // Launch ALL tile fetches in parallel
+  const fetches: Promise<void>[] = []
+  for (let ty = cov.yMin; ty <= cov.yMax; ty++) {
+    for (let tx = cov.xMin; tx <= cov.xMax; tx++) {
+      fetches.push(fetchTile(tx, ty))
+    }
   }
+  await Promise.allSettled(fetches)
 
-  // Expose which provider was used as a canvas property for attribution
-  ;(canvas as HTMLCanvasElement & { _provider?: string })._provider = useOpenTopo ? 'opentopomap' : 'esri'
+  return provider
+}
 
-  return canvas
+const UPDATE_INTERVAL_MS = 250 // ≤4 updates/sec
+
+/**
+ * Exported prefetch function. Call on battle entry to warm the tile cache
+ * before the user toggles topo. Safe to call multiple times (cache check first,
+ * in-flight dedup via Set). Runs entirely in the background.
+ */
+export function prefetchBasemap(battle: Battle, site: LatLng): void {
+  const rawExtent = battleExtent(battle, site)
+  const angularRadius = Math.max(0.0015, Math.min(0.08, rawExtent * 2.5))
+  const cov = computeCoverage(site, angularRadius)
+  const key = cacheKey(battle.name, cov.z)
+
+  if (tileCache.has(key) || inFlight.has(key)) return
+
+  inFlight.add(key)
+  const cols = cov.xMax - cov.xMin + 1
+  const rows = cov.yMax - cov.yMin + 1
+  const entry = getOrCreateCacheEntry(key, cols, rows)
+
+  fetchAndStitchProgressive(cov, entry.canvas, () => {
+    // Prefetch: no texture ref yet, just ensure canvas has data
+  }).then((provider) => {
+    entry.provider = provider
+    entry.complete = true
+  }).catch((err) => {
+    console.warn('[BattleBasemap] prefetch failed:', err)
+  }).finally(() => {
+    inFlight.delete(key)
+  })
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -217,8 +316,8 @@ interface BattleBasemapProps {
 export function BattleBasemap({ battle, site }: BattleBasemapProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const texRef = useRef<THREE.CanvasTexture | null>(null)
-  const geoRef = useRef<THREE.BufferGeometry | null>(null)
-  const loadedRef = useRef(false)
+  const lastUpdateRef = useRef<number>(0)
+  const mountedRef = useRef(true)
 
   // Compute coverage once (battle/site never change during a battle session)
   const coverage = useMemo(() => {
@@ -229,64 +328,98 @@ export function BattleBasemap({ battle, site }: BattleBasemapProps) {
 
   // Build geometry (based on tile bbox, not coverage input)
   const geometry = useMemo(() => {
-    const geo = buildPatchGeometry(
+    return buildPatchGeometry(
       coverage.latMin, coverage.latMax,
       coverage.lngMin, coverage.lngMax,
       48, 48,
     )
-    geoRef.current = geo
-    return geo
   }, [coverage])
 
   // Enable flat mode on mount, disable on unmount
   useEffect(() => {
     setFlatMode(true)
+    mountedRef.current = true
     return () => {
+      mountedRef.current = false
       setFlatMode(false)
     }
   }, [])
 
-  // Fetch and stitch tiles
+  // Fetch/stitch tiles — use cache when available
   useEffect(() => {
-    loadedRef.current = false
-    let cancelled = false
+    const key = cacheKey(battle.name, coverage.z)
+    const cols = coverage.xMax - coverage.xMin + 1
+    const rows = coverage.yMax - coverage.yMin + 1
 
-    fetchAndStitch(coverage).then((canvas) => {
-      if (cancelled) return
-      const tex = new THREE.CanvasTexture(canvas)
+    // Reuse or create cache entry
+    const entry = getOrCreateCacheEntry(key, cols, rows)
+
+    // Create or reuse the CanvasTexture
+    if (!entry.texture) {
+      const tex = new THREE.CanvasTexture(entry.canvas)
       tex.colorSpace = THREE.SRGBColorSpace
       tex.needsUpdate = true
-      texRef.current = tex
-      loadedRef.current = true
-    }).catch((err) => {
-      if (!cancelled) console.warn('[BattleBasemap] tile fetch failed:', err)
-    })
-
-    return () => {
-      cancelled = true
-      if (texRef.current) {
-        texRef.current.dispose()
-        texRef.current = null
-      }
+      entry.texture = tex
     }
-  }, [coverage])
+    texRef.current = entry.texture
 
-  // Apply texture to mesh once loaded
+    // Apply placeholder texture immediately so mesh shows parchment while loading
+    const mesh = meshRef.current
+    if (mesh) {
+      const mat = mesh.material as THREE.MeshBasicMaterial
+      mat.map = entry.texture
+      mat.needsUpdate = true
+    }
+
+    if (entry.complete || inFlight.has(key)) return
+
+    // Launch tile fetch
+    inFlight.add(key)
+
+    let tileDrawn = false
+    const throttledUpdate = () => {
+      tileDrawn = true
+      const now = performance.now()
+      if (now - lastUpdateRef.current < UPDATE_INTERVAL_MS) return
+      lastUpdateRef.current = now
+      if (entry.texture) entry.texture.needsUpdate = true
+    }
+
+    fetchAndStitchProgressive(coverage, entry.canvas, throttledUpdate)
+      .then((provider) => {
+        entry.provider = provider
+        entry.complete = true
+        if (entry.texture) entry.texture.needsUpdate = true
+        // Update attribution canvas property for BattleOverlay
+        ;(entry.canvas as HTMLCanvasElement & { _provider?: string })._provider = provider
+      })
+      .catch((err) => {
+        console.warn('[BattleBasemap] tile fetch failed:', err)
+      })
+      .finally(() => {
+        inFlight.delete(key)
+        if (!tileDrawn && entry.texture) entry.texture.needsUpdate = true
+      })
+  }, [coverage, battle.name])
+
+  // Apply texture to mesh every frame while loading (for progressive updates)
   useFrame(() => {
     const mesh = meshRef.current
-    if (!mesh || !loadedRef.current || !texRef.current) return
+    const tex = texRef.current
+    if (!mesh || !tex) return
     const mat = mesh.material as THREE.MeshBasicMaterial
-    if (mat.map === texRef.current) return
-    mat.map = texRef.current
-    mat.needsUpdate = true
+    if (mat.map !== tex) {
+      mat.map = tex
+      mat.needsUpdate = true
+    }
   })
 
-  // Cleanup geometry on unmount
+  // Cleanup geometry on unmount (but NOT the cached texture)
   useEffect(() => {
     return () => {
-      geoRef.current?.dispose()
+      geometry.dispose()
     }
-  }, [])
+  }, [geometry])
 
   return (
     <mesh ref={meshRef} geometry={geometry} renderOrder={1}>

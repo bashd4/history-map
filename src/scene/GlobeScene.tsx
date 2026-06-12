@@ -12,7 +12,7 @@ import { useAppStore } from '../state/store'
 import { TerrainErrorBoundary } from './TerrainErrorBoundary'
 import { BattleArrows } from './BattleArrows'
 import { BattleAnnotations } from './BattleAnnotations'
-import { BattleBasemap } from './BattleBasemap'
+import { BattleBasemap, prefetchBasemap } from './BattleBasemap'
 import { PerfSampler } from './PerfSampler'
 
 // Code-split so the hub never pays the 3d-tiles-renderer bundle cost.
@@ -101,6 +101,13 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
     mode === 'journey' && nearBattleStopIndex != null && journey != null
       ? (journey.stops[nearBattleStopIndex]?.coords ?? null)
       : null
+
+  // Prefetch topo tiles when entering battle mode so toggle is instant
+  useEffect(() => {
+    if (activeBattle && journey && battleStopIndex != null) {
+      prefetchBasemap(activeBattle, journey.stops[battleStopIndex].coords)
+    }
+  }, [activeBattle, journey, battleStopIndex])
 
   return (
     <div className="canvas-fixed">
