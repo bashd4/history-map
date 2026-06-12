@@ -26,8 +26,11 @@ import { getActiveTiles } from './terrainRegistry'
 
 // ~4km above the ellipsoid — high enough that the ray origin clears any tile.
 const RAY_ORIGIN_RADIUS = 1.05
-// ~0 to ~19 km expressed as scene-unit radii. Reject hits outside this band.
-const MIN_RADIUS = 1.0
+// Sanity band for raycast hits, in scene-unit radii.
+// MIN: 0.990 to accommodate WGS84 vs sphere differences at high latitudes
+//      (~0.3% radius variation) and terrain below sea level (Dead Sea, etc.).
+// MAX: 1.003 (~19 km) rejects cosmically wrong hits.
+const MIN_RADIUS = 0.990
 const MAX_RADIUS = 1.003
 
 /**
@@ -56,6 +59,8 @@ export class TerrainHeightSampler {
   /** Named point groups — each consumer owns a slot, merged on refresh. */
   private pointGroups = new Map<string, Array<{ lat: number; lng: number }>>()
   private debounceTimer: ReturnType<typeof setTimeout> | null = null
+  /** Independent retry timers — scheduled once on registration, not debounced. */
+  private retryTimers: ReturnType<typeof setTimeout>[] = []
   private unlistenRef: (() => void) | null = null
 
   /** Current refresh version — consumers track this to know when to rebuild. */
@@ -66,11 +71,20 @@ export class TerrainHeightSampler {
    * Each consumer (arrows, annotations) owns a slot identified by `groupId`.
    * Multiple groups are merged before sampling — calling registerPoints with
    * the same groupId replaces that group's points.
-   * Triggers an immediate lazy sample on first call.
+   * Triggers an immediate sample plus independent retry passes at 1s, 3s and
+   * 7s so that tiles which finish loading after battle entry are still picked up.
    */
   registerPoints(groupId: string, points: Array<{ lat: number; lng: number }>): void {
     this.pointGroups.set(groupId, points)
+    // Immediate debounced pass — tiles are likely already loaded (PreheatCamera).
     this._scheduleSample(0)
+    // Independent retry passes: cancel any previous retries, schedule new ones.
+    for (const t of this.retryTimers) clearTimeout(t)
+    this.retryTimers = [
+      setTimeout(() => this._refreshAll(), 1000),
+      setTimeout(() => this._refreshAll(), 3000),
+      setTimeout(() => this._refreshAll(), 7000),
+    ]
   }
 
   private get _allPoints(): Array<{ lat: number; lng: number }> {
@@ -122,6 +136,8 @@ export class TerrainHeightSampler {
       clearTimeout(this.debounceTimer)
       this.debounceTimer = null
     }
+    for (const t of this.retryTimers) clearTimeout(t)
+    this.retryTimers = []
   }
 
   private _scheduleSample(delayMs: number): void {
@@ -156,6 +172,10 @@ export class TerrainHeightSampler {
     const tiles = getActiveTiles()
     if (!tiles?.group) return 1.0
 
+    // Ensure world matrices are current — critical on the first sample pass
+    // before the first render frame has run (r3f hasn't called updateMatrixWorld yet).
+    try { tiles.group.updateWorldMatrix(true, true) } catch { /* no-op if not yet in scene */ }
+
     // Ray: from above (radius 1.05) → toward globe center
     _origin.copy(latLngToVector3(lat, lng, RAY_ORIGIN_RADIUS))
     _direction.subVectors(_globeCenter, _origin).normalize()
@@ -184,6 +204,23 @@ export class TerrainHeightSampler {
 // ─── Module-level singleton sampler ──────────────────────────────────────────
 
 export const terrainSampler = new TerrainHeightSampler()
+
+// DEV-only: expose sampler state for browser devtools inspection.
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(window as any).__terrainSampler = {
+    get cache() { return Object.fromEntries((terrainSampler as unknown as { cache: Map<string,number> }).cache) },
+    get version() { return terrainSampler.version },
+    get cacheSize() { return (terrainSampler as unknown as { cache: Map<string,number> }).cache.size },
+    get pointGroups() {
+      const pg = (terrainSampler as unknown as { pointGroups: Map<string, Array<{lat:number;lng:number}>> }).pointGroups
+      const out: Record<string, number> = {}
+      for (const [k, v] of pg.entries()) out[k] = v.length
+      return out
+    },
+    sampleRadius: (lat: number, lng: number) => terrainSampler.sampleRadius(lat, lng),
+  }
+}
 
 /**
  * When flat mode is on, sampleRadius returns the ellipsoid fallback (1.0)

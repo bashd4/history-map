@@ -7,9 +7,10 @@ import { playbackAt } from '../lib/battlePlayback'
 import { useAppStore } from '../state/store'
 import { terrainSampler, useTerrainHeightsVersion } from './useTerrainHeights'
 
-// Clearance above sampled terrain surface for outlines (~250 m) and labels (~500 m).
-const OUTLINE_CLEARANCE = 0.00004
-const LABEL_CLEARANCE = 0.00008
+// Clearance above sampled terrain surface for outlines (~65 m) and labels (~130 m).
+// depthTest is false so nothing gets buried visually at these tight clearances.
+const OUTLINE_CLEARANCE = 0.00001
+const LABEL_CLEARANCE = 0.00002
 
 /** Number of slerp subdivisions per outline edge to follow globe curvature */
 const SEGS_PER_EDGE = 8
@@ -30,12 +31,17 @@ const baseLabelStyle: CSSProperties = {
 }
 
 /**
- * Helper: recover approximate (lat, lng) from a unit THREE.Vector3 generated
- * by latLngToVector3 / slerpUnit.  Used to look up sampled terrain height.
+ * Helper: recover geographic (lat, lng) from a unit THREE.Vector3 produced by
+ * latLngToVector3 / slerpUnit.  Used to look up sampled terrain height.
+ *
+ * latLngToVector3 encodes longitude as theta = (lng + 180) * π/180, so a
+ * naive atan2(v.z, -v.x) returns theta (degrees), not lng.  We subtract 180
+ * and normalise to [-180, 180] to recover the actual geographic longitude.
  */
 function vec3ToLatLng(v: THREE.Vector3): { lat: number; lng: number } {
   const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
-  const lng = Math.atan2(v.z, -v.x) * (180 / Math.PI)
+  const theta = Math.atan2(v.z, -v.x) * (180 / Math.PI) // = lng + 180
+  const lng = theta - 180 < -180 ? theta + 180 : theta - 180 // normalise to [-180, 180]
   return { lat, lng }
 }
 

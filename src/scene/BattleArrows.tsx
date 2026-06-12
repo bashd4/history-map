@@ -10,9 +10,9 @@ import { screenScale } from '../lib/screenScale'
 import { useAppStore } from '../state/store'
 import { terrainSampler, useTerrainHeightsVersion } from './useTerrainHeights'
 
-// Clearance above the sampled terrain surface (~190 m in scene units).
-// Enough to avoid z-fighting without visibly floating.
-const SURFACE_CLEARANCE = 0.00003
+// Clearance above the sampled terrain surface (~50 m in scene units).
+// depthTest is false so nothing gets buried visually at this tight clearance.
+const SURFACE_CLEARANCE = 0.000008
 
 /** Number of slerp segments per leg of a movement path */
 const SEGS_PER_LEG = 24
@@ -42,6 +42,16 @@ const _tangent = new THREE.Vector3()
  * Collect all distinct (lat, lng) waypoints for a movement path, with
  * interpolated slerp steps, for pre-registering with the terrain sampler.
  */
+/**
+ * Recover geographic longitude from a unit vector produced by latLngToVector3.
+ * latLngToVector3 encodes as theta = (lng + 180)*π/180, so atan2(v.z, -v.x)
+ * returns theta (in degrees), not lng. We must subtract 180 and normalise.
+ */
+function recoverLng(v: THREE.Vector3): number {
+  const theta = Math.atan2(v.z, -v.x) * (180 / Math.PI) // = lng + 180
+  return theta - 180 < -180 ? theta + 180 : theta - 180  // normalise to [-180, 180]
+}
+
 function movementLatLngs(movement: Movement): Array<{ lat: number; lng: number }> {
   const out: Array<{ lat: number; lng: number }> = []
   for (let leg = 0; leg < movement.path.length - 1; leg++) {
@@ -52,10 +62,10 @@ function movementLatLngs(movement: Movement): Array<{ lat: number; lng: number }
     const start = leg === 0 ? 0 : 1
     for (let i = start; i <= SEGS_PER_LEG; i++) {
       const t = i / SEGS_PER_LEG
-      // Approximate lat/lng by normalizing the slerped unit vector back.
+      // Recover lat/lng from the slerped unit vector.
       const v = slerpUnit(a, b, t)
       const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
-      const lng = Math.atan2(v.z, -v.x) * (180 / Math.PI)
+      const lng = recoverLng(v)
       out.push({ lat, lng })
     }
   }
@@ -76,7 +86,7 @@ function buildMovementPoints(movement: Movement): THREE.Vector3[] {
       const v = slerpUnit(a, b, t)
       // Recover lat/lng for this interpolated point to look up sampled height
       const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
-      const lng = Math.atan2(v.z, -v.x) * (180 / Math.PI)
+      const lng = recoverLng(v)
       const surfaceR = terrainSampler.sampleRadius(lat, lng)
       pts.push(v.clone().multiplyScalar(surfaceR + SURFACE_CLEARANCE))
     }
