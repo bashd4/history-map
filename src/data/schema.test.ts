@@ -82,20 +82,40 @@ describe('journeySchema', () => {
     expect(() => withBattle({ ...baseBattle, strengths: { french: '73,000', ottoman: '10,000' } }))
       .toThrow(/ottoman/)
   })
-  it('accepts battle with landmarks', () => {
+  it('accepts battle with areas', () => {
     const j = withBattle({
       ...baseBattle,
-      landmarks: [
-        { name: 'Pratzen Heights', coords: { lat: 49.128, lng: 16.7625 }, kind: 'terrain' },
-        { name: 'Satschan Ponds', coords: { lat: 49.08, lng: 16.73 }, kind: 'water' },
+      areas: [
+        {
+          name: 'Pratzen Heights',
+          outline: [
+            { lat: 49.115, lng: 16.740 },
+            { lat: 49.130, lng: 16.775 },
+            { lat: 49.140, lng: 16.780 },
+            { lat: 49.125, lng: 16.745 },
+          ],
+          kind: 'terrain',
+        },
       ],
     })
-    expect(j.stops[0].battle?.landmarks?.[0].name).toBe('Pratzen Heights')
+    expect(j.stops[0].battle?.areas?.[0].name).toBe('Pratzen Heights')
   })
-  it('rejects a landmark with name > 40 chars', () => {
+  it('rejects an area with fewer than 3 outline points', () => {
     expect(() => withBattle({
       ...baseBattle,
-      landmarks: [{ name: 'A'.repeat(41), coords: { lat: 49.1, lng: 16.7 } }],
+      areas: [{
+        name: 'Too Small',
+        outline: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }],
+      }],
+    })).toThrow()
+  })
+  it('rejects an area with name > 40 chars', () => {
+    expect(() => withBattle({
+      ...baseBattle,
+      areas: [{
+        name: 'A'.repeat(41),
+        outline: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }, { lat: 49.15, lng: 16.75 }],
+      }],
     })).toThrow()
   })
   it('accepts battle with fieldAzimuth', () => {

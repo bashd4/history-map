@@ -24,12 +24,13 @@ describe('battleExtent', () => {
     expect(battleExtent(b, site)).toBeCloseTo(0.1 * DEG, 5)
   })
 
-  it('includes landmarks and events in the distribution', () => {
+  it('includes area outlines and events in the distribution', () => {
     const b = makeBattle([[{ lat: 0, lng: 1 }, { lat: 0, lng: 1 }]])
-    b.landmarks = [
-      { name: 'L1', coords: { lat: 0, lng: 1 } },
-      { name: 'L2', coords: { lat: 0, lng: 1 } },
-      { name: 'L3', coords: { lat: 2, lng: 0 } },
+    b.areas = [
+      {
+        name: 'Area A',
+        outline: [{ lat: 0, lng: 1 }, { lat: 0, lng: 1 }, { lat: 2, lng: 0 }],
+      },
     ]
     // sorted dists: [1°,1°,1°,1°,2°]; index floor(5*0.8)=4 → 2°
     expect(battleExtent(b, site)).toBeCloseTo(2 * DEG, 5)

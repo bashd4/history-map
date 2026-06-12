@@ -1,17 +1,23 @@
 import { useMemo, type CSSProperties } from 'react'
-import { Html } from '@react-three/drei'
+import { Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Battle } from '../data/schema'
-import { latLngToVector3 } from '../lib/geo'
+import { latLngToVector3, slerpUnit } from '../lib/geo'
 import { playbackAt } from '../lib/battlePlayback'
 import { useAppStore } from '../state/store'
 
 // Just above the arrow layer's surface footprint, below the camera.
 const LABEL_ALT = 1.0008
+// Area outline sits slightly below the label altitude
+const OUTLINE_ALT = 1.0006
+
+/** Number of slerp subdivisions per outline edge to follow globe curvature */
+const SEGS_PER_EDGE = 8
 
 const KIND_COLOR: Record<string, string> = {
   terrain: '#cfc4ab',
   water: '#9fc4d4',
+  woods: '#9fb892',
   settlement: '#e8dcc3',
 }
 
@@ -20,25 +26,56 @@ const baseLabelStyle: CSSProperties = {
   whiteSpace: 'nowrap',
   textShadow: '0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.7)',
   userSelect: 'none',
-  transform: 'translate(6px, -50%)',
+  transform: 'translate(-50%, -50%)',
 }
 
 /**
- * Landmark + phase-event labels for battle mode. DOM labels via drei <Html>
- * (constant screen size, no pointer events, layered below the battle overlay
- * at z-index 20). Mounted only while a battle is active.
+ * Build a closed, slerp-subdivided outline loop for an area at the given radius.
+ * The loop is closed by appending the first interpolated segment back to origin.
+ */
+function buildOutlineLoop(outline: Array<{ lat: number; lng: number }>, radius: number): THREE.Vector3[] {
+  const unitVerts = outline.map((p) => latLngToVector3(p.lat, p.lng).normalize())
+  const pts: THREE.Vector3[] = []
+  const n = unitVerts.length
+  for (let i = 0; i < n; i++) {
+    const a = unitVerts[i]
+    const b = unitVerts[(i + 1) % n]
+    for (let s = 0; s < SEGS_PER_EDGE; s++) {
+      pts.push(slerpUnit(a, b, s / SEGS_PER_EDGE).multiplyScalar(radius))
+    }
+  }
+  // close the loop
+  pts.push(pts[0].clone())
+  return pts
+}
+
+/**
+ * Compute centroid of outline as the normalised average of unit vectors,
+ * then lift to the given radius.
+ */
+function outlineCentroid(outline: Array<{ lat: number; lng: number }>, radius: number): THREE.Vector3 {
+  const sum = new THREE.Vector3()
+  for (const p of outline) {
+    sum.add(latLngToVector3(p.lat, p.lng).normalize())
+  }
+  return sum.normalize().multiplyScalar(radius)
+}
+
+/**
+ * Area outlines + phase-event labels for battle mode. DOM labels via drei <Html>
+ * (constant screen size, no pointer events). Mounted only while a battle is active.
  */
 export function BattleAnnotations({ battle }: { battle: Battle }) {
-  // React subscription at battleElapsed frequency is acceptable here —
-  // BattleOverlay already re-renders at the same rate.
   const battleElapsed = useAppStore((s) => s.battleElapsed)
   const { phaseIndex: currentPhase, done } = playbackAt(battle, battleElapsed)
 
-  const landmarks = useMemo(
+  const areas = useMemo(
     () =>
-      (battle.landmarks ?? []).map((lm) => ({
-        ...lm,
-        pos: latLngToVector3(lm.coords.lat, lm.coords.lng, LABEL_ALT),
+      (battle.areas ?? []).map((area) => ({
+        ...area,
+        loop: buildOutlineLoop(area.outline, OUTLINE_ALT),
+        centroid: outlineCentroid(area.outline, LABEL_ALT),
+        color: KIND_COLOR[area.kind ?? 'terrain'] ?? KIND_COLOR.terrain,
       })),
     [battle],
   )
@@ -59,26 +96,35 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
 
   return (
     <group>
-      {/* Landmarks — always visible during battle */}
-      {landmarks.map((lm) => (
-        <group key={lm.name} position={lm.pos}>
-          <mesh renderOrder={11}>
-            {/* ~3 px at battle altitude (0.012): 2r/frustumHeight ≈ 0.4% */}
-            <sphereGeometry args={[0.00002, 8, 8]} />
-            <meshBasicMaterial color="#e8b54a" toneMapped={false}
-              depthWrite={false} depthTest={false} />
-          </mesh>
-          <Html zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
-            <span style={{
-              ...baseLabelStyle,
-              fontStyle: 'italic',
-              fontSize: '11px',
-              color: KIND_COLOR[lm.kind ?? 'terrain'] ?? KIND_COLOR.terrain,
-              display: 'inline-block',
-            }}>
-              {lm.name}
-            </span>
-          </Html>
+      {/* Area outlines — always visible during battle */}
+      {areas.map((area) => (
+        <group key={area.name}>
+          <Line
+            points={area.loop}
+            color={area.color}
+            lineWidth={1.5}
+            dashed
+            dashSize={0.0008}
+            gapSize={0.0005}
+            opacity={0.55}
+            transparent
+            toneMapped={false}
+            depthTest={false}
+            renderOrder={9}
+          />
+          <group position={area.centroid}>
+            <Html zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
+              <span style={{
+                ...baseLabelStyle,
+                fontStyle: 'italic',
+                fontSize: '11px',
+                color: area.color,
+                display: 'inline-block',
+              }}>
+                {area.name}
+              </span>
+            </Html>
+          </group>
         </group>
       ))}
 
@@ -95,6 +141,7 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
                 color: '#e8b54a',
                 opacity: isPast ? 0.6 : 1,
                 display: 'inline-block',
+                transform: 'translate(6px, -50%)',
               }}>
                 ✶ {ev.label}
               </span>

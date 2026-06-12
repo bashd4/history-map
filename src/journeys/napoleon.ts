@@ -33,13 +33,45 @@ export const napoleon: Journey = {
         strengths: { french: '73,000 men', coalition: '85,000 men' },
         // Camera stands SW of the field, looking NE across the Pratzen Heights.
         fieldAzimuth: 250,
-        landmarks: [
-          { name: 'Pratzen Heights', coords: { lat: 49.128, lng: 16.7625 }, kind: 'terrain' },
-          { name: 'Satschan Ponds', coords: { lat: 49.08, lng: 16.73 }, kind: 'water' },
-          { name: 'Sokolnitz', coords: { lat: 49.10, lng: 16.70 }, kind: 'settlement' },
-          { name: 'Telnitz', coords: { lat: 49.09, lng: 16.71 }, kind: 'settlement' },
-          { name: 'Zuran Hill', coords: { lat: 49.138, lng: 16.718 }, kind: 'terrain' },
-          { name: 'Brünn–Olmütz Road', coords: { lat: 49.148, lng: 16.810 }, kind: 'terrain' },
+        areas: [
+          {
+            name: 'Pratzen Heights',
+            kind: 'terrain',
+            outline: [
+              { lat: 49.115, lng: 16.740 },
+              { lat: 49.118, lng: 16.758 },
+              { lat: 49.128, lng: 16.775 },
+              { lat: 49.138, lng: 16.785 },
+              { lat: 49.142, lng: 16.770 },
+              { lat: 49.135, lng: 16.748 },
+              { lat: 49.122, lng: 16.735 },
+            ],
+          },
+          {
+            name: 'Satschan Ponds',
+            kind: 'water',
+            outline: [
+              { lat: 49.072, lng: 16.720 },
+              { lat: 49.075, lng: 16.735 },
+              { lat: 49.082, lng: 16.742 },
+              { lat: 49.088, lng: 16.738 },
+              { lat: 49.085, lng: 16.722 },
+              { lat: 49.078, lng: 16.715 },
+            ],
+          },
+          {
+            name: 'Goldbach Valley',
+            kind: 'terrain',
+            outline: [
+              { lat: 49.090, lng: 16.698 },
+              { lat: 49.098, lng: 16.705 },
+              { lat: 49.110, lng: 16.712 },
+              { lat: 49.118, lng: 16.718 },
+              { lat: 49.115, lng: 16.708 },
+              { lat: 49.105, lng: 16.700 },
+              { lat: 49.095, lng: 16.692 },
+            ],
+          },
         ],
         phases: [
           { caption: 'The trap is set: Napoleon abandons the Pratzen Heights and strips his right flank — Lannes anchors the north, Murat\'s cavalry screens the Brünn road, Soult\'s corps lurks in the valley mist.',

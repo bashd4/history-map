@@ -13,12 +13,51 @@ const fortDonelson: Battle = {
   strengths: { union: '~24,500 men', confederate: '~16,000 men' },
   // Camera stands NW on the river, looking SE across the fort and bluffs.
   fieldAzimuth: 315,
-  landmarks: [
-    { name: 'Fort Donelson', coords: { lat: 36.4922, lng: -87.8617 }, kind: 'terrain' },
-    { name: 'Cumberland River', coords: { lat: 36.495, lng: -87.855 }, kind: 'water' },
-    { name: 'Dover', coords: { lat: 36.488, lng: -87.847 }, kind: 'settlement' },
-    { name: 'Hickman Creek', coords: { lat: 36.515, lng: -87.895 }, kind: 'water' },
-    { name: 'Forge Road', coords: { lat: 36.522, lng: -87.930 }, kind: 'terrain' },
+  areas: [
+    {
+      name: 'Fort Donelson',
+      kind: 'terrain',
+      outline: [
+        { lat: 36.4940, lng: -87.8650 },
+        { lat: 36.4955, lng: -87.8630 },
+        { lat: 36.4960, lng: -87.8600 },
+        { lat: 36.4945, lng: -87.8580 },
+        { lat: 36.4920, lng: -87.8575 },
+        { lat: 36.4905, lng: -87.8595 },
+        { lat: 36.4910, lng: -87.8630 },
+        { lat: 36.4928, lng: -87.8648 },
+      ],
+    },
+    {
+      name: 'Dover',
+      kind: 'settlement',
+      outline: [
+        { lat: 36.4900, lng: -87.8510 },
+        { lat: 36.4905, lng: -87.8475 },
+        { lat: 36.4880, lng: -87.8460 },
+        { lat: 36.4858, lng: -87.8470 },
+        { lat: 36.4855, lng: -87.8500 },
+        { lat: 36.4875, lng: -87.8518 },
+      ],
+    },
+    {
+      name: 'Outer Confederate Trenches',
+      kind: 'terrain',
+      outline: [
+        { lat: 36.5150, lng: -87.8950 },
+        { lat: 36.5100, lng: -87.8900 },
+        { lat: 36.5050, lng: -87.8850 },
+        { lat: 36.4980, lng: -87.8750 },
+        { lat: 36.4920, lng: -87.8700 },
+        { lat: 36.4880, lng: -87.8680 },
+        { lat: 36.4850, lng: -87.8620 },
+        { lat: 36.4870, lng: -87.8550 },
+        { lat: 36.4930, lng: -87.8520 },
+        { lat: 36.5020, lng: -87.8560 },
+        { lat: 36.5100, lng: -87.8650 },
+        { lat: 36.5180, lng: -87.8780 },
+      ],
+    },
   ],
   phases: [
     {
@@ -202,13 +241,58 @@ const shiloh: Battle = {
   strengths: { union: '~66,800 men', confederate: '~44,700 men' },
   // Camera stands ENE on the river bluff, looking WSW across the ridges toward Shiloh Church.
   fieldAzimuth: 70,
-  landmarks: [
-    { name: 'Pittsburg Landing', coords: { lat: 35.1402, lng: -88.342 }, kind: 'settlement' },
-    { name: 'Shiloh Church', coords: { lat: 35.1378, lng: -88.3565 }, kind: 'settlement' },
-    { name: 'Hornet\'s Nest', coords: { lat: 35.1407, lng: -88.3445 }, kind: 'terrain' },
-    { name: 'Peach Orchard', coords: { lat: 35.131, lng: -88.327 }, kind: 'terrain' },
-    { name: 'Owl Creek', coords: { lat: 35.155, lng: -88.380 }, kind: 'water' },
-    { name: 'Tennessee River', coords: { lat: 35.142, lng: -88.328 }, kind: 'water' },
+  areas: [
+    {
+      name: "Hornet's Nest",
+      kind: 'woods',
+      outline: [
+        { lat: 35.1420, lng: -88.3480 },
+        { lat: 35.1425, lng: -88.3460 },
+        { lat: 35.1418, lng: -88.3435 },
+        { lat: 35.1402, lng: -88.3420 },
+        { lat: 35.1388, lng: -88.3428 },
+        { lat: 35.1382, lng: -88.3455 },
+        { lat: 35.1392, lng: -88.3475 },
+        { lat: 35.1408, lng: -88.3482 },
+      ],
+    },
+    {
+      name: 'Pittsburg Landing',
+      kind: 'settlement',
+      outline: [
+        { lat: 35.1420, lng: -88.3430 },
+        { lat: 35.1428, lng: -88.3415 },
+        { lat: 35.1415, lng: -88.3398 },
+        { lat: 35.1398, lng: -88.3395 },
+        { lat: 35.1388, lng: -88.3410 },
+        { lat: 35.1395, lng: -88.3428 },
+      ],
+    },
+    {
+      name: 'Owl Creek Swamps',
+      kind: 'water',
+      outline: [
+        { lat: 35.1600, lng: -88.3900 },
+        { lat: 35.1580, lng: -88.3850 },
+        { lat: 35.1555, lng: -88.3810 },
+        { lat: 35.1530, lng: -88.3830 },
+        { lat: 35.1520, lng: -88.3870 },
+        { lat: 35.1545, lng: -88.3920 },
+        { lat: 35.1575, lng: -88.3930 },
+      ],
+    },
+    {
+      name: 'Peach Orchard',
+      kind: 'terrain',
+      outline: [
+        { lat: 35.1328, lng: -88.3290 },
+        { lat: 35.1335, lng: -88.3272 },
+        { lat: 35.1320, lng: -88.3258 },
+        { lat: 35.1302, lng: -88.3262 },
+        { lat: 35.1298, lng: -88.3280 },
+        { lat: 35.1312, lng: -88.3295 },
+      ],
+    },
   ],
   phases: [
     {
@@ -408,13 +492,36 @@ const vicksburg: Battle = {
   strengths: { union: '~77,000 men', confederate: '~33,000 men' },
   // Camera stands WSW on the river, looking ENE so Vicksburg's bluffs rise above the Mississippi.
   fieldAzimuth: 250,
-  landmarks: [
-    { name: 'Vicksburg', coords: { lat: 32.3526, lng: -90.8779 }, kind: 'settlement' },
-    { name: 'Mississippi River', coords: { lat: 32.30, lng: -91.05 }, kind: 'water' },
-    { name: 'Bruinsburg', coords: { lat: 31.967, lng: -91.126 }, kind: 'settlement' },
-    { name: 'Champion Hill', coords: { lat: 32.326, lng: -90.574 }, kind: 'terrain' },
-    { name: 'Big Black River', coords: { lat: 32.345, lng: -90.730 }, kind: 'water' },
-    { name: 'Jackson', coords: { lat: 32.299, lng: -90.185 }, kind: 'settlement' },
+  areas: [
+    {
+      name: 'Vicksburg Fortress',
+      kind: 'settlement',
+      outline: [
+        { lat: 32.3650, lng: -90.8900 },
+        { lat: 32.3620, lng: -90.8820 },
+        { lat: 32.3580, lng: -90.8760 },
+        { lat: 32.3520, lng: -90.8720 },
+        { lat: 32.3460, lng: -90.8740 },
+        { lat: 32.3420, lng: -90.8800 },
+        { lat: 32.3440, lng: -90.8880 },
+        { lat: 32.3500, lng: -90.8930 },
+        { lat: 32.3580, lng: -90.8940 },
+      ],
+    },
+    {
+      name: 'Champion Hill',
+      kind: 'terrain',
+      outline: [
+        { lat: 32.3360, lng: -90.5700 },
+        { lat: 32.3380, lng: -90.5650 },
+        { lat: 32.3340, lng: -90.5600 },
+        { lat: 32.3280, lng: -90.5590 },
+        { lat: 32.3220, lng: -90.5620 },
+        { lat: 32.3210, lng: -90.5680 },
+        { lat: 32.3260, lng: -90.5730 },
+        { lat: 32.3320, lng: -90.5730 },
+      ],
+    },
   ],
   phases: [
     {
@@ -632,13 +739,50 @@ const chattanooga: Battle = {
   // Camera stands SE of the city, looking NW — Lookout Mountain rises on the left,
   // Missionary Ridge stretches across the frame, Orchard Knob in the middle distance.
   fieldAzimuth: 135,
-  landmarks: [
-    { name: 'Lookout Mountain', coords: { lat: 35.0103, lng: -85.3403 }, kind: 'terrain' },
-    { name: 'Missionary Ridge', coords: { lat: 35.0220, lng: -85.2486 }, kind: 'terrain' },
-    { name: 'Orchard Knob', coords: { lat: 35.0330, lng: -85.2768 }, kind: 'terrain' },
-    { name: 'Tunnel Hill', coords: { lat: 35.058, lng: -85.253 }, kind: 'terrain' },
-    { name: 'Chattanooga', coords: { lat: 35.0456, lng: -85.3097 }, kind: 'settlement' },
-    { name: 'Tennessee River', coords: { lat: 35.060, lng: -85.290 }, kind: 'water' },
+  areas: [
+    {
+      name: 'Missionary Ridge',
+      kind: 'terrain',
+      // Elongated NE-SW band ~10 km, centered ~35.022, -85.249
+      outline: [
+        { lat: 35.0550, lng: -85.2350 },
+        { lat: 35.0480, lng: -85.2280 },
+        { lat: 35.0380, lng: -85.2330 },
+        { lat: 35.0280, lng: -85.2420 },
+        { lat: 35.0150, lng: -85.2560 },
+        { lat: 35.0080, lng: -85.2650 },
+        { lat: 35.0100, lng: -85.2720 },
+        { lat: 35.0180, lng: -85.2680 },
+        { lat: 35.0300, lng: -85.2560 },
+        { lat: 35.0420, lng: -85.2440 },
+        { lat: 35.0520, lng: -85.2370 },
+      ],
+    },
+    {
+      name: 'Lookout Mountain',
+      kind: 'terrain',
+      outline: [
+        { lat: 35.0200, lng: -85.3500 },
+        { lat: 35.0180, lng: -85.3420 },
+        { lat: 35.0100, lng: -85.3380 },
+        { lat: 34.9980, lng: -85.3420 },
+        { lat: 34.9950, lng: -85.3520 },
+        { lat: 35.0020, lng: -85.3600 },
+        { lat: 35.0120, lng: -85.3590 },
+      ],
+    },
+    {
+      name: 'Orchard Knob',
+      kind: 'terrain',
+      outline: [
+        { lat: 35.0352, lng: -85.2790 },
+        { lat: 35.0360, lng: -85.2768 },
+        { lat: 35.0348, lng: -85.2748 },
+        { lat: 35.0330, lng: -85.2742 },
+        { lat: 35.0318, lng: -85.2758 },
+        { lat: 35.0325, lng: -85.2782 },
+      ],
+    },
   ],
   phases: [
     {

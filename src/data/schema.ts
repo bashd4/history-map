@@ -21,10 +21,10 @@ const phase = z.object({
   events: z.array(event).optional(),
 })
 
-const landmark = z.object({
+const area = z.object({
   name: z.string().min(1).max(40),
-  coords: latLng,
-  kind: z.enum(['terrain', 'water', 'settlement']).optional(),
+  outline: z.array(latLng).min(3),
+  kind: z.enum(['terrain', 'water', 'woods', 'settlement']).optional(),
 })
 
 const battle = z
@@ -37,7 +37,8 @@ const battle = z
     phases: z.array(phase).min(1),
     /** Display strings per side, e.g. "66,812 men". Keys must ⊆ sides keys. */
     strengths: z.record(z.string(), z.string().min(1)).optional(),
-    landmarks: z.array(landmark).optional(),
+    /** Area outlines whose EXTENT matters tactically (plateau, water body, settlement perimeter). */
+    areas: z.array(area).optional(),
     /** Compass bearing FROM the site TOWARD the field-view camera position (degrees). */
     fieldAzimuth: z.number().min(0).max(360).optional(),
   })
@@ -90,6 +91,6 @@ export type Stop = Journey['stops'][number]
 export type Battle = NonNullable<Stop['battle']>
 export type Phase = Battle['phases'][number]
 export type Movement = Phase['movements'][number]
-export type Landmark = NonNullable<Battle['landmarks']>[number]
+export type BattleArea = NonNullable<Battle['areas']>[number]
 export type BattleEvent = NonNullable<Phase['events']>[number]
 export type LatLng = z.infer<typeof latLng>

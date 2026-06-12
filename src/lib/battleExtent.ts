@@ -22,7 +22,7 @@ export function battleExtent(battle: Battle, site: LatLng): number {
     for (const m of ph.movements) m.path.forEach(consider)
     ph.events?.forEach((e) => consider(e.coords))
   }
-  battle.landmarks?.forEach((l) => consider(l.coords))
+  battle.areas?.forEach((a) => a.outline.forEach(consider))
   dists.sort((a, b) => a - b)
   const extent = dists.length ? dists[Math.min(dists.length - 1, Math.floor(dists.length * 0.8))] : 0
   cache.set(battle, extent)
