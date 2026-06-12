@@ -34,6 +34,21 @@ export function stopsForCamera(journey: Journey): Parameters<typeof cameraAt>[1]
 
 const ease = (t: number) => t * t * (3 - 2 * t) // smoothstep
 
+/**
+ * Fraction of the route, measured in HOPS (0..n-1), that should be drawn at
+ * journey progress t. Mirrors cameraAt's dwell/travel model exactly: while
+ * dwelling at stop i the value holds at i (line fills precisely to the
+ * marker), and during travel it advances with the same smoothstep easing as
+ * the camera — so the bright arc tip always tracks the camera's position.
+ */
+export function routeProgressAt(t: number, n: number): number {
+  const tc = Math.min(1, Math.max(0, t))
+  const seg = Math.min(n - 1, Math.floor(tc * n))
+  const local = tc * n - seg
+  if (seg >= n - 1 || local < DWELL) return seg
+  return seg + ease((local - DWELL) / (1 - DWELL))
+}
+
 export function cameraAt(
   t: number,
   stops: Array<LatLng & { camera?: { altitude: number } }>,

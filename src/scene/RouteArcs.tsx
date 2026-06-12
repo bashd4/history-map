@@ -5,7 +5,7 @@ import { Line } from '@react-three/drei'
 import type { Line2 } from 'three-stdlib'
 import type { Journey } from '../data/schema'
 import { greatCirclePoints, latLngToVector3 } from '../lib/geo'
-import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
+import { cameraAt, routeProgressAt, stopsForCamera } from '../lib/journeyCamera'
 import { screenScale } from '../lib/screenScale'
 import { useAppStore } from '../state/store'
 
@@ -124,10 +124,13 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
     }
     const safeT = Number.isFinite(t) ? Math.min(1, Math.max(0, t)) : 0
 
-    // Control how many segments are drawn via instanceCount
+    // Fill the line to match the CAMERA's route position, not raw t:
+    // routeProgressAt holds at each stop through its dwell window (line tip
+    // sits exactly on the marker) and eases through travel like the camera.
     if (lineRef.current) {
-      const drawnSegments = Math.max(0, Math.floor(safeT * totalSegments))
-      lineRef.current.geometry.instanceCount = drawnSegments
+      const segsPerHop = totalSegments / (stops.length - 1)
+      const drawn = Math.round(routeProgressAt(safeT, stops.length) * segsPerHop)
+      lineRef.current.geometry.instanceCount = Math.max(0, drawn)
     }
 
     // Pulse the active stop marker
