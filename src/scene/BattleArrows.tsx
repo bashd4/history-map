@@ -34,6 +34,10 @@ const OPACITY_DONE = 0.4
 const CASING_OPACITY = 0.85
 const CASING_COLOR = '#1a140c'
 
+// Auto-fade timing constants (seconds)
+const LABEL_FADE_HOLD = 2.5   // seconds at full opacity after completion
+const LABEL_FADE_RAMP = 0.6   // seconds to ramp from 1 to 0
+
 // Scratch objects — never allocate in the frame loop.
 const _UP = new THREE.Vector3(0, 1, 0)
 const _tangent = new THREE.Vector3()
@@ -137,62 +141,13 @@ function useBattleMovements(battle: Battle): TaggedMovement[] {
 
 type ArrowState = 'hidden' | 'completed' | 'current'
 
-/** Visibility state for a phase-bound annotation — same rules as the arrows. */
-function arrowStateAt(battle: Battle, phaseIndex: number, elapsed: number): ArrowState {
-  const { phaseIndex: currentPhase, done } = playbackAt(battle, elapsed)
-  return phaseIndex > currentPhase ? 'hidden'
-    : phaseIndex < currentPhase || done ? 'completed'
-    : 'current'
-}
-
-/**
- * Unit name at the path midpoint, colored by side.
- * Visible ONLY for the current phase — completed phases hide their labels
- * to reduce visual clutter.
- */
-function UnitLabel({
-  battle,
-  phaseIndex,
-  unit,
-  color,
-  position,
-}: {
-  battle: Battle
-  phaseIndex: number
-  unit: string
-  color: string
-  position: THREE.Vector3
-}) {
-  const battleElapsed = useAppStore((s) => s.battleElapsed)
-  const state = arrowStateAt(battle, phaseIndex, battleElapsed)
-  // Only show for current phase — hide completed and future phases
-  if (state !== 'current') return null
-
-  return (
-    <Html position={position} zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
-      <span style={{
-        fontFamily: "Georgia, 'Times New Roman', serif",
-        fontVariant: 'small-caps',
-        fontSize: '10px',
-        letterSpacing: '0.04em',
-        color,
-        opacity: OPACITY_CURRENT,
-        whiteSpace: 'nowrap',
-        textShadow: '0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.7)',
-        userSelect: 'none',
-        display: 'inline-block',
-        transform: 'translate(-50%, -130%)',
-      }}>
-        {unit}
-      </span>
-    </Html>
-  )
-}
-
 /**
  * Single animated movement arrow with dark casing for legibility.
  * Renders a casing (near-black, slightly wider) below the colored arrow.
  * Both lines animate in sync via shared instanceCount writes.
+ *
+ * The unit label (if any) rides the animated tip, auto-fades after completion,
+ * and reappears on hover over the casing or cone.
  */
 function MovementArrow({
   tagged,
@@ -210,12 +165,20 @@ function MovementArrow({
   const lastStateRef = useRef<ArrowState | null>(null)
   const totalSegs = points.length - 1
 
+  // Label tracking refs — all driven imperatively; no React state at frame rate.
+  const labelGroupRef = useRef<THREE.Group>(null)
+  const divRef = useRef<HTMLDivElement>(null)
+  const completedAtRef = useRef<number | null>(null)
+  const hoveredRef = useRef(false)
+
   const isDashed = movement.style === 'retreat' || movement.style === 'feint'
   const color = battle.sides[movement.side] ?? '#ffffff'
   const lineWidth = movement.style === 'advance' ? 2.5 : 2
   const casingWidth = lineWidth + 2
 
-  useFrame(({ camera }) => {
+  const hasLabel = Boolean(movement.unit)
+
+  useFrame(({ camera, clock }) => {
     const { battleElapsed, mode } = useAppStore.getState()
     if (mode !== 'battle') return
 
@@ -239,15 +202,28 @@ function MovementArrow({
       if (state === 'completed') {
         cone.scale.setScalar(
           screenScale(camera, cone.position, CONE_FRAC, CONE_MIN, CONE_MAX))
+        // Update completed-phase label opacity (fade / hover).
+        if (hasLabel) {
+          updateLabelOpacity(clock.elapsedTime)
+        }
       }
       return
     }
+
+    // Handle state transitions — reset label state when going to hidden.
+    if (state === 'hidden' && lastStateRef.current !== 'hidden') {
+      completedAtRef.current = null
+    }
+
     lastStateRef.current = state
 
     if (state === 'hidden') {
       line.geometry.instanceCount = 0
       casing.geometry.instanceCount = 0
       cone.visible = false
+      if (hasLabel && divRef.current) {
+        divRef.current.style.opacity = '0'
+      }
       return
     }
 
@@ -256,7 +232,7 @@ function MovementArrow({
     const coneMat = cone.material as THREE.Material
 
     if (state === 'completed') {
-      // Fully drawn, faded — label hidden (handled in UnitLabel)
+      // Fully drawn, faded.
       line.geometry.instanceCount = totalSegs
       casing.geometry.instanceCount = totalSegs
       lineMat.opacity = OPACITY_DONE
@@ -268,6 +244,16 @@ function MovementArrow({
       cone.scale.setScalar(screenScale(camera, tip, CONE_FRAC, CONE_MIN, CONE_MAX))
       cone.visible = true
       coneMat.opacity = OPACITY_DONE
+
+      if (hasLabel) {
+        // Move label to the completed tip position.
+        labelGroupRef.current?.position.copy(tip)
+        // Record completion time once.
+        if (completedAtRef.current === null) {
+          completedAtRef.current = clock.elapsedTime
+        }
+        updateLabelOpacity(clock.elapsedTime)
+      }
       return
     }
 
@@ -279,8 +265,16 @@ function MovementArrow({
     lineMat.opacity = OPACITY_CURRENT
     casingMat.opacity = CASING_OPACITY
 
+    // Reset completedAt when replaying from the start of this phase.
+    if (phaseProgress < 0.02) {
+      completedAtRef.current = null
+    }
+
     if (drawnSegs < 2 || phaseProgress < 0.02) {
       cone.visible = false
+      if (hasLabel && divRef.current) {
+        divRef.current.style.opacity = '0'
+      }
       return
     }
 
@@ -292,7 +286,54 @@ function MovementArrow({
     cone.scale.setScalar(screenScale(camera, tip, CONE_FRAC, CONE_MIN, CONE_MAX))
     cone.visible = true
     coneMat.opacity = OPACITY_CURRENT
+
+    if (hasLabel) {
+      // Move label group to the tip.
+      labelGroupRef.current?.position.copy(tip)
+      if (divRef.current) {
+        divRef.current.style.opacity = String(OPACITY_CURRENT)
+      }
+    }
   })
+
+  /** Compute and apply label opacity imperatively — no React state. */
+  function updateLabelOpacity(now: number) {
+    const div = divRef.current
+    if (!div) return
+
+    if (hoveredRef.current) {
+      div.style.opacity = String(OPACITY_CURRENT)
+      return
+    }
+
+    const completedAt = completedAtRef.current
+    if (completedAt === null) {
+      div.style.opacity = '0'
+      return
+    }
+
+    const age = now - completedAt
+    if (age < LABEL_FADE_HOLD) {
+      div.style.opacity = String(OPACITY_CURRENT)
+    } else {
+      const t = Math.min(1, (age - LABEL_FADE_HOLD) / LABEL_FADE_RAMP)
+      div.style.opacity = String(OPACITY_CURRENT * (1 - t))
+    }
+  }
+
+  function onPointerOver() {
+    hoveredRef.current = true
+    document.body.style.cursor = 'pointer'
+    // Immediately reveal label.
+    if (divRef.current) {
+      divRef.current.style.opacity = String(OPACITY_CURRENT)
+    }
+  }
+
+  function onPointerOut() {
+    hoveredRef.current = false
+    document.body.style.cursor = ''
+  }
 
   return (
     <group>
@@ -310,6 +351,8 @@ function MovementArrow({
         depthWrite={false}
         depthTest={false}
         renderOrder={9}
+        onPointerOver={onPointerOver}
+        onPointerOut={onPointerOut}
       />
       {/* Colored arrow — on top of casing */}
       <Line
@@ -326,7 +369,13 @@ function MovementArrow({
         depthTest={false}
         renderOrder={10}
       />
-      <mesh ref={coneRef} visible={false} renderOrder={10}>
+      <mesh
+        ref={coneRef}
+        visible={false}
+        renderOrder={10}
+        onPointerOver={onPointerOver}
+        onPointerOut={onPointerOut}
+      >
         <coneGeometry args={[1, 2, 8]} />
         <meshBasicMaterial
           color={color}
@@ -337,14 +386,31 @@ function MovementArrow({
           depthTest={false}
         />
       </mesh>
-      {movement.unit && (
-        <UnitLabel
-          battle={battle}
-          phaseIndex={phaseIndex}
-          unit={movement.unit}
-          color={color}
-          position={points[Math.floor(points.length / 2)]}
-        />
+      {hasLabel && (
+        // group ref drives the 3-D position; Html re-projects every frame.
+        <group ref={labelGroupRef} position={points[0]}>
+          <Html zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
+            <div
+              ref={divRef}
+              style={{
+                opacity: 0,
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                fontVariant: 'small-caps',
+                fontSize: '10px',
+                letterSpacing: '0.04em',
+                color,
+                whiteSpace: 'nowrap',
+                textShadow: '0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.7)',
+                userSelect: 'none',
+                display: 'inline-block',
+                transform: 'translate(12px, -16px)',
+                transition: 'none',
+              }}
+            >
+              {movement.unit}
+            </div>
+          </Html>
+        </group>
       )}
     </group>
   )
