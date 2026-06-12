@@ -11,7 +11,7 @@ const VIEWS: Array<{ id: BattleView; label: string }> = [
 
 const BASEMAPS: Array<{ id: BattleBasemap; label: string }> = [
   { id: 'satellite', label: 'Imagery' },
-  { id: 'topo', label: 'Map' },
+  { id: 'topo', label: 'Topo' }, // not "Map" — that label belongs to the view control
 ]
 
 export function BattleOverlay({ battle }: { battle: Battle }) {
