@@ -25,6 +25,7 @@ function JourneyStory({ journey }: { journey: Journey }) {
   const stopParam = searchParams.get('stop')
 
   const navigating = useAppStore((s) => s.navigating)
+  const flight = useAppStore((s) => s.flight)
   const { goToStop, activeStopIndex } = useJourneyNavigation(journey)
   useWheelZoom()
   const n = journey.stops.length
@@ -124,9 +125,11 @@ function JourneyStory({ journey }: { journey: Journey }) {
         </nav>
       )}
 
-      {/* Story card — right side */}
+      {/* Story card — right side. Suppress during direct flights (card already
+           snapped to destination while camera is still en route). Adjacent
+           flights use the natural dwell-window fade, so no multiplier there. */}
       {stop && mode === 'journey' && (
-        <article className="overlay story-card" style={{ opacity: cam.cardOpacity }}>
+        <article className="overlay story-card" style={{ opacity: flight ? 0 : cam.cardOpacity }}>
           <div className="card-date">{stop.date}</div>
           <h3>{stop.name}</h3>
           <p>{stop.story}</p>

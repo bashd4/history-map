@@ -1,7 +1,7 @@
 import gsap from 'gsap'
 import { useEffect, useRef, useState } from 'react'
 import type { Journey } from '../data/schema'
-import { cameraAt, DWELL, stopsForCamera } from '../lib/journeyCamera'
+import { cameraAt, DWELL, DWELL_ALT, stopsForCamera } from '../lib/journeyCamera'
 import { useAppStore } from '../state/store'
 
 /**
@@ -28,6 +28,9 @@ export function useJourneyNavigation(journey: Journey) {
   const setJourneyT = useAppStore((s) => s.setJourneyT)
   const setNavigating = useAppStore((s) => s.setNavigating)
   const setNearBattleStopIndex = useAppStore((s) => s.setNearBattleStopIndex)
+  const setFlight = useAppStore((s) => s.setFlight)
+  const setFlightT = useAppStore((s) => s.setFlightT)
+  const clearFlight = useAppStore((s) => s.clearFlight)
 
   // Derived active stop index — re-computed when journeyT changes (subscription
   // is fine here: only updates at tween frequency during flights).
@@ -51,42 +54,107 @@ export function useJourneyNavigation(journey: Journey) {
   const goToStop = (index: number) => {
     const clamped = Math.max(0, Math.min(n - 1, index))
     const targetT = dwellCenterT(clamped, n)
-    const currentT = useAppStore.getState().journeyT
 
-    // Kill any running tween.
+    // Kill any running tween and clear any active flight.
     if (tweenRef.current) {
       tweenRef.current.kill()
       tweenRef.current = null
     }
 
-    // Snap proxy to current real position.
-    proxy.current.t = currentT
-
-    const diff = Math.abs(targetT - currentT)
-    const duration = Math.min(4.5, 1.2 + 1.1 * diff * n)
-
     // A flight always arrives at the curated framing — clear any wheel zoom.
     useAppStore.getState().setZoom(1)
-    setNavigating(true)
-    tweenRef.current = gsap.to(proxy.current, {
-      t: targetT,
-      duration,
-      ease: 'power2.inOut',
-      onUpdate: () => {
-        const t = proxy.current.t
-        setJourneyT(t)
-        // Maintain preheat during flight.
-        const cam = cameraAt(t, stops)
-        const idx =
-          cam.activeStop != null && journey.stops[cam.activeStop]?.battle != null
-            ? cam.activeStop
-            : null
-        if (useAppStore.getState().nearBattleStopIndex !== idx) {
-          setNearBattleStopIndex(idx)
-        }
-      },
-      onComplete: () => setNavigating(false),
-    })
+
+    const state = useAppStore.getState()
+    const currentT = state.journeyT
+
+    // Derive current camera position — if a direct flight is already in progress,
+    // sample from the flight's 2-stop array at the current flightT to get the
+    // real screen position rather than the snapped journeyT destination.
+    let currentCam: ReturnType<typeof cameraAt>
+    if (state.flight) {
+      const flightStops = [
+        { lat: state.flight.from.lat, lng: state.flight.from.lng, camera: { altitude: state.flight.from.altitude } },
+        { lat: state.flight.to.lat, lng: state.flight.to.lng, camera: { altitude: state.flight.to.altitude } },
+      ]
+      currentCam = cameraAt(state.flightT, flightStops)
+    } else {
+      currentCam = cameraAt(currentT, stops)
+    }
+
+    // Clear any prior flight after sampling it above.
+    clearFlight()
+
+    const currentActiveIndex = cameraAt(currentT, stops).activeStop
+    const delta = currentActiveIndex != null ? Math.abs(clamped - currentActiveIndex) : 2
+
+    if (delta <= 1) {
+      // --- Adjacent move: scenic segment flight via journeyT tween (existing) ---
+      proxy.current.t = currentT
+      const diff = Math.abs(targetT - currentT)
+      const duration = Math.min(4.5, 1.2 + 1.1 * diff * n)
+
+      setNavigating(true)
+      tweenRef.current = gsap.to(proxy.current, {
+        t: targetT,
+        duration,
+        ease: 'power2.inOut',
+        onUpdate: () => {
+          const t = proxy.current.t
+          setJourneyT(t)
+          // Maintain preheat during flight.
+          const cam = cameraAt(t, stops)
+          const idx =
+            cam.activeStop != null && journey.stops[cam.activeStop]?.battle != null
+              ? cam.activeStop
+              : null
+          if (useAppStore.getState().nearBattleStopIndex !== idx) {
+            setNearBattleStopIndex(idx)
+          }
+        },
+        onComplete: () => setNavigating(false),
+      })
+    } else {
+      // --- Non-adjacent move: direct great-circle flight ---
+      const targetStop = journey.stops[clamped]
+      const toAltitude = targetStop.camera?.altitude ?? DWELL_ALT
+
+      // Snap journeyT to the destination immediately so timeline highlight
+      // and route line reflect the target from the very start of the flight.
+      setJourneyT(targetT)
+
+      // Set up the 2-stop flight from current camera position to target.
+      const fromEndpoint = {
+        lat: currentCam.lat,
+        lng: currentCam.lng,
+        altitude: currentCam.altitude,
+      }
+      const toEndpoint = {
+        lat: targetStop.coords.lat,
+        lng: targetStop.coords.lng,
+        altitude: toAltitude,
+      }
+      setFlight({ from: fromEndpoint, to: toEndpoint })
+
+      // Tween flightT from dwell-center of stop 0 to dwell-center of stop 1
+      // in a 2-stop journey. dwellCenterT(0,2) ≈ DWELL/2/2, dwellCenterT(1,2) = 0.75.
+      const tStart = dwellCenterT(0, 2)
+      const tEnd = dwellCenterT(1, 2)
+      proxy.current.t = tStart
+
+      setNavigating(true)
+      tweenRef.current = gsap.to(proxy.current, {
+        t: tEnd,
+        duration: 2.6,
+        ease: 'power2.inOut',
+        onUpdate: () => {
+          setFlightT(proxy.current.t)
+        },
+        onComplete: () => {
+          clearFlight()
+          setNavigating(false)
+        },
+      })
+    }
   }
 
   const next = () => {

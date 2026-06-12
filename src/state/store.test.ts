@@ -174,4 +174,40 @@ describe('app store', () => {
     useAppStore.getState().reset()
     expect(useAppStore.getState().battleBasemap).toBe('satellite')
   })
+
+  // Direct-flight state
+  it('flight starts null', () => {
+    expect(useAppStore.getState().flight).toBeNull()
+  })
+  it('flightT starts at 0', () => {
+    expect(useAppStore.getState().flightT).toBe(0)
+  })
+  it('setFlight sets flight and setFlightT updates flightT', () => {
+    const f = { from: { lat: 1, lng: 2, altitude: 0.09 }, to: { lat: 10, lng: 20, altitude: 0.09 } }
+    useAppStore.getState().setFlight(f)
+    expect(useAppStore.getState().flight).toBe(f)
+    useAppStore.getState().setFlightT(0.5)
+    expect(useAppStore.getState().flightT).toBe(0.5)
+  })
+  it('clearFlight nulls flight', () => {
+    useAppStore.getState().setFlight({ from: { lat: 0, lng: 0, altitude: 0 }, to: { lat: 1, lng: 1, altitude: 0 } })
+    useAppStore.getState().clearFlight()
+    expect(useAppStore.getState().flight).toBeNull()
+  })
+  it('flight clears on enterBattle', () => {
+    useAppStore.getState().setFlight({ from: { lat: 0, lng: 0, altitude: 0 }, to: { lat: 1, lng: 1, altitude: 0 } })
+    useAppStore.getState().enterBattle(3)
+    expect(useAppStore.getState().flight).toBeNull()
+  })
+  it('flight clears on exitJourney', () => {
+    useAppStore.getState().enterJourney('napoleon')
+    useAppStore.getState().setFlight({ from: { lat: 0, lng: 0, altitude: 0 }, to: { lat: 1, lng: 1, altitude: 0 } })
+    useAppStore.getState().exitJourney()
+    expect(useAppStore.getState().flight).toBeNull()
+  })
+  it('flight clears on reset()', () => {
+    useAppStore.getState().setFlight({ from: { lat: 0, lng: 0, altitude: 0 }, to: { lat: 1, lng: 1, altitude: 0 } })
+    useAppStore.getState().reset()
+    expect(useAppStore.getState().flight).toBeNull()
+  })
 })

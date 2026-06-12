@@ -5,7 +5,28 @@ import { journeyById } from '../journeys'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
 import { latLngToVector3, offsetLatLng } from '../lib/geo'
 import { battleFrameAltitude } from '../lib/battleExtent'
-import { useAppStore } from '../state/store'
+import { useAppStore, type FlightState } from '../state/store'
+import type { LatLng } from '../data/schema'
+
+// Module-level scratch array for direct-flight 2-stop cameraAt calls.
+// Rebuilt only when the flight reference changes — avoids per-frame allocation.
+let _flightRef: FlightState | null = null
+const _flightStops: Array<LatLng & { camera?: { altitude: number } }> = [
+  { lat: 0, lng: 0, camera: { altitude: 0 } },
+  { lat: 0, lng: 0, camera: { altitude: 0 } },
+]
+function getFlightStops(flight: FlightState): typeof _flightStops {
+  if (flight !== _flightRef) {
+    _flightRef = flight
+    _flightStops[0].lat = flight.from.lat
+    _flightStops[0].lng = flight.from.lng
+    _flightStops[0].camera!.altitude = flight.from.altitude
+    _flightStops[1].lat = flight.to.lat
+    _flightStops[1].lng = flight.to.lng
+    _flightStops[1].camera!.altitude = flight.to.altitude
+  }
+  return _flightStops
+}
 
 const HUB_POS = new THREE.Vector3(0, 0.4, 2.8)
 const ORIGIN = new THREE.Vector3(0, 0, 0)
@@ -26,7 +47,7 @@ export function CameraRig() {
 
   useFrame((state, dt) => {
     const dtc = Math.min(dt, 0.1) // cap against tab-resume teleport
-    const { mode, journeyId, journeyT, battleStopIndex, zoom, battleView } =
+    const { mode, journeyId, journeyT, battleStopIndex, zoom, battleView, flight, flightT } =
       useAppStore.getState()
     const journey = journeyId ? journeyById(journeyId) : null
     const k = 3.2 // damping stiffness
@@ -48,7 +69,11 @@ export function CameraRig() {
       look.current.copy(ORIGIN)
       return
     } else if (mode === 'journey') {
-      const c = cameraAt(journeyT, stopsForCamera(journey))
+      // Direct-flight override: use a 2-stop cameraAt driven by flightT for a
+      // clean great-circle hop. Otherwise use journeyT as usual.
+      const c = flight
+        ? cameraAt(flightT, getFlightStops(flight))
+        : cameraAt(journeyT, stopsForCamera(journey))
       // zoom multiplies altitude (wheel/pinch); the damping below smooths it.
       targetPos.current.copy(latLngToVector3(c.lat, c.lng, 1 + c.altitude * zoom))
       targetLook.current.copy(ORIGIN)
