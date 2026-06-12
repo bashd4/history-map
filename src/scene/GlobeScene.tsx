@@ -11,6 +11,7 @@ import { journeys, journeyById } from '../journeys'
 import { useAppStore } from '../state/store'
 import { TerrainErrorBoundary } from './TerrainErrorBoundary'
 import { BattleArrows } from './BattleArrows'
+import { BattleAnnotations } from './BattleAnnotations'
 import { PerfSampler } from './PerfSampler'
 
 // Code-split so the hub never pays the 3d-tiles-renderer bundle cost.
@@ -151,6 +152,8 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
           {/* Battle movement arrows — outside terrain error boundary so they
               work even when terrain degrades. Mounted only in battle mode. */}
           {activeBattle && <BattleArrows battle={activeBattle} />}
+          {/* Landmark/event labels — also outside the terrain boundary. */}
+          {activeBattle && <BattleAnnotations battle={activeBattle} />}
         </Suspense>
         <CameraRig />
         {mode === 'hub' && (

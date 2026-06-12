@@ -61,4 +61,86 @@ describe('journeySchema', () => {
     }
     expect(() => journeySchema.parse({ ...validJourney, stops: [battleStop, validStop] })).toThrow()
   })
+
+  // ── enrichment fields ──────────────────────────────────────────────────
+  const baseBattle = {
+    name: 'Austerlitz', date: '2 Dec 1805',
+    sides: { french: '#4d8fdb', coalition: '#c0392b' },
+    phases: [{
+      caption: 'Phase.',
+      movements: [{ side: 'french', style: 'advance', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+    }],
+  }
+  const withBattle = (battle: object) =>
+    journeySchema.parse({ ...validJourney, stops: [{ ...validStop, battle }, validStop] })
+
+  it('accepts battle with strengths matching sides keys', () => {
+    const j = withBattle({ ...baseBattle, strengths: { french: '73,000 men', coalition: '85,000 men' } })
+    expect(j.stops[0].battle?.strengths?.french).toBe('73,000 men')
+  })
+  it('rejects battle with strengths key not in sides', () => {
+    expect(() => withBattle({ ...baseBattle, strengths: { french: '73,000', ottoman: '10,000' } }))
+      .toThrow(/ottoman/)
+  })
+  it('accepts battle with landmarks', () => {
+    const j = withBattle({
+      ...baseBattle,
+      landmarks: [
+        { name: 'Pratzen Heights', coords: { lat: 49.128, lng: 16.7625 }, kind: 'terrain' },
+        { name: 'Satschan Ponds', coords: { lat: 49.08, lng: 16.73 }, kind: 'water' },
+      ],
+    })
+    expect(j.stops[0].battle?.landmarks?.[0].name).toBe('Pratzen Heights')
+  })
+  it('rejects a landmark with name > 40 chars', () => {
+    expect(() => withBattle({
+      ...baseBattle,
+      landmarks: [{ name: 'A'.repeat(41), coords: { lat: 49.1, lng: 16.7 } }],
+    })).toThrow()
+  })
+  it('accepts battle with fieldAzimuth', () => {
+    const j = withBattle({ ...baseBattle, fieldAzimuth: 250 })
+    expect(j.stops[0].battle?.fieldAzimuth).toBe(250)
+  })
+  it('rejects fieldAzimuth > 360', () => {
+    expect(() => withBattle({ ...baseBattle, fieldAzimuth: 361 })).toThrow()
+  })
+  it('accepts a phase with events', () => {
+    const j = withBattle({
+      ...baseBattle,
+      phases: [{
+        ...baseBattle.phases[0],
+        events: [{ coords: { lat: 49.08, lng: 16.73 }, label: 'Allied troops flee across the frozen ponds' }],
+      }],
+    })
+    expect(j.stops[0].battle?.phases[0].events?.[0].label).toMatch(/frozen/)
+  })
+  it('rejects an event label > 60 chars', () => {
+    expect(() => withBattle({
+      ...baseBattle,
+      phases: [{
+        ...baseBattle.phases[0],
+        events: [{ coords: { lat: 49.08, lng: 16.73 }, label: 'A'.repeat(61) }],
+      }],
+    })).toThrow()
+  })
+  it('accepts a movement with unit label', () => {
+    const j = withBattle({
+      ...baseBattle,
+      phases: [{
+        caption: 'Phase.',
+        movements: [{ side: 'french', style: 'advance', unit: 'Soult — IV Corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+      }],
+    })
+    expect(j.stops[0].battle?.phases[0].movements[0].unit).toBe('Soult — IV Corps')
+  })
+  it('rejects a movement unit > 40 chars', () => {
+    expect(() => withBattle({
+      ...baseBattle,
+      phases: [{
+        caption: 'Phase.',
+        movements: [{ side: 'french', style: 'advance', unit: 'A'.repeat(41), path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+      }],
+    })).toThrow()
+  })
 })

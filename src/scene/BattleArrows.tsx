@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Line } from '@react-three/drei'
+import { Html, Line } from '@react-three/drei'
 import type { Line2 } from 'three-stdlib'
 import type { Battle, Movement } from '../data/schema'
 import { latLngToVector3, slerpUnit } from '../lib/geo'
@@ -21,12 +21,14 @@ const SEGS_PER_LEG = 24
  * it never disappears (min) or dominates while the camera is still far away
  * during the dive-in transition (max).
  */
-const CONE_FRAC = 0.035
-const CONE_MIN = 0.0003
-const CONE_MAX = 0.004
+const CONE_FRAC = 0.018
+// Min is a far-range safety net only — keep it below the screen-fraction value
+// at close zoom (d ≈ 0.005) so zoomed-in field views don't inflate the cone.
+const CONE_MIN = 0.00005
+const CONE_MAX = 0.002
 
 const OPACITY_CURRENT = 0.95
-const OPACITY_DONE = 0.45
+const OPACITY_DONE = 0.4
 
 // Scratch objects — never allocate in the frame loop.
 const _UP = new THREE.Vector3(0, 1, 0)
@@ -76,6 +78,58 @@ function useBattleMovements(battle: Battle): TaggedMovement[] {
 
 type ArrowState = 'hidden' | 'completed' | 'current'
 
+/** Visibility state for a phase-bound annotation — same rules as the arrows. */
+function arrowStateAt(battle: Battle, phaseIndex: number, elapsed: number): ArrowState {
+  const { phaseIndex: currentPhase, done } = playbackAt(battle, elapsed)
+  return phaseIndex > currentPhase ? 'hidden'
+    : phaseIndex < currentPhase || done ? 'completed'
+    : 'current'
+}
+
+/**
+ * Unit name at the path midpoint, colored by side. Matches the arrow's
+ * visibility/fade: full when current, dimmed when completed, hidden when
+ * future. React subscription to battleElapsed is acceptable here —
+ * BattleOverlay already re-renders at that frequency.
+ */
+function UnitLabel({
+  battle,
+  phaseIndex,
+  unit,
+  color,
+  position,
+}: {
+  battle: Battle
+  phaseIndex: number
+  unit: string
+  color: string
+  position: THREE.Vector3
+}) {
+  const battleElapsed = useAppStore((s) => s.battleElapsed)
+  const state = arrowStateAt(battle, phaseIndex, battleElapsed)
+  if (state === 'hidden') return null
+
+  return (
+    <Html position={position} zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
+      <span style={{
+        fontFamily: "Georgia, 'Times New Roman', serif",
+        fontVariant: 'small-caps',
+        fontSize: '10px',
+        letterSpacing: '0.04em',
+        color,
+        opacity: state === 'completed' ? OPACITY_DONE : OPACITY_CURRENT,
+        whiteSpace: 'nowrap',
+        textShadow: '0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.7)',
+        userSelect: 'none',
+        display: 'inline-block',
+        transform: 'translate(-50%, -130%)',
+      }}>
+        {unit}
+      </span>
+    </Html>
+  )
+}
+
 /**
  * Single animated movement arrow. `battle` is read in useFrame via closure —
  * safe because r3f keeps the latest frame callback per render.
@@ -97,7 +151,7 @@ function MovementArrow({
 
   const isDashed = movement.style === 'retreat' || movement.style === 'feint'
   const color = battle.sides[movement.side] ?? '#ffffff'
-  const lineWidth = movement.style === 'advance' ? 5 : 4
+  const lineWidth = movement.style === 'advance' ? 2.5 : 2
 
   useFrame(({ camera }) => {
     const { battleElapsed, mode } = useAppStore.getState()
@@ -197,6 +251,15 @@ function MovementArrow({
           depthTest={false}
         />
       </mesh>
+      {movement.unit && (
+        <UnitLabel
+          battle={battle}
+          phaseIndex={phaseIndex}
+          unit={movement.unit}
+          color={color}
+          position={points[Math.floor(points.length / 2)]}
+        />
+      )}
     </group>
   )
 }

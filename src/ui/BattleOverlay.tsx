@@ -1,13 +1,21 @@
 import { useEffect } from 'react'
 import { phaseSeconds, playbackAt, totalDuration } from '../lib/battlePlayback'
 import type { Battle } from '../data/schema'
-import { useAppStore } from '../state/store'
+import { useAppStore, type BattleView } from '../state/store'
+
+const VIEWS: Array<{ id: BattleView; label: string }> = [
+  { id: 'map', label: 'Map' },
+  { id: 'field', label: 'Field' },
+  { id: 'orbit', label: 'Orbit' },
+]
 
 export function BattleOverlay({ battle }: { battle: Battle }) {
   const battleElapsed = useAppStore((s) => s.battleElapsed)
   const battlePlaying = useAppStore((s) => s.battlePlaying)
+  const battleView = useAppStore((s) => s.battleView)
   const setBattleElapsed = useAppStore((s) => s.setBattleElapsed)
   const setBattlePlaying = useAppStore((s) => s.setBattlePlaying)
+  const setBattleView = useAppStore((s) => s.setBattleView)
   const replayBattle = useAppStore((s) => s.replayBattle)
   const exitBattle = useAppStore((s) => s.exitBattle)
   const total = totalDuration(battle)
@@ -50,8 +58,31 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
         <div>
           <h3>{battle.name}</h3>
           <div className="card-date">{battle.date} · Phase {phaseIndex + 1} of {battle.phases.length}</div>
+          {battle.strengths && (
+            <div className="battle-strengths">
+              {Object.entries(battle.strengths).map(([side, text]) => (
+                <span key={side} className="battle-strength-chip">
+                  <span className="battle-strength-dot"
+                    style={{ background: battle.sides[side] ?? '#888888' }} />
+                  {text}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        <button onClick={exitBattle} aria-label="Exit battle">✕</button>
+        <div className="battle-header-right">
+          <div className="battle-view-switcher" role="group" aria-label="Camera view">
+            {VIEWS.map((v) => (
+              <button key={v.id}
+                className={`battle-view-btn${battleView === v.id ? ' battle-view-btn--active' : ''}`}
+                aria-pressed={battleView === v.id}
+                onClick={() => setBattleView(v.id)}>
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <button className="battle-close" onClick={exitBattle} aria-label="Exit battle">✕</button>
+        </div>
       </header>
       <footer className="battle-footer">
         <button className="battle-play" onClick={() =>

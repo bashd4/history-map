@@ -26,6 +26,32 @@ export function slerpUnit(a: THREE.Vector3, b: THREE.Vector3, t: number): THREE.
     .add(b.clone().multiplyScalar(Math.sin(t * angle) / s))
 }
 
+/**
+ * Destination point on the unit sphere given an origin, compass bearing
+ * (degrees, 0 = north, 90 = east), and angular distance in RADIANS.
+ * Standard great-circle destination formula.
+ */
+export function offsetLatLng(origin: LatLng, bearingDeg: number, angularDist: number): LatLng {
+  const DEG2RAD = Math.PI / 180
+  const phi1 = origin.lat * DEG2RAD
+  const lambda1 = origin.lng * DEG2RAD
+  const theta = bearingDeg * DEG2RAD
+  const delta = angularDist
+
+  const phi2 = Math.asin(
+    Math.sin(phi1) * Math.cos(delta) + Math.cos(phi1) * Math.sin(delta) * Math.cos(theta),
+  )
+  const lambda2 = lambda1 + Math.atan2(
+    Math.sin(theta) * Math.sin(delta) * Math.cos(phi1),
+    Math.cos(delta) - Math.sin(phi1) * Math.sin(phi2),
+  )
+
+  return {
+    lat: phi2 / DEG2RAD,
+    lng: ((lambda2 / DEG2RAD + 540) % 360) - 180, // normalise to [-180, 180)
+  }
+}
+
 /** Great-circle arc lifted off the surface; lift scales with arc length. */
 export function greatCirclePoints(from: LatLng, to: LatLng, segments = 64, lift = 0.05): THREE.Vector3[] {
   const a = latLngToVector3(from.lat, from.lng).normalize()

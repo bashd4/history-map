@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 export type Mode = 'hub' | 'journey' | 'battle'
+export type BattleView = 'map' | 'field' | 'orbit'
 
 interface AppState {
   mode: Mode
@@ -28,6 +29,10 @@ interface AppState {
    *  or battle. 1 = curated framing; <1 closer, >1 further out. Reset to 1 on
    *  enterBattle/exitBattle and when a stop flight starts (goToStop). */
   zoom: number
+  /** Battle camera mode: map = straight down (default), field = oblique from
+   *  fieldAzimuth, orbit = slow rotation around the site. Reset to 'map' on
+   *  enterBattle/exitBattle. */
+  battleView: BattleView
   enterJourney: (id: string) => void
   exitJourney: () => void
   setJourneyT: (t: number) => void
@@ -41,6 +46,7 @@ interface AppState {
   setNearBattleStopIndex: (index: number | null) => void
   setLowPerf: (v: boolean) => void
   setZoom: (z: number) => void
+  setBattleView: (v: BattleView) => void
   requestStop: (index: number) => void
   clearRequestedStop: () => void
   reset: () => void
@@ -52,6 +58,7 @@ const initial = {
   hoveredJourneyId: null, nearBattleStopIndex: null as number | null,
   requestedStopIndex: null as number | null,
   zoom: 1,
+  battleView: 'map' as BattleView,
   // NOTE: lowPerf is intentionally NOT in initial — it's preserved across resets.
 }
 
@@ -63,8 +70,9 @@ export const useAppStore = create<AppState>((set) => ({
   setJourneyT: (journeyT) => set({ journeyT }),
   setNavigating: (navigating) => set({ navigating }),
   enterBattle: (battleStopIndex) =>
-    set({ mode: 'battle', battleStopIndex, battleElapsed: 0, battlePlaying: true, zoom: 1 }),
-  exitBattle: () => set({ mode: 'journey', battleStopIndex: null, battlePlaying: false, zoom: 1 }),
+    set({ mode: 'battle', battleStopIndex, battleElapsed: 0, battlePlaying: true, zoom: 1, battleView: 'map' }),
+  exitBattle: () =>
+    set({ mode: 'journey', battleStopIndex: null, battlePlaying: false, zoom: 1, battleView: 'map' }),
   replayBattle: () => set({ battleElapsed: 0, battlePlaying: true }),
   setBattleElapsed: (battleElapsed) => set({ battleElapsed }),
   setBattlePlaying: (battlePlaying) => set({ battlePlaying }),
@@ -72,6 +80,7 @@ export const useAppStore = create<AppState>((set) => ({
   setNearBattleStopIndex: (nearBattleStopIndex) => set({ nearBattleStopIndex }),
   setLowPerf: (lowPerf) => set({ lowPerf }),
   setZoom: (zoom) => set({ zoom }),
+  setBattleView: (battleView) => set({ battleView }),
   requestStop: (requestedStopIndex) => set({ requestedStopIndex }),
   clearRequestedStop: () => set({ requestedStopIndex: null }),
   reset: () => set((s) => ({ ...initial, lowPerf: s.lowPerf })),

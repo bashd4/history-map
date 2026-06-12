@@ -30,28 +30,40 @@ export const napoleon: Journey = {
       battle: {
         name: 'Battle of Austerlitz', date: '2 December 1805',
         sides: { french: '#4d8fdb', coalition: '#c0392b' },
+        strengths: { french: '73,000 men', coalition: '85,000 men' },
+        // Camera stands SW of the field, looking NE across the Pratzen Heights.
+        fieldAzimuth: 250,
+        landmarks: [
+          { name: 'Pratzen Heights', coords: { lat: 49.128, lng: 16.7625 }, kind: 'terrain' },
+          { name: 'Satschan Ponds', coords: { lat: 49.08, lng: 16.73 }, kind: 'water' },
+          { name: 'Sokolnitz', coords: { lat: 49.10, lng: 16.70 }, kind: 'settlement' },
+          { name: 'Telnitz', coords: { lat: 49.09, lng: 16.71 }, kind: 'settlement' },
+        ],
         phases: [
           { caption: 'The trap is set: Napoleon deliberately abandons the Pratzen Heights and weakens his right flank, inviting attack.',
             duration: 7,
             movements: [
-              { side: 'french', style: 'feint', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.13, lng: 16.69 }] },
+              { side: 'french', style: 'feint', unit: 'Soult — IV Corps', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.13, lng: 16.69 }] },
             ] },
           { caption: 'The Allies take the bait: their columns pour south off the heights to envelop the French right, where Davout\'s corps arrives after a forced march to hold the line.',
             duration: 8,
             movements: [
-              { side: 'coalition', style: 'advance', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.1, lng: 16.73 }, { lat: 49.09, lng: 16.705 }] },
-              { side: 'french', style: 'advance', path: [{ lat: 49.06, lng: 16.65 }, { lat: 49.088, lng: 16.7 }] },
+              { side: 'coalition', style: 'advance', unit: 'Buxhöwden\'s columns', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.1, lng: 16.73 }, { lat: 49.09, lng: 16.705 }] },
+              { side: 'french', style: 'advance', unit: 'Davout — III Corps', path: [{ lat: 49.06, lng: 16.65 }, { lat: 49.088, lng: 16.7 }] },
             ] },
           { caption: 'The masterstroke: as fog lifts under the "Sun of Austerlitz," Soult\'s corps storms the emptied Pratzen Heights and splits the Allied army in two.',
             duration: 7,
             movements: [
-              { side: 'french', style: 'advance', path: [{ lat: 49.125, lng: 16.7 }, { lat: 49.128, lng: 16.762 }] },
+              { side: 'french', style: 'advance', unit: 'Soult — IV Corps', path: [{ lat: 49.125, lng: 16.7 }, { lat: 49.128, lng: 16.762 }] },
             ] },
           { caption: 'The rout: the French wheel south from the heights; the Allied left collapses and flees across the frozen Satschan ponds.',
             duration: 8,
+            events: [
+              { coords: { lat: 49.08, lng: 16.73 }, label: 'Allied troops flee across the frozen ponds' },
+            ],
             movements: [
-              { side: 'french', style: 'advance', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.095, lng: 16.74 }] },
-              { side: 'coalition', style: 'retreat', path: [{ lat: 49.09, lng: 16.72 }, { lat: 49.07, lng: 16.74 }] },
+              { side: 'french', style: 'advance', unit: 'St. Hilaire & Vandamme', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.095, lng: 16.74 }] },
+              { side: 'coalition', style: 'retreat', unit: 'Allied left wing', path: [{ lat: 49.09, lng: 16.72 }, { lat: 49.07, lng: 16.74 }] },
             ] },
         ],
       } },

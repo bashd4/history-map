@@ -127,4 +127,27 @@ describe('app store', () => {
     useAppStore.getState().enterJourney('napoleon')
     expect(useAppStore.getState().zoom).toBe(1)
   })
+  it('battleView defaults to map', () => {
+    expect(useAppStore.getState().battleView).toBe('map')
+  })
+  it('setBattleView updates battleView', () => {
+    useAppStore.getState().setBattleView('field')
+    expect(useAppStore.getState().battleView).toBe('field')
+  })
+  it('battleView resets to map on enterBattle', () => {
+    useAppStore.getState().setBattleView('orbit')
+    useAppStore.getState().enterBattle(8)
+    expect(useAppStore.getState().battleView).toBe('map')
+  })
+  it('battleView resets to map on exitBattle', () => {
+    useAppStore.getState().enterBattle(8)
+    useAppStore.getState().setBattleView('orbit')
+    useAppStore.getState().exitBattle()
+    expect(useAppStore.getState().battleView).toBe('map')
+  })
+  it('battleView resets to map on reset()', () => {
+    useAppStore.getState().setBattleView('field')
+    useAppStore.getState().reset()
+    expect(useAppStore.getState().battleView).toBe('map')
+  })
 })

@@ -3,11 +3,12 @@ import { useRef } from 'react'
 import * as THREE from 'three'
 import { journeyById } from '../journeys'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
-import { latLngToVector3 } from '../lib/geo'
+import { latLngToVector3, offsetLatLng } from '../lib/geo'
 import { useAppStore } from '../state/store'
 
 const HUB_POS = new THREE.Vector3(0, 0.4, 2.8)
 const ORIGIN = new THREE.Vector3(0, 0, 0)
+const WORLD_UP = new THREE.Vector3(0, 1, 0)
 const BATTLE_ALT = 0.012 // ~75 km bird's-eye over the battlefield
 
 export function CameraRig() {
@@ -15,10 +16,17 @@ export function CameraRig() {
   const targetPos = useRef(HUB_POS.clone())
   const targetLook = useRef(ORIGIN.clone())
   const look = useRef(ORIGIN.clone())
+  // Up-vector hint, damped like the rest of the rig. World +Y everywhere
+  // except battle field/orbit, where the site's radial direction keeps the
+  // horizon level (world-Y up rolls the horizon ~40° at Austerlitz's latitude
+  // when looking obliquely along the surface).
+  const targetUp = useRef(WORLD_UP.clone())
+  const up = useRef(WORLD_UP.clone())
 
-  useFrame((_, dt) => {
+  useFrame((state, dt) => {
     const dtc = Math.min(dt, 0.1) // cap against tab-resume teleport
-    const { mode, journeyId, journeyT, battleStopIndex, zoom } = useAppStore.getState()
+    const { mode, journeyId, journeyT, battleStopIndex, zoom, battleView } =
+      useAppStore.getState()
     const journey = journeyId ? journeyById(journeyId) : null
     const k = 3.2 // damping stiffness
 
@@ -47,17 +55,45 @@ export function CameraRig() {
       const stop = journey.stops[battleStopIndex]
       if (!stop) return
       const site = stop.coords
-      targetPos.current.copy(latLngToVector3(site.lat, site.lng, 1 + BATTLE_ALT * zoom))
-      targetLook.current.copy(latLngToVector3(site.lat, site.lng, 1)) // straight down
+      if (battleView === 'map') {
+        targetPos.current.copy(latLngToVector3(site.lat, site.lng, 1 + BATTLE_ALT * zoom))
+        targetLook.current.copy(latLngToVector3(site.lat, site.lng, 1)) // straight down
+        targetUp.current.copy(WORLD_UP)
+      } else {
+        // field / orbit: stand off from the site at a low oblique altitude and
+        // look back at the surface point — tilted view that shows relief.
+        const azimuth = stop.battle?.fieldAzimuth ?? 180
+        const bearing =
+          battleView === 'orbit'
+            ? azimuth + state.clock.elapsedTime * 4 // slow circle, 4°/s
+            : azimuth
+        const groundDist = BATTLE_ALT * 1.4 * zoom // angular standoff (radians)
+        const camLL = offsetLatLng(site, ((bearing % 360) + 360) % 360, groundDist)
+        targetPos.current.copy(
+          latLngToVector3(camLL.lat, camLL.lng, 1 + BATTLE_ALT * 0.45 * zoom))
+        targetLook.current.copy(latLngToVector3(site.lat, site.lng, 1))
+        targetUp.current.copy(latLngToVector3(site.lat, site.lng, 1)) // radial up: level horizon
+      }
     }
 
-    camera.position.x = THREE.MathUtils.damp(camera.position.x, targetPos.current.x, k, dtc)
-    camera.position.y = THREE.MathUtils.damp(camera.position.y, targetPos.current.y, k, dtc)
-    camera.position.z = THREE.MathUtils.damp(camera.position.z, targetPos.current.z, k, dtc)
+    if (mode !== 'battle') targetUp.current.copy(WORLD_UP)
+
+    // Orbit's target moves continuously — damp k=3.2 lags enough to shrink the
+    // circle; a stiffer tracker keeps the radius while staying smooth.
+    const kp = mode === 'battle' && battleView === 'orbit' ? 8 : k
+
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, targetPos.current.x, kp, dtc)
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, targetPos.current.y, kp, dtc)
+    camera.position.z = THREE.MathUtils.damp(camera.position.z, targetPos.current.z, kp, dtc)
     look.current.x = THREE.MathUtils.damp(look.current.x, targetLook.current.x, k, dtc)
     look.current.y = THREE.MathUtils.damp(look.current.y, targetLook.current.y, k, dtc)
     look.current.z = THREE.MathUtils.damp(look.current.z, targetLook.current.z, k, dtc)
-    camera.up.set(0, 1, 0)
+    up.current.x = THREE.MathUtils.damp(up.current.x, targetUp.current.x, k, dtc)
+    up.current.y = THREE.MathUtils.damp(up.current.y, targetUp.current.y, k, dtc)
+    up.current.z = THREE.MathUtils.damp(up.current.z, targetUp.current.z, k, dtc)
+    if (up.current.lengthSq() > 1e-6) up.current.normalize()
+    else up.current.copy(targetUp.current)
+    camera.up.copy(up.current)
     camera.lookAt(look.current)
   })
   return null
