@@ -8,9 +8,11 @@ import { latLngToVector3, slerpUnit } from '../lib/geo'
 import { playbackAt } from '../lib/battlePlayback'
 import { screenScale } from '../lib/screenScale'
 import { useAppStore } from '../state/store'
+import { terrainSampler, useTerrainHeightsVersion } from './useTerrainHeights'
 
-// Arrow altitude — ~3.8 km above surface, clears Austerlitz heights (~300 m)
-const ARROW_ALT = 1.0006
+// Clearance above the sampled terrain surface (~190 m in scene units).
+// Enough to avoid z-fighting without visibly floating.
+const SURFACE_CLEARANCE = 0.00003
 
 /** Number of slerp segments per leg of a movement path */
 const SEGS_PER_LEG = 24
@@ -34,7 +36,31 @@ const OPACITY_DONE = 0.4
 const _UP = new THREE.Vector3(0, 1, 0)
 const _tangent = new THREE.Vector3()
 
-/** Build surface-hugging polyline points for a movement. */
+/**
+ * Collect all distinct (lat, lng) waypoints for a movement path, with
+ * interpolated slerp steps, for pre-registering with the terrain sampler.
+ */
+function movementLatLngs(movement: Movement): Array<{ lat: number; lng: number }> {
+  const out: Array<{ lat: number; lng: number }> = []
+  for (let leg = 0; leg < movement.path.length - 1; leg++) {
+    const from = movement.path[leg]
+    const to = movement.path[leg + 1]
+    const a = latLngToVector3(from.lat, from.lng).normalize()
+    const b = latLngToVector3(to.lat, to.lng).normalize()
+    const start = leg === 0 ? 0 : 1
+    for (let i = start; i <= SEGS_PER_LEG; i++) {
+      const t = i / SEGS_PER_LEG
+      // Approximate lat/lng by normalizing the slerped unit vector back.
+      const v = slerpUnit(a, b, t)
+      const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
+      const lng = Math.atan2(v.z, -v.x) * (180 / Math.PI)
+      out.push({ lat, lng })
+    }
+  }
+  return out
+}
+
+/** Build surface-hugging polyline points for a movement, draping onto terrain. */
 function buildMovementPoints(movement: Movement): THREE.Vector3[] {
   const pts: THREE.Vector3[] = []
   for (let leg = 0; leg < movement.path.length - 1; leg++) {
@@ -45,7 +71,12 @@ function buildMovementPoints(movement: Movement): THREE.Vector3[] {
     const start = leg === 0 ? 0 : 1 // avoid duplicate point at leg joints
     for (let i = start; i <= SEGS_PER_LEG; i++) {
       const t = i / SEGS_PER_LEG
-      pts.push(slerpUnit(a, b, t).multiplyScalar(ARROW_ALT))
+      const v = slerpUnit(a, b, t)
+      // Recover lat/lng for this interpolated point to look up sampled height
+      const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
+      const lng = Math.atan2(v.z, -v.x) * (180 / Math.PI)
+      const surfaceR = terrainSampler.sampleRadius(lat, lng)
+      pts.push(v.clone().multiplyScalar(surfaceR + SURFACE_CLEARANCE))
     }
   }
   return pts
@@ -60,6 +91,20 @@ interface TaggedMovement {
 }
 
 function useBattleMovements(battle: Battle): TaggedMovement[] {
+  const heightsVersion = useTerrainHeightsVersion()
+
+  // Pre-register all path points with the sampler so they stay cached.
+  // Re-registers whenever battle data changes (new battle loaded).
+  useMemo(() => {
+    const allPoints: Array<{ lat: number; lng: number }> = []
+    battle.phases.forEach((phase) => {
+      phase.movements.forEach((movement) => {
+        allPoints.push(...movementLatLngs(movement))
+      })
+    })
+    terrainSampler.registerPoints('arrows', allPoints)
+  }, [battle])
+
   return useMemo(() => {
     const result: TaggedMovement[] = []
     battle.phases.forEach((phase, phaseIndex) => {
@@ -73,7 +118,9 @@ function useBattleMovements(battle: Battle): TaggedMovement[] {
       })
     })
     return result
-  }, [battle])
+  // heightsVersion triggers a rebuild when terrain data refreshes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [battle, heightsVersion])
 }
 
 type ArrowState = 'hidden' | 'completed' | 'current'

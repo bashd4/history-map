@@ -5,11 +5,11 @@ import type { Battle } from '../data/schema'
 import { latLngToVector3, slerpUnit } from '../lib/geo'
 import { playbackAt } from '../lib/battlePlayback'
 import { useAppStore } from '../state/store'
+import { terrainSampler, useTerrainHeightsVersion } from './useTerrainHeights'
 
-// Just above the arrow layer's surface footprint, below the camera.
-const LABEL_ALT = 1.0008
-// Area outline sits slightly below the label altitude
-const OUTLINE_ALT = 1.0006
+// Clearance above sampled terrain surface for outlines (~250 m) and labels (~500 m).
+const OUTLINE_CLEARANCE = 0.00004
+const LABEL_CLEARANCE = 0.00008
 
 /** Number of slerp subdivisions per outline edge to follow globe curvature */
 const SEGS_PER_EDGE = 8
@@ -30,10 +30,20 @@ const baseLabelStyle: CSSProperties = {
 }
 
 /**
- * Build a closed, slerp-subdivided outline loop for an area at the given radius.
- * The loop is closed by appending the first interpolated segment back to origin.
+ * Helper: recover approximate (lat, lng) from a unit THREE.Vector3 generated
+ * by latLngToVector3 / slerpUnit.  Used to look up sampled terrain height.
  */
-function buildOutlineLoop(outline: Array<{ lat: number; lng: number }>, radius: number): THREE.Vector3[] {
+function vec3ToLatLng(v: THREE.Vector3): { lat: number; lng: number } {
+  const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
+  const lng = Math.atan2(v.z, -v.x) * (180 / Math.PI)
+  return { lat, lng }
+}
+
+/**
+ * Build a closed, slerp-subdivided outline loop for an area, draped onto terrain.
+ * Each interpolated point is lifted to sampledRadius + OUTLINE_CLEARANCE.
+ */
+function buildOutlineLoop(outline: Array<{ lat: number; lng: number }>): THREE.Vector3[] {
   const unitVerts = outline.map((p) => latLngToVector3(p.lat, p.lng).normalize())
   const pts: THREE.Vector3[] = []
   const n = unitVerts.length
@@ -41,7 +51,10 @@ function buildOutlineLoop(outline: Array<{ lat: number; lng: number }>, radius: 
     const a = unitVerts[i]
     const b = unitVerts[(i + 1) % n]
     for (let s = 0; s < SEGS_PER_EDGE; s++) {
-      pts.push(slerpUnit(a, b, s / SEGS_PER_EDGE).multiplyScalar(radius))
+      const v = slerpUnit(a, b, s / SEGS_PER_EDGE)
+      const { lat, lng } = vec3ToLatLng(v)
+      const r = terrainSampler.sampleRadius(lat, lng) + OUTLINE_CLEARANCE
+      pts.push(v.clone().multiplyScalar(r))
     }
   }
   // close the loop
@@ -50,15 +63,42 @@ function buildOutlineLoop(outline: Array<{ lat: number; lng: number }>, radius: 
 }
 
 /**
- * Compute centroid of outline as the normalised average of unit vectors,
- * then lift to the given radius.
+ * Collect all (lat, lng) points needed for all areas, for pre-registering
+ * with the terrain sampler.
  */
-function outlineCentroid(outline: Array<{ lat: number; lng: number }>, radius: number): THREE.Vector3 {
+function allAreaPoints(areas: Array<{ outline: Array<{ lat: number; lng: number }> }>): Array<{ lat: number; lng: number }> {
+  const out: Array<{ lat: number; lng: number }> = []
+  for (const area of areas) {
+    const unitVerts = area.outline.map((p) => latLngToVector3(p.lat, p.lng).normalize())
+    const n = unitVerts.length
+    for (let i = 0; i < n; i++) {
+      const a = unitVerts[i]
+      const b = unitVerts[(i + 1) % n]
+      for (let s = 0; s < SEGS_PER_EDGE; s++) {
+        out.push(vec3ToLatLng(slerpUnit(a, b, s / SEGS_PER_EDGE)))
+      }
+    }
+    // centroid
+    const sum = new THREE.Vector3()
+    for (const p of area.outline) sum.add(latLngToVector3(p.lat, p.lng).normalize())
+    out.push(vec3ToLatLng(sum.normalize()))
+  }
+  return out
+}
+
+/**
+ * Compute centroid of outline as the normalised average of unit vectors,
+ * then lift to sampledRadius + LABEL_CLEARANCE.
+ */
+function outlineCentroid(outline: Array<{ lat: number; lng: number }>): THREE.Vector3 {
   const sum = new THREE.Vector3()
   for (const p of outline) {
     sum.add(latLngToVector3(p.lat, p.lng).normalize())
   }
-  return sum.normalize().multiplyScalar(radius)
+  const unit = sum.normalize()
+  const { lat, lng } = vec3ToLatLng(unit)
+  const r = terrainSampler.sampleRadius(lat, lng) + LABEL_CLEARANCE
+  return unit.clone().multiplyScalar(r)
 }
 
 /**
@@ -68,31 +108,47 @@ function outlineCentroid(outline: Array<{ lat: number; lng: number }>, radius: n
 export function BattleAnnotations({ battle }: { battle: Battle }) {
   const battleElapsed = useAppStore((s) => s.battleElapsed)
   const { phaseIndex: currentPhase, done } = playbackAt(battle, battleElapsed)
+  const heightsVersion = useTerrainHeightsVersion()
+
+  // Pre-register area and event points with the terrain sampler so they stay cached.
+  useMemo(() => {
+    const rawAreas = battle.areas ?? []
+    const areaPoints = allAreaPoints(rawAreas)
+    const eventPoints = battle.phases.flatMap((phase) =>
+      (phase.events ?? []).map((ev) => ({ lat: ev.coords.lat, lng: ev.coords.lng }))
+    )
+    terrainSampler.registerPoints('annotations', [...areaPoints, ...eventPoints])
+  }, [battle])
 
   const areas = useMemo(
     () =>
       (battle.areas ?? []).map((area) => ({
         ...area,
-        loop: buildOutlineLoop(area.outline, OUTLINE_ALT),
-        centroid: outlineCentroid(area.outline, LABEL_ALT),
+        loop: buildOutlineLoop(area.outline),
+        centroid: outlineCentroid(area.outline),
         color: KIND_COLOR[area.kind ?? 'terrain'] ?? KIND_COLOR.terrain,
       })),
-    [battle],
+    // heightsVersion triggers a rebuild when terrain data refreshes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [battle, heightsVersion],
   )
 
   const events = useMemo(() => {
     const out: Array<{ phaseIndex: number; label: string; pos: THREE.Vector3 }> = []
     battle.phases.forEach((phase, phaseIndex) => {
       for (const ev of phase.events ?? []) {
+        const r = terrainSampler.sampleRadius(ev.coords.lat, ev.coords.lng) + LABEL_CLEARANCE
         out.push({
           phaseIndex,
           label: ev.label,
-          pos: latLngToVector3(ev.coords.lat, ev.coords.lng, LABEL_ALT),
+          pos: latLngToVector3(ev.coords.lat, ev.coords.lng, r),
         })
       }
     })
     return out
-  }, [battle])
+  // heightsVersion triggers a rebuild when terrain data refreshes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [battle, heightsVersion])
 
   return (
     <group>

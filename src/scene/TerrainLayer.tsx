@@ -45,6 +45,8 @@ import { useFrame } from '@react-three/fiber'
 import { TilesPlugin, TilesRenderer, TilesRendererContext } from '3d-tiles-renderer/r3f'
 import { GoogleCloudAuthPlugin } from '3d-tiles-renderer/plugins'
 import { latLngToVector3 } from '../lib/geo'
+import { setActiveTiles } from './terrainRegistry'
+import { terrainSampler } from './useTerrainHeights'
 
 // ECEF radius in metres → scene units (globe radius = 1).
 const ECEF_TO_SCENE = 1 / 6_378_137
@@ -64,6 +66,26 @@ const AUTH_PLUGIN_ARGS = [
     useRecommendedSettings: false,
   },
 ]
+
+/**
+ * Runs inside TilesRenderer context — registers the tiles instance into the
+ * module-level terrainRegistry so that BattleArrows / BattleAnnotations
+ * (mounted outside this context) can raycast against the tile meshes.
+ * Also attaches the terrain sampler to get 'tiles-load-end' notifications.
+ */
+function TilesRegistrar() {
+  const tiles = useContext(TilesRendererContext)
+  useEffect(() => {
+    if (!tiles) return
+    setActiveTiles(tiles)
+    terrainSampler.attachToTiles(tiles)
+    return () => {
+      setActiveTiles(null)
+      terrainSampler.detach()
+    }
+  }, [tiles])
+  return null
+}
 
 export interface PreheatCoords {
   lat: number
@@ -155,6 +177,8 @@ export function TerrainLayer({ preheat, errorTarget = 8 }: TerrainLayerProps) {
         <TilesPlugin plugin={GoogleCloudAuthPlugin} args={AUTH_PLUGIN_ARGS} />
         {/* Virtual preheat camera — only active during journey preload phase */}
         {preheat && <PreheatCamera lat={preheat.lat} lng={preheat.lng} />}
+        {/* Register tiles in module-level registry for out-of-context consumers */}
+        <TilesRegistrar />
       </TilesRenderer>
     </group>
   )
