@@ -22,3 +22,5 @@ Vite, React 19, TypeScript, three.js + @react-three/fiber, GSAP ScrollTrigger, Z
 ## Attributions
 
 Earth texture: [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0)
+
+Topo basemap: Esri — World Topographic Map (sources: Esri, HERE, Garmin, Intermap, INCREMENT P, GEBCO, USGS, FAO, NPS, NRCAN, GeoBase, IGN, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), © OpenStreetMap contributors, GIS User Community). Fallback: © [OpenTopoMap](https://opentopomap.org) contributors (CC BY-SA).

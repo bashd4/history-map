@@ -47,11 +47,13 @@ button { font: inherit; cursor: pointer; }
 .battle-header h3 { font-size: 1.3rem; color: #f2e8d0; }
 .battle-close { background: none; border: none; color: #c9a050; font-size: 1.3rem; }
 .battle-header-right { display: flex; align-items: center; gap: .8rem; }
+.battle-basemap-switcher { display: flex; border: 1px solid rgba(232,181,74,.4); border-radius: 4px; overflow: hidden; }
 .battle-view-switcher { display: flex; border: 1px solid rgba(232,181,74,.4); border-radius: 4px; overflow: hidden; }
 .battle-view-btn { background: rgba(20,16,10,.7); border: none; border-right: 1px solid rgba(232,181,74,.3); color: #c9a050; font-size: .75rem; letter-spacing: .08em; padding: .35rem .7rem; transition: background .15s, color .15s; }
 .battle-view-btn:last-child { border-right: none; }
 .battle-view-btn:hover { background: rgba(232,181,74,.15); color: #e8b54a; }
 .battle-view-btn--active { background: rgba(232,181,74,.28); color: #e8b54a; font-weight: 700; }
+.topo-attribution { position: fixed; bottom: 7rem; left: 1rem; font-size: 9px; color: rgba(232,220,195,.5); pointer-events: none; z-index: 21; }
 .battle-strengths { display: flex; gap: .7rem; margin-top: .4rem; flex-wrap: wrap; }
 .battle-strength-chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; color: #cfc4ab; letter-spacing: .04em; }
 .battle-strength-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 3px rgba(0,0,0,.6); }

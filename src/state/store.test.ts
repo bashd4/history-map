@@ -150,4 +150,28 @@ describe('app store', () => {
     useAppStore.getState().reset()
     expect(useAppStore.getState().battleView).toBe('map')
   })
+
+  it('battleBasemap defaults to satellite', () => {
+    expect(useAppStore.getState().battleBasemap).toBe('satellite')
+  })
+  it('setBattleBasemap updates battleBasemap', () => {
+    useAppStore.getState().setBattleBasemap('topo')
+    expect(useAppStore.getState().battleBasemap).toBe('topo')
+  })
+  it('battleBasemap resets to satellite on enterBattle', () => {
+    useAppStore.getState().setBattleBasemap('topo')
+    useAppStore.getState().enterBattle(3)
+    expect(useAppStore.getState().battleBasemap).toBe('satellite')
+  })
+  it('battleBasemap resets to satellite on exitBattle', () => {
+    useAppStore.getState().enterBattle(3)
+    useAppStore.getState().setBattleBasemap('topo')
+    useAppStore.getState().exitBattle()
+    expect(useAppStore.getState().battleBasemap).toBe('satellite')
+  })
+  it('battleBasemap resets to satellite on reset()', () => {
+    useAppStore.getState().setBattleBasemap('topo')
+    useAppStore.getState().reset()
+    expect(useAppStore.getState().battleBasemap).toBe('satellite')
+  })
 })

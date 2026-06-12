@@ -12,6 +12,7 @@ import { useAppStore } from '../state/store'
 import { TerrainErrorBoundary } from './TerrainErrorBoundary'
 import { BattleArrows } from './BattleArrows'
 import { BattleAnnotations } from './BattleAnnotations'
+import { BattleBasemap } from './BattleBasemap'
 import { PerfSampler } from './PerfSampler'
 
 // Code-split so the hub never pays the 3d-tiles-renderer bundle cost.
@@ -76,6 +77,8 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
   const journeyId = useAppStore((s) => s.journeyId)
   const battleStopIndex = useAppStore((s) => s.battleStopIndex)
   const nearBattleStopIndex = useAppStore((s) => s.nearBattleStopIndex)
+  const battleBasemap = useAppStore((s) => s.battleBasemap)
+  const topoActive = mode === 'battle' && battleBasemap === 'topo'
 
   // Mode-aware LOD budget: hub auto-rotation churns fine LODs needlessly;
   // journey dwell benefits from medium detail; battle needs maximum detail.
@@ -145,9 +148,19 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
                 <TerrainLayer
                   errorTarget={errorTarget}
                   preheat={battleStopCoords ?? undefined}
+                  tilesHidden={topoActive}
                 />
               </Suspense>
             </TerrainErrorBoundary>
+          )}
+          {/* Topo basemap patch — mounted only in battle mode with topo basemap.
+              Sits above the sepia sphere (radius 1.0001); 3D tiles are hidden.
+              Sets flat mode so arrows/annotations sit on the ellipsoid surface. */}
+          {activeBattle && topoActive && (
+            <BattleBasemap
+              battle={activeBattle}
+              site={journey!.stops[battleStopIndex!].coords}
+            />
           )}
           {/* Battle movement arrows — outside terrain error boundary so they
               work even when terrain degrades. Mounted only in battle mode. */}

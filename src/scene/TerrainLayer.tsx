@@ -156,9 +156,12 @@ export interface TerrainLayerProps {
    *  battle → 8 (fine; close altitude ~0.012 needs maximum resolution)
    *  useDeepOptions applies this reactively via useLayoutEffect on prop change. */
   errorTarget?: number
+  /** When true the 3D-tiles group is hidden (visible=false) so the topo basemap
+   *  shows through. Tiles keep streaming (cache stays warm); only rendering stops. */
+  tilesHidden?: boolean
 }
 
-export function TerrainLayer({ preheat, errorTarget = 8 }: TerrainLayerProps) {
+export function TerrainLayer({ preheat, errorTarget = 8, tilesHidden = false }: TerrainLayerProps) {
   return (
     // rotation: ECEF +Z (north pole) → scene +Y; ECEF +X (lng0) → scene +X
     <group scale={ECEF_TO_SCENE} rotation={[-Math.PI / 2, 0, 0]}>
@@ -171,8 +174,13 @@ export function TerrainLayer({ preheat, errorTarget = 8 }: TerrainLayerProps) {
        * source), so we disable it and own errorTarget for finer detail.
        * useDeepOptions re-applies on prop change (verified: useLayoutEffect
        * with useObjectDep dependency — reactive to prop changes).
+       *
+       * group prop: spreads onto <primitive object={tiles.group} {...group}>.
+       * When tilesHidden=true we set visible=false so 3D tiles don't render
+       * while the topo basemap is active — tiles keep streaming (cache warm).
+       * The r3f d.ts types group as TilesGroup (THREE.Group subtype); cast needed.
        */}
-      <TilesRenderer errorTarget={errorTarget}>
+      <TilesRenderer errorTarget={errorTarget} group={{ visible: !tilesHidden } as unknown as Parameters<typeof TilesRenderer>[0]['group']}>
         {/* args must be the stable module-level reference — see AUTH_PLUGIN_ARGS */}
         <TilesPlugin plugin={GoogleCloudAuthPlugin} args={AUTH_PLUGIN_ARGS} />
         {/* Virtual preheat camera — only active during journey preload phase */}

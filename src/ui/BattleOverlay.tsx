@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { phaseSeconds, playbackAt, totalDuration } from '../lib/battlePlayback'
 import type { Battle } from '../data/schema'
-import { useAppStore, type BattleView } from '../state/store'
+import { useAppStore, type BattleView, type BattleBasemap } from '../state/store'
 
 const VIEWS: Array<{ id: BattleView; label: string }> = [
   { id: 'map', label: 'Map' },
@@ -9,13 +9,20 @@ const VIEWS: Array<{ id: BattleView; label: string }> = [
   { id: 'orbit', label: 'Orbit' },
 ]
 
+const BASEMAPS: Array<{ id: BattleBasemap; label: string }> = [
+  { id: 'satellite', label: 'Imagery' },
+  { id: 'topo', label: 'Map' },
+]
+
 export function BattleOverlay({ battle }: { battle: Battle }) {
   const battleElapsed = useAppStore((s) => s.battleElapsed)
   const battlePlaying = useAppStore((s) => s.battlePlaying)
   const battleView = useAppStore((s) => s.battleView)
+  const battleBasemap = useAppStore((s) => s.battleBasemap)
   const setBattleElapsed = useAppStore((s) => s.setBattleElapsed)
   const setBattlePlaying = useAppStore((s) => s.setBattlePlaying)
   const setBattleView = useAppStore((s) => s.setBattleView)
+  const setBattleBasemap = useAppStore((s) => s.setBattleBasemap)
   const replayBattle = useAppStore((s) => s.replayBattle)
   const exitBattle = useAppStore((s) => s.exitBattle)
   const total = totalDuration(battle)
@@ -71,6 +78,16 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
           )}
         </div>
         <div className="battle-header-right">
+          <div className="battle-basemap-switcher" role="group" aria-label="Basemap">
+            {BASEMAPS.map((b) => (
+              <button key={b.id}
+                className={`battle-view-btn${battleBasemap === b.id ? ' battle-view-btn--active' : ''}`}
+                aria-pressed={battleBasemap === b.id}
+                onClick={() => setBattleBasemap(b.id)}>
+                {b.label}
+              </button>
+            ))}
+          </div>
           <div className="battle-view-switcher" role="group" aria-label="Camera view">
             {VIEWS.map((v) => (
               <button key={v.id}
@@ -83,6 +100,11 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
           </div>
           <button className="battle-close" onClick={exitBattle} aria-label="Exit battle">✕</button>
         </div>
+        {battleBasemap === 'topo' && (
+          <div className="topo-attribution">
+            Basemap &copy; Esri — World Topographic Map
+          </div>
+        )}
       </header>
       <footer className="battle-footer">
         <button className="battle-play" onClick={() =>

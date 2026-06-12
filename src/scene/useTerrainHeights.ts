@@ -82,8 +82,11 @@ export class TerrainHeightSampler {
   /**
    * Return the cached sampled radius for (lat, lng), or the ellipsoid default
    * (1.0) if not yet sampled.
+   * In flat mode (topo basemap active) always returns 1.0 so geometry lies
+   * on the ellipsoid surface — no floating arrows above the topo patch.
    */
   sampleRadius(lat: number, lng: number): number {
+    if (_flatMode) return 1.0
     const key = terrainCacheKey(lat, lng)
     const cached = this.cache.get(key)
     if (cached !== undefined) return cached
@@ -181,6 +184,26 @@ export class TerrainHeightSampler {
 // ─── Module-level singleton sampler ──────────────────────────────────────────
 
 export const terrainSampler = new TerrainHeightSampler()
+
+/**
+ * When flat mode is on, sampleRadius returns the ellipsoid fallback (1.0)
+ * for every point, and heightsVersion is bumped so consumers rebuild their
+ * geometry onto the flat sepia sphere / topo patch rather than the tile surface.
+ * Called by BattleBasemap on mount/unmount.
+ */
+let _flatMode = false
+
+export function setFlatMode(flat: boolean): void {
+  if (_flatMode === flat) return
+  _flatMode = flat
+  // Bump the version so consumers (BattleArrows, BattleAnnotations) rebuild.
+  terrainSampler.version += 1
+  useTerrainHeightsStore.setState({ version: terrainSampler.version })
+}
+
+export function isFlatMode(): boolean {
+  return _flatMode
+}
 
 // ─── Zustand store for version tracking ──────────────────────────────────────
 
