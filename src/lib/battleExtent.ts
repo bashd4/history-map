@@ -4,11 +4,11 @@ import { latLngToVector3 } from './geo'
 const cache = new WeakMap<Battle, number>()
 
 /**
- * The battle's CORE radius on the unit sphere (radians): the 80th-percentile
- * angular distance from the site over all waypoints/events/landmarks. A
- * percentile (not the max) so outliers — a retreat toward a distant town, an
- * approach march — don't blow up the framing; classic battle maps frame the
- * core and let retreats run off the edge.
+ * The battle's radius on the unit sphere (radians): the 90th-percentile angular
+ * distance from the site over all waypoints/events/area outlines. A high
+ * percentile (not the max) so a single far retreat or approach march doesn't
+ * blow up the framing — the bulk of the action defines the frame and the rare
+ * outlier runs off the edge, the classic battle-map look.
  */
 export function battleExtent(battle: Battle, site: LatLng): number {
   const cached = cache.get(battle)
@@ -24,13 +24,21 @@ export function battleExtent(battle: Battle, site: LatLng): number {
   }
   battle.areas?.forEach((a) => a.outline.forEach(consider))
   dists.sort((a, b) => a - b)
-  const extent = dists.length ? dists[Math.min(dists.length - 1, Math.floor(dists.length * 0.8))] : 0
+  const extent = dists.length ? dists[Math.min(dists.length - 1, Math.floor(dists.length * 0.9))] : 0
   cache.set(battle, extent)
   return extent
 }
 
-/** Camera altitude (in globe radii) that frames the battle core: scales with
- *  extent, clamped to a sensible range (~32 km close, ~380 km wide). */
+/**
+ * Camera altitude (globe radii) that frames the battle as tightly as possible
+ * while keeping the whole battle in view. Derived from the map-view geometry:
+ * the camera looks straight down with a 45° fov, so the visible ground radius
+ * is altitude·tan(22.5°) ≈ altitude·0.414. The ×3.3 factor sets the battle's
+ * 90th-percentile radius to fill the frame's shorter (vertical) axis with a
+ * little margin, accounting for the playback footer that covers the lower band.
+ * Clamped to [~10 km, ~380 km] — only a safety floor/ceiling, so each battle is
+ * sized to its own footprint (Shiloh ~2 km dives close; Vicksburg ~40 km wide).
+ */
 export function battleFrameAltitude(battle: Battle, site: LatLng): number {
-  return Math.min(0.06, Math.max(0.005, battleExtent(battle, site) * 3))
+  return Math.min(0.06, Math.max(0.0015, battleExtent(battle, site) * 3.3))
 }
