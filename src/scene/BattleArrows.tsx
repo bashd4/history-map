@@ -248,9 +248,15 @@ function MovementArrow({
       if (hasLabel) {
         // Move label to the completed tip position.
         labelGroupRef.current?.position.copy(tip)
-        // Record completion time once.
+        // Record completion time once. When the WHOLE battle is done (e.g.
+        // scrubbed to the end), every phase completes at once — suppress the
+        // linger so labels don't all pile on; backdate so it reads as already
+        // faded (hover still reveals). During normal playback (a later phase
+        // started) the label lingers LABEL_FADE_HOLD then fades.
         if (completedAtRef.current === null) {
-          completedAtRef.current = clock.elapsedTime
+          completedAtRef.current = done
+            ? clock.elapsedTime - (LABEL_FADE_HOLD + LABEL_FADE_RAMP)
+            : clock.elapsedTime
         }
         updateLabelOpacity(clock.elapsedTime)
       }
@@ -390,23 +396,32 @@ function MovementArrow({
         // group ref drives the 3-D position; Html re-projects every frame.
         <group ref={labelGroupRef} position={points[0]}>
           <Html zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
+            {/* Dark chip with a side-colored dot — readable over any imagery. */}
             <div
               ref={divRef}
               style={{
                 opacity: 0,
+                transform: 'translate(10px, -50%)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '2px 7px',
+                borderRadius: '4px',
+                background: 'rgba(16,12,8,0.86)',
+                border: '1px solid rgba(232,181,74,0.22)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(2px)',
                 fontFamily: "Georgia, 'Times New Roman', serif",
-                fontVariant: 'small-caps',
-                fontSize: '10px',
-                letterSpacing: '0.04em',
-                color,
+                fontSize: '11px',
+                color: '#f0e8d6',
                 whiteSpace: 'nowrap',
-                textShadow: '0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.7)',
                 userSelect: 'none',
-                display: 'inline-block',
-                transform: 'translate(12px, -16px)',
-                transition: 'none',
               }}
             >
+              <span style={{
+                width: '6px', height: '6px', borderRadius: '50%',
+                background: color, flex: '0 0 auto',
+              }} />
               {movement.unit}
             </div>
           </Html>

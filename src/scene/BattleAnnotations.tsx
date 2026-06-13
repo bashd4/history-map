@@ -175,13 +175,16 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
             renderOrder={9}
           />
           <group position={area.centroid}>
-            <Html zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
+            <Html zIndexRange={[14, 0]} style={{ pointerEvents: 'none' }}>
+              {/* Area names are context — quiet, faint plate, recessive. */}
               <span style={{
                 ...baseLabelStyle,
                 fontStyle: 'italic',
                 fontSize: '11px',
                 color: area.color,
-                opacity: 0.7,
+                background: 'rgba(16,12,8,0.5)',
+                padding: '1px 6px',
+                borderRadius: '3px',
                 display: 'inline-block',
               }}>
                 {area.name}
@@ -199,11 +202,16 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
         return (
           <group key={`${ev.phaseIndex}-${i}`} position={ev.pos}>
             <Html zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
+              {/* Events are key moments — gold chip, pops. */}
               <span style={{
                 ...baseLabelStyle,
                 fontSize: '11px',
-                color: '#e8b54a',
-                opacity: 1,
+                color: '#f3d089',
+                background: 'rgba(16,12,8,0.86)',
+                border: '1px solid rgba(232,181,74,0.5)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.55)',
+                padding: '2px 8px',
+                borderRadius: '4px',
                 display: 'inline-block',
                 transform: 'translate(6px, -50%)',
               }}>
