@@ -267,16 +267,17 @@ function MovementArrow({
     coneMat.opacity = OPACITY_CURRENT
 
     if (hasLabel) {
-      // Current phase: label rides the tip, always shown.
+      // Label rides the tip so it's correctly placed if hovered; visibility is
+      // hover-only (keeps the map clean during playback).
       labelGroupRef.current?.position.copy(tip)
-      if (divRef.current) divRef.current.style.opacity = String(OPACITY_CURRENT)
+      updateLabelOpacity()
     }
   })
 
   /**
-   * Unit labels show ONLY for the current phase (set directly in the current
-   * branch above) or on hover. Everything else is hidden — a stateless rule, so
-   * scrubbing or finishing can never pile multiple phases' labels on screen.
+   * Unit labels are HOVER-ONLY: the map stays clean (just arrows) during
+   * playback, and hovering any arrow reveals its unit. Stateless, so scrubbing
+   * or finishing can never pile labels on screen.
    */
   function updateLabelOpacity() {
     const div = divRef.current
