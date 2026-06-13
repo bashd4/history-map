@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from 'react'
+import { useMemo, useRef, type CSSProperties } from 'react'
 import { Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Battle } from '../data/schema'
@@ -108,6 +108,93 @@ function outlineCentroid(outline: Array<{ lat: number; lng: number }>): THREE.Ve
 }
 
 /**
+ * Transparent triangle-fan fill over an area — an invisible hover target so the
+ * whole area region (not just its thin outline) reveals the name on hover.
+ */
+function buildAreaFill(outline: Array<{ lat: number; lng: number }>): THREE.BufferGeometry {
+  const center = new THREE.Vector3()
+  const verts = outline.map((p) => latLngToVector3(p.lat, p.lng).normalize())
+  for (const v of verts) center.add(v)
+  center.normalize()
+  const drape = (u: THREE.Vector3) => {
+    const { lat, lng } = vec3ToLatLng(u)
+    return u.clone().multiplyScalar(terrainSampler.sampleRadius(lat, lng) + OUTLINE_CLEARANCE)
+  }
+  const c = drape(center)
+  const pos: number[] = []
+  for (let i = 0; i < verts.length; i++) {
+    const a = drape(verts[i])
+    const b = drape(verts[(i + 1) % verts.length])
+    pos.push(c.x, c.y, c.z, a.x, a.y, a.z, b.x, b.y, b.z)
+  }
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  return geo
+}
+
+/** One area: dashed outline (always), hover-fill that reveals the name. */
+function AreaAnnotation({
+  loop, fill, centroid, name, color,
+}: {
+  loop: THREE.Vector3[]
+  fill: THREE.BufferGeometry
+  centroid: THREE.Vector3
+  name: string
+  color: string
+}) {
+  const nameRef = useRef<HTMLSpanElement>(null)
+  return (
+    <group>
+      <Line
+        points={loop}
+        color={color}
+        lineWidth={1.5}
+        dashed
+        dashSize={0.0008}
+        gapSize={0.0005}
+        opacity={0.5}
+        transparent
+        toneMapped={false}
+        depthTest={false}
+        renderOrder={9}
+      />
+      {/* invisible hover target covering the area interior */}
+      <mesh
+        geometry={fill}
+        renderOrder={8}
+        onPointerOver={() => {
+          if (nameRef.current) nameRef.current.style.opacity = '0.8'
+          document.body.style.cursor = 'pointer'
+        }}
+        onPointerOut={() => {
+          if (nameRef.current) nameRef.current.style.opacity = '0'
+          document.body.style.cursor = ''
+        }}
+      >
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} depthTest={false} />
+      </mesh>
+      <group position={centroid}>
+        <Html zIndexRange={[14, 0]} style={{ pointerEvents: 'none' }}>
+          <span ref={nameRef} style={{
+            ...baseLabelStyle,
+            opacity: 0,
+            fontStyle: 'italic',
+            fontSize: '11px',
+            color,
+            background: 'rgba(16,12,8,0.6)',
+            padding: '1px 6px',
+            borderRadius: '3px',
+            display: 'inline-block',
+          }}>
+            {name}
+          </span>
+        </Html>
+      </group>
+    </group>
+  )
+}
+
+/**
  * Area outlines + phase-event labels for battle mode. DOM labels via drei <Html>
  * (constant screen size, no pointer events). Mounted only while a battle is active.
  */
@@ -131,6 +218,7 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
       (battle.areas ?? []).map((area) => ({
         ...area,
         loop: buildOutlineLoop(area.outline),
+        fill: buildAreaFill(area.outline),
         centroid: outlineCentroid(area.outline),
         color: KIND_COLOR[area.kind ?? 'terrain'] ?? KIND_COLOR.terrain,
       })),
@@ -158,40 +246,17 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
 
   return (
     <group>
-      {/* Area outlines — always visible during battle */}
+      {/* Area outlines always visible; the name appears only on hover, so the
+          default map stays clean (just shapes). */}
       {areas.map((area) => (
-        <group key={area.name}>
-          <Line
-            points={area.loop}
-            color={area.color}
-            lineWidth={1.5}
-            dashed
-            dashSize={0.0008}
-            gapSize={0.0005}
-            opacity={0.55}
-            transparent
-            toneMapped={false}
-            depthTest={false}
-            renderOrder={9}
-          />
-          <group position={area.centroid}>
-            <Html zIndexRange={[14, 0]} style={{ pointerEvents: 'none' }}>
-              {/* Area names are context — quiet, faint plate, recessive. */}
-              <span style={{
-                ...baseLabelStyle,
-                fontStyle: 'italic',
-                fontSize: '11px',
-                color: area.color,
-                background: 'rgba(16,12,8,0.5)',
-                padding: '1px 6px',
-                borderRadius: '3px',
-                display: 'inline-block',
-              }}>
-                {area.name}
-              </span>
-            </Html>
-          </group>
-        </group>
+        <AreaAnnotation
+          key={area.name}
+          loop={area.loop}
+          fill={area.fill}
+          centroid={area.centroid}
+          name={area.name}
+          color={area.color}
+        />
       ))}
 
       {/* Events — current phase only; past events are hidden to reduce clutter.
