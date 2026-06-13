@@ -213,7 +213,8 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
                 padding: '2px 8px',
                 borderRadius: '4px',
                 display: 'inline-block',
-                transform: 'translate(6px, -50%)',
+                // Lift events above the unit-label column so they don't collide.
+                transform: 'translate(6px, calc(-50% - 34px))',
               }}>
                 ✶ {ev.label}
               </span>

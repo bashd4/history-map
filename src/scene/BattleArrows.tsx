@@ -34,9 +34,6 @@ const OPACITY_DONE = 0.4
 const CASING_OPACITY = 0.85
 const CASING_COLOR = '#1a140c'
 
-// Auto-fade timing constants (seconds)
-const LABEL_FADE_HOLD = 2.5   // seconds at full opacity after completion
-const LABEL_FADE_RAMP = 0.6   // seconds to ramp from 1 to 0
 
 // Scratch objects — never allocate in the frame loop.
 const _UP = new THREE.Vector3(0, 1, 0)
@@ -102,6 +99,7 @@ function buildMovementPoints(movement: Movement): THREE.Vector3[] {
 interface TaggedMovement {
   phaseIndex: number
   movIndex: number
+  phaseCount: number // movements in this phase — for label vertical stagger
   movement: Movement
   points: THREE.Vector3[]
 }
@@ -128,6 +126,7 @@ function useBattleMovements(battle: Battle): TaggedMovement[] {
         result.push({
           phaseIndex,
           movIndex,
+          phaseCount: phase.movements.length,
           movement,
           points: buildMovementPoints(movement),
         })
@@ -156,7 +155,10 @@ function MovementArrow({
   tagged: TaggedMovement
   battle: Battle
 }) {
-  const { movement, points, phaseIndex } = tagged
+  const { movement, points, phaseIndex, movIndex, phaseCount } = tagged
+  // Vertical stagger (screen px) so a phase's labels — whose arrow tips often
+  // cluster on the same objective — don't stack on top of each other.
+  const labelStaggerPx = (movIndex - (phaseCount - 1) / 2) * 24
   const lineRef = useRef<Line2>(null)
   const casingRef = useRef<Line2>(null)
   const coneRef = useRef<THREE.Mesh>(null)
@@ -168,7 +170,6 @@ function MovementArrow({
   // Label tracking refs — all driven imperatively; no React state at frame rate.
   const labelGroupRef = useRef<THREE.Group>(null)
   const divRef = useRef<HTMLDivElement>(null)
-  const completedAtRef = useRef<number | null>(null)
   const hoveredRef = useRef(false)
 
   const isDashed = movement.style === 'retreat' || movement.style === 'feint'
@@ -178,7 +179,7 @@ function MovementArrow({
 
   const hasLabel = Boolean(movement.unit)
 
-  useFrame(({ camera, clock }) => {
+  useFrame(({ camera }) => {
     const { battleElapsed, mode } = useAppStore.getState()
     if (mode !== 'battle') return
 
@@ -202,17 +203,10 @@ function MovementArrow({
       if (state === 'completed') {
         cone.scale.setScalar(
           screenScale(camera, cone.position, CONE_FRAC, CONE_MIN, CONE_MAX))
-        // Update completed-phase label opacity (fade / hover).
-        if (hasLabel) {
-          updateLabelOpacity(clock.elapsedTime)
-        }
+        // Completed-phase label: hidden unless hovered.
+        if (hasLabel) updateLabelOpacity()
       }
       return
-    }
-
-    // Handle state transitions — reset label state when going to hidden.
-    if (state === 'hidden' && lastStateRef.current !== 'hidden') {
-      completedAtRef.current = null
     }
 
     lastStateRef.current = state
@@ -221,9 +215,7 @@ function MovementArrow({
       line.geometry.instanceCount = 0
       casing.geometry.instanceCount = 0
       cone.visible = false
-      if (hasLabel && divRef.current) {
-        divRef.current.style.opacity = '0'
-      }
+      if (hasLabel) updateLabelOpacity()
       return
     }
 
@@ -232,7 +224,7 @@ function MovementArrow({
     const coneMat = cone.material as THREE.Material
 
     if (state === 'completed') {
-      // Fully drawn, faded.
+      // Fully drawn, faded. Label is hidden (not the current phase) unless hovered.
       line.geometry.instanceCount = totalSegs
       casing.geometry.instanceCount = totalSegs
       lineMat.opacity = OPACITY_DONE
@@ -244,21 +236,9 @@ function MovementArrow({
       cone.scale.setScalar(screenScale(camera, tip, CONE_FRAC, CONE_MIN, CONE_MAX))
       cone.visible = true
       coneMat.opacity = OPACITY_DONE
-
       if (hasLabel) {
-        // Move label to the completed tip position.
         labelGroupRef.current?.position.copy(tip)
-        // Record completion time once. When the WHOLE battle is done (e.g.
-        // scrubbed to the end), every phase completes at once — suppress the
-        // linger so labels don't all pile on; backdate so it reads as already
-        // faded (hover still reveals). During normal playback (a later phase
-        // started) the label lingers LABEL_FADE_HOLD then fades.
-        if (completedAtRef.current === null) {
-          completedAtRef.current = done
-            ? clock.elapsedTime - (LABEL_FADE_HOLD + LABEL_FADE_RAMP)
-            : clock.elapsedTime
-        }
-        updateLabelOpacity(clock.elapsedTime)
+        updateLabelOpacity()
       }
       return
     }
@@ -271,16 +251,9 @@ function MovementArrow({
     lineMat.opacity = OPACITY_CURRENT
     casingMat.opacity = CASING_OPACITY
 
-    // Reset completedAt when replaying from the start of this phase.
-    if (phaseProgress < 0.02) {
-      completedAtRef.current = null
-    }
-
     if (drawnSegs < 2 || phaseProgress < 0.02) {
       cone.visible = false
-      if (hasLabel && divRef.current) {
-        divRef.current.style.opacity = '0'
-      }
+      if (hasLabel) updateLabelOpacity()
       return
     }
 
@@ -294,37 +267,21 @@ function MovementArrow({
     coneMat.opacity = OPACITY_CURRENT
 
     if (hasLabel) {
-      // Move label group to the tip.
+      // Current phase: label rides the tip, always shown.
       labelGroupRef.current?.position.copy(tip)
-      if (divRef.current) {
-        divRef.current.style.opacity = String(OPACITY_CURRENT)
-      }
+      if (divRef.current) divRef.current.style.opacity = String(OPACITY_CURRENT)
     }
   })
 
-  /** Compute and apply label opacity imperatively — no React state. */
-  function updateLabelOpacity(now: number) {
+  /**
+   * Unit labels show ONLY for the current phase (set directly in the current
+   * branch above) or on hover. Everything else is hidden — a stateless rule, so
+   * scrubbing or finishing can never pile multiple phases' labels on screen.
+   */
+  function updateLabelOpacity() {
     const div = divRef.current
     if (!div) return
-
-    if (hoveredRef.current) {
-      div.style.opacity = String(OPACITY_CURRENT)
-      return
-    }
-
-    const completedAt = completedAtRef.current
-    if (completedAt === null) {
-      div.style.opacity = '0'
-      return
-    }
-
-    const age = now - completedAt
-    if (age < LABEL_FADE_HOLD) {
-      div.style.opacity = String(OPACITY_CURRENT)
-    } else {
-      const t = Math.min(1, (age - LABEL_FADE_HOLD) / LABEL_FADE_RAMP)
-      div.style.opacity = String(OPACITY_CURRENT * (1 - t))
-    }
+    div.style.opacity = hoveredRef.current ? String(OPACITY_CURRENT) : '0'
   }
 
   function onPointerOver() {
@@ -401,7 +358,7 @@ function MovementArrow({
               ref={divRef}
               style={{
                 opacity: 0,
-                transform: 'translate(10px, -50%)',
+                transform: `translate(10px, calc(-50% + ${labelStaggerPx}px))`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '5px',
