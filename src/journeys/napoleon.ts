@@ -28,90 +28,286 @@ export const napoleon: Journey = {
     { name: 'Austerlitz', coords: { lat: 49.1281, lng: 16.7625 }, date: 'Dec 1805',
       story: 'His masterpiece. Outnumbered, he feigns weakness, surrenders the high ground, and destroys a Russo-Austrian army in a single morning.',
       battle: {
-        name: 'Battle of Austerlitz', date: '2 December 1805',
-        sides: { french: '#4d8fdb', coalition: '#c0392b' },
-        strengths: { french: '73,000 men', coalition: '85,000 men' },
-        // Camera stands SW of the field, looking NE across the Pratzen Heights.
-        fieldAzimuth: 250,
-        areas: [
-          {
-            name: 'Pratzen Heights',
-            kind: 'terrain',
-            outline: [
-              { lat: 49.115, lng: 16.740 },
-              { lat: 49.118, lng: 16.758 },
-              { lat: 49.128, lng: 16.775 },
-              { lat: 49.138, lng: 16.785 },
-              { lat: 49.142, lng: 16.770 },
-              { lat: 49.135, lng: 16.748 },
-              { lat: 49.122, lng: 16.735 },
-            ],
-          },
-          {
-            name: 'Satschan Ponds',
-            kind: 'water',
-            outline: [
-              { lat: 49.072, lng: 16.720 },
-              { lat: 49.075, lng: 16.735 },
-              { lat: 49.082, lng: 16.742 },
-              { lat: 49.088, lng: 16.738 },
-              { lat: 49.085, lng: 16.722 },
-              { lat: 49.078, lng: 16.715 },
-            ],
-          },
-          {
-            name: 'Goldbach Valley',
-            kind: 'terrain',
-            outline: [
-              { lat: 49.090, lng: 16.698 },
-              { lat: 49.098, lng: 16.705 },
-              { lat: 49.110, lng: 16.712 },
-              { lat: 49.118, lng: 16.718 },
-              { lat: 49.115, lng: 16.708 },
-              { lat: 49.105, lng: 16.700 },
-              { lat: 49.095, lng: 16.692 },
-            ],
-          },
-        ],
-        phases: [
-          { caption: 'The trap is set: Napoleon abandons the Pratzen Heights and strips his right flank — Lannes anchors the north, Murat\'s cavalry screens the Brünn road, Soult\'s corps lurks in the valley mist.',
-            duration: 7,
-            movements: [
-              { side: 'french', style: 'feint', unit: 'Soult — IV Corps (feigned weakness)', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.118, lng: 16.720 }] },
-              { side: 'french', style: 'feint', unit: 'Lannes — V Corps (north anchor)', path: [{ lat: 49.155, lng: 16.770 }, { lat: 49.158, lng: 16.778 }] },
-              { side: 'french', style: 'feint', unit: 'Murat — Cavalry Reserve', path: [{ lat: 49.150, lng: 16.800 }, { lat: 49.148, lng: 16.810 }] },
-            ] },
-          { caption: 'The Allies take the bait: Buxhöwden\'s three columns pour south off the heights toward Sokolnitz and Telnitz; Davout\'s corps arrives after a 110 km forced march to hold the thinned French right.',
-            duration: 8,
-            movements: [
-              { side: 'coalition', style: 'advance', unit: 'Buxhöwden — left-wing columns', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.100, lng: 16.730 }, { lat: 49.090, lng: 16.705 }] },
-              { side: 'coalition', style: 'advance', unit: 'Kienmayer — advance guard', path: [{ lat: 49.115, lng: 16.745 }, { lat: 49.092, lng: 16.712 }] },
-              { side: 'french', style: 'advance', unit: 'Davout — III Corps (forced march)', path: [{ lat: 49.060, lng: 16.650 }, { lat: 49.082, lng: 16.695 }, { lat: 49.088, lng: 16.700 }] },
-            ] },
-          { caption: 'The masterstroke: as fog burns off under the "Sun of Austerlitz," St. Hilaire and Vandamme\'s divisions storm the emptied Pratzen Heights; Bernadotte\'s corps secures the centre.',
-            duration: 7,
-            events: [
-              { coords: { lat: 49.138, lng: 16.718 }, label: 'Napoleon watches from Zuran Hill as Soult storms the heights' },
-            ],
-            movements: [
-              { side: 'french', style: 'advance', unit: 'St. Hilaire — division (south Pratzen)', path: [{ lat: 49.118, lng: 16.720 }, { lat: 49.124, lng: 16.748 }, { lat: 49.128, lng: 16.762 }] },
-              { side: 'french', style: 'advance', unit: 'Vandamme — division (north Pratzen)', path: [{ lat: 49.122, lng: 16.725 }, { lat: 49.130, lng: 16.752 }, { lat: 49.132, lng: 16.768 }] },
-              { side: 'french', style: 'advance', unit: 'Bernadotte — I Corps (centre link)', path: [{ lat: 49.135, lng: 16.730 }, { lat: 49.135, lng: 16.760 }] },
-              { side: 'coalition', style: 'retreat', unit: 'Kollowrath — Allied centre', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.130, lng: 16.780 }] },
-            ] },
-          { caption: 'The rout: the French wheel south from the heights; the Russian Guard counter-attacks briefly before being driven back; the Allied left dissolves across the frozen Satschan ponds.',
-            duration: 8,
-            events: [
-              { coords: { lat: 49.08, lng: 16.73 }, label: 'Allied troops flee across the frozen Satschan ponds' },
-            ],
-            movements: [
-              { side: 'french', style: 'advance', unit: 'St. Hilaire & Vandamme (wheel south)', path: [{ lat: 49.128, lng: 16.762 }, { lat: 49.100, lng: 16.748 }, { lat: 49.092, lng: 16.738 }] },
-              { side: 'coalition', style: 'advance', unit: 'Russian Imperial Guard (counter-attack)', path: [{ lat: 49.142, lng: 16.772 }, { lat: 49.132, lng: 16.762 }] },
-              { side: 'french', style: 'advance', unit: 'Rapp — Guard cavalry (repulse the Guard)', path: [{ lat: 49.135, lng: 16.768 }, { lat: 49.140, lng: 16.774 }] },
-              { side: 'coalition', style: 'retreat', unit: 'Allied left wing (Satschan flight)', path: [{ lat: 49.095, lng: 16.722 }, { lat: 49.075, lng: 16.738 }, { lat: 49.068, lng: 16.748 }] },
-            ] },
-        ],
-      } },
+  name: 'Battle of Austerlitz', date: '2 December 1805',
+  sides: { french: '#4d8fdb', coalition: '#c0392b' },
+  strengths: { french: '73,000 men', coalition: '85,000 men' },
+  // Camera stands SW of the field, looking NE across the Pratzen Heights.
+  // Žuráň is at ~49.180, 16.738 (WSW of the plateau); Santon is NE at ~49.188, 16.764.
+  fieldAzimuth: 250,
+  areas: [
+    {
+      // Pratzen Heights (Pracký kopec / Pratzenberg): the gently-sloping plateau
+      // between the Goldbach (Říčka) valley to the west and the Litava to the east.
+      // Highest point ~324 m near Prácě village (49.141, 16.765).
+      // The plateau runs roughly NW–SE from Blasovice road down toward Újezd.
+      // Polygon verified against: Prácě ~49.141,16.765; Kobylnice W edge ~49.138,16.732;
+      // Sokolnice NE rim ~49.114,16.735; Újezd NW ~49.104,16.757; Slavkov road E ~49.128,16.800.
+      name: 'Pratzen Heights',
+      kind: 'terrain',
+      outline: [
+        { lat: 49.14500, lng: 16.74500 }, // NW corner, above Kobylnice
+        { lat: 49.14800, lng: 16.76500 }, // N edge near Prácě–Blažovice road
+        { lat: 49.14200, lng: 16.78200 }, // NE corner toward Blažovice
+        { lat: 49.13000, lng: 16.79000 }, // E edge above Újezd
+        { lat: 49.11800, lng: 16.78500 }, // SE edge
+        { lat: 49.10800, lng: 16.76800 }, // S point above Újezd
+        { lat: 49.11000, lng: 16.75000 }, // SW foot of heights
+        { lat: 49.12000, lng: 16.73800 }, // W foot, above Sokolnice
+        { lat: 49.13500, lng: 16.73500 }, // W slope toward Kobylnice
+      ],
+    },
+    {
+      // Satschan/Žatčany and Mönitz/Měnín ponds: two frozen ponds SE of the battle,
+      // into which the Allied left fled. Žatčany village 49.08778,16.73389;
+      // Měnín village 49.08250,16.69417. The ponds (now drained) lay between these
+      // two villages, on either side of a causeway the Allies were funnelled along.
+      // Žatčanský pond: east of causeway (~49.085–49.095, 16.720–16.745).
+      // Měnínský pond: west of causeway (~49.080–49.090, 16.685–16.715).
+      name: 'Satschan Ponds',
+      kind: 'water',
+      outline: [
+        { lat: 49.09500, lng: 16.69500 }, // NW — Měnínský pond north
+        { lat: 49.09500, lng: 16.72200 }, // N causeway / between ponds
+        { lat: 49.09400, lng: 16.73800 }, // NE — Žatčanský pond north
+        { lat: 49.08800, lng: 16.74200 }, // E — Žatčany village edge
+        { lat: 49.08200, lng: 16.73600 }, // SE — Žatčanský pond south
+        { lat: 49.07800, lng: 16.71800 }, // S — between ponds south
+        { lat: 49.07900, lng: 16.69200 }, // SW — Měnínský pond south
+        { lat: 49.08400, lng: 16.68600 }, // W — Měnín village edge
+      ],
+    },
+    {
+      // Goldbach Valley (Říčka brook corridor): the N–S marshy valley through which
+      // Davout's right flank was anchored and Buxhöwden's columns attacked.
+      // Brook runs N→S through Kobylnice (49.138,16.732) → Sokolnice (49.114,16.722)
+      // → Telnice (49.102,16.718). Valley is ~500–800 m wide.
+      name: 'Goldbach Valley',
+      kind: 'terrain',
+      outline: [
+        { lat: 49.14500, lng: 16.71500 }, // N end, above Kobylnice
+        { lat: 49.14500, lng: 16.73000 }, // NE edge of valley
+        { lat: 49.13500, lng: 16.73200 }, // E side at Kobylnice
+        { lat: 49.12000, lng: 16.73000 }, // E side toward Sokolnice
+        { lat: 49.10800, lng: 16.72500 }, // E side at Sokolnice
+        { lat: 49.09800, lng: 16.72200 }, // E side at Telnice
+        { lat: 49.09500, lng: 16.71000 }, // SE end
+        { lat: 49.09500, lng: 16.70200 }, // SW end
+        { lat: 49.10200, lng: 16.70500 }, // W side at Telnice
+        { lat: 49.11200, lng: 16.70800 }, // W side at Sokolnice
+        { lat: 49.13500, lng: 16.71500 }, // W side at Kobylnice
+      ],
+    },
+  ],
+  phases: [
+    {
+      caption: 'The trap is set (night of 1–2 Dec): Napoleon deliberately abandons the Pratzen Heights, pulling Soult\'s IV Corps westward off the plateau into the Goldbach valley mist. Lannes anchors the French left at the Santon hill; Murat\'s cavalry screens the Brünn–Olmütz road between Santon and Žuráň. Bernadotte holds the centre behind Ponětovice. Davout\'s III Corps, having marched 110 km in 48 hours from Rajhrad, arrives to hold the thinned right near Telnice.',
+      duration: 7,
+      events: [
+        { coords: { lat: 49.17977, lng: 16.73840 }, label: 'Žuráň hill — Napoleon\'s command post' },
+      ],
+      movements: [
+        {
+          // Soult's IV Corps (St. Hilaire + Vandamme) pulls WEST off the plateau
+          // into the Goldbach valley, assembling at Ponětovice (49.152,16.742).
+          // This is the feint that invites the Allied assault on the southern flank.
+          side: 'french', style: 'feint',
+          unit: "Soult — IV Corps",
+          path: [
+            { lat: 49.12800, lng: 16.76200 }, // Pratzen plateau center
+            { lat: 49.13200, lng: 16.75000 }, // W slope
+            { lat: 49.13800, lng: 16.74200 }, // Kobylnice area
+            { lat: 49.15000, lng: 16.74200 }, // Ponětovice assembly point
+          ],
+        },
+        {
+          // Lannes' V Corps holds the French left, anchored on Santon (49.188,16.764),
+          // extending SE toward Bosenitz/Tvarožná along the Olmütz road.
+          side: 'french', style: 'feint',
+          unit: "Lannes — V Corps",
+          path: [
+            { lat: 49.18837, lng: 16.76376 }, // Santon hill top
+            { lat: 49.17600, lng: 16.75800 }, // SE toward Tvarožná
+          ],
+        },
+        {
+          // Murat's cavalry reserve screens between Santon and the main army
+          // along the Brünn–Austerlitz road (roughly the N part of the field).
+          side: 'french', style: 'feint',
+          unit: "Murat — Cavalry Reserve",
+          path: [
+            { lat: 49.18000, lng: 16.75000 }, // N, near Bosenitz road
+            { lat: 49.16500, lng: 16.76000 }, // S toward Blažovice road
+          ],
+        },
+      ],
+    },
+    {
+      caption: 'The Allies take the bait (dawn, ~7:00 a.m.): Buxhöwden\'s three columns (Dokhturov, Langeron, Przybyszewski) pour south and southwest off the Pratzen plateau toward Sokolnice and Telnice, leaving the heights stripped. Kienmayer\'s Austrians attack Telnice first. On the Allied right, Bagration attacks the Santon but is repelled. Davout\'s exhausted divisions (Friant, Gudin) plug the Goldbach line from Sokolnice south to Telnice with barely 5,000 men.',
+      duration: 8,
+      movements: [
+        {
+          // Allied columns descend from the Pratzen plateau SW toward the Goldbach.
+          // Route: from plateau center, through Újezd (49.104,16.758), then SW to Sokolnice.
+          side: 'coalition', style: 'advance',
+          unit: "Buxhöwden — three left-wing columns",
+          path: [
+            { lat: 49.12800, lng: 16.76200 }, // Pratzen plateau
+            { lat: 49.11800, lng: 16.75800 }, // W slope / Újezd approach
+            { lat: 49.11400, lng: 16.74500 }, // Descended toward valley
+            { lat: 49.11000, lng: 16.72800 }, // Sokolnice approach
+            { lat: 49.10200, lng: 16.71900 }, // Telnice approach
+          ],
+        },
+        {
+          // Kienmayer's Austrian advance guard attacks Telnice directly from the E/NE.
+          side: 'coalition', style: 'advance',
+          unit: "Kienmayer — Austrian advance guard",
+          path: [
+            { lat: 49.11000, lng: 16.74500 }, // Plateau W slope
+            { lat: 49.10200, lng: 16.73000 }, // Valley approach
+            { lat: 49.10194, lng: 16.71778 }, // Telnice village
+          ],
+        },
+        {
+          // Davout's III Corps arrives from the S/SSW, from Rajhrad (49.090,16.604)
+          // along the Vienna road, fanning out to hold Telnice and Sokolnice.
+          side: 'french', style: 'advance',
+          unit: "Davout — III Corps",
+          path: [
+            { lat: 49.09028, lng: 16.60389 }, // Rajhrad (Gross-Raigern)
+            { lat: 49.09800, lng: 16.64000 }, // March N along road
+            { lat: 49.10000, lng: 16.68500 }, // Approach Telnice from SW
+            { lat: 49.10194, lng: 16.71778 }, // Telnice — right anchor
+            { lat: 49.11389, lng: 16.72167 }, // Sokolnice — right flank
+          ],
+        },
+        {
+          // Bagration attacks the Santon from the NE (from Krenovice road / Prostějov direction).
+          side: 'coalition', style: 'advance',
+          unit: "Bagration — right wing",
+          path: [
+            { lat: 49.19500, lng: 16.80000 }, // Allied right start, NE
+            { lat: 49.18837, lng: 16.76376 }, // Santon hill (repelled)
+          ],
+        },
+      ],
+    },
+    {
+      caption: 'The masterstroke (9:00 a.m.): as the "Sun of Austerlitz" burns off the Goldbach fog, Soult\'s IV Corps crosses the brook and storms eastward up the now-empty Pratzen plateau. St. Hilaire\'s division takes the S sector of the heights; Vandamme\'s division sweeps the N sector through Prácě village. Bernadotte crosses to Blažovice (Blasowitz) to pin the Allied centre and cover the gap between Soult and Lannes.',
+      duration: 7,
+      events: [
+        { coords: { lat: 49.17977, lng: 16.73840 }, label: "Napoleon orders Soult\'s assault from Žuráň hill — \"One" },
+        { coords: { lat: 49.14111, lng: 16.76528 }, label: 'Prácě village — epicentre of the Pratzen Heights assault' },
+      ],
+      movements: [
+        {
+          // St. Hilaire's division: from Ponětovice valley, crosses Říčka, attacks E/NE
+          // up the southern Pratzen slope toward Sokolnice–Újezd ridge line.
+          side: 'french', style: 'advance',
+          unit: "St. Hilaire — division",
+          path: [
+            { lat: 49.13000, lng: 16.73000 }, // Assembly E of Kobylnice (Goldbach)
+            { lat: 49.12800, lng: 16.74500 }, // Climbing W slope of heights
+            { lat: 49.12500, lng: 16.76000 }, // S plateau
+            { lat: 49.11800, lng: 16.77500 }, // S heights, driving towardÚjezd
+          ],
+        },
+        {
+          // Vandamme's division: from Ponětovice/Kobylnice, attacks E/NE
+          // up the northern Pratzen slope toward Prácě village.
+          side: 'french', style: 'advance',
+          unit: "Vandamme — division",
+          path: [
+            { lat: 49.14500, lng: 16.73500 }, // Kobylnice / N Goldbach
+            { lat: 49.14300, lng: 16.75000 }, // W slope
+            { lat: 49.14111, lng: 16.76528 }, // Prácě village — plateau summit
+            { lat: 49.14000, lng: 16.78000 }, // E plateau edge
+          ],
+        },
+        {
+          // Bernadotte's I Corps: from Ponětovice area, moves NE to Blažovice (Blasowitz)
+          // to cover gap between Soult and Lannes, threatening Allied centre.
+          side: 'french', style: 'advance',
+          unit: "Bernadotte — I Corps",
+          path: [
+            { lat: 49.15500, lng: 16.74500 }, // Ponětovice area
+            { lat: 49.16000, lng: 16.76500 }, // NE toward Blažovice
+            { lat: 49.16583, lng: 16.78611 }, // Blažovice (Blasowitz)
+          ],
+        },
+        {
+          // Kollowrath's Allied centre column, on the Pratzen, is caught in the open
+          // and pushed eastward off the plateau toward Slavkov town.
+          side: 'coalition', style: 'retreat',
+          unit: "Kollowrath — Allied centre",
+          path: [
+            { lat: 49.13800, lng: 16.76500 }, // Plateau centre
+            { lat: 49.14000, lng: 16.79000 }, // E edge of heights
+            { lat: 49.14500, lng: 16.82000 }, // Retreat toward Slavkov road
+          ],
+        },
+      ],
+    },
+    {
+      caption: 'The rout (11 a.m.–2 p.m.): French wheel south from the Pratzen heights, encircling Buxhöwden\'s trapped columns between the plateau and the frozen ponds. The Russian Imperial Guard under Grand Duke Constantine counter-attacks from Blažovice toward the N Pratzen, briefly capturing a French standard, before Rapp\'s Guard cavalry repulses it. The Allied left — Dokhturov, Langeron — dissolves southeastward across the frozen Žatčanský and Měnínský ponds under French cannon fire.',
+      duration: 8,
+      events: [
+        { coords: { lat: 49.08600, lng: 16.71800 }, label: "Allied troops flee across the frozen Žatčany–Měnín ponds" },
+        { coords: { lat: 49.10444, lng: 16.75750 }, label: "Újezd — French seal the trap; Przybyszewski\'s column" },
+      ],
+      movements: [
+        {
+          // St. Hilaire + Vandamme wheel S from the plateau, driving the trapped Allied left
+          // toward Újezd and the ponds. Direction: from plateau, S/SW toward Sokolnice–Újezd.
+          side: 'french', style: 'advance',
+          unit: "St. Hilaire & Vandamme — wheel south",
+          path: [
+            { lat: 49.12800, lng: 16.76200 }, // Plateau centre
+            { lat: 49.11500, lng: 16.76000 }, // S along E face of heights
+            { lat: 49.10800, lng: 16.76800 }, // Above Újezd — closing the trap
+            { lat: 49.10444, lng: 16.75750 }, // Újezd
+          ],
+        },
+        {
+          // Russian Imperial Guard counter-attacks from Blažovice NW toward N Pratzen
+          // (Vandamme sector). They briefly recapture ground near the summit before being repulsed.
+          side: 'coalition', style: 'advance',
+          unit: "Russian Imperial Guard — Grand Duke",
+          path: [
+            { lat: 49.16583, lng: 16.78611 }, // Blažovice (Blasowitz) — Guard reserve
+            { lat: 49.15500, lng: 16.78000 }, // Advance W
+            { lat: 49.14800, lng: 16.77200 }, // N Pratzen — brief penetration
+          ],
+        },
+        {
+          // Rapp's Guard cavalry (horse grenadiers + Mamelukes) counter-charges the
+          // Russian Guard cavalry near Blažovice, driving them back.
+          side: 'french', style: 'advance',
+          unit: "Rapp — Guard cavalry",
+          path: [
+            { lat: 49.16000, lng: 16.77000 }, // French Guard cavalry start
+            { lat: 49.16583, lng: 16.78611 }, // Charge through to Blažovice
+            { lat: 49.17000, lng: 16.79500 }, // Pursuit NE
+          ],
+        },
+        {
+          // Trapped Allied left (Buxhöwden's remnants) flee SE from Sokolnice/Telnice
+          // toward Újezd, then S along the causeway between the frozen ponds.
+          side: 'coalition', style: 'retreat',
+          unit: "Allied left wing — Dokhturov / Langeron",
+          path: [
+            { lat: 49.11389, lng: 16.72167 }, // Sokolnice — collapse point
+            { lat: 49.10194, lng: 16.71778 }, // Telnice — southern anchor lost
+            { lat: 49.09400, lng: 16.72000 }, // Toward causeway between ponds
+            { lat: 49.08600, lng: 16.71500 }, // Causeway between Žatčany and Měnín ponds
+            { lat: 49.07800, lng: 16.71800 }, // Across Žatčany pond (SE flight)
+            { lat: 49.07000, lng: 16.72500 }, // Beyond Žatčany village — escape SE
+          ],
+        },
+      ],
+    },
+  ],
+} },
     { name: 'Moscow', coords: { lat: 55.7558, lng: 37.6173 }, date: 'Sep 1812',
       story: 'He enters Moscow expecting surrender and finds it burning and empty. The retreat that follows destroys the Grande Armée — of 600,000 men, fewer than 100,000 return.',
       camera: { altitude: 0.2 } },

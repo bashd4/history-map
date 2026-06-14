@@ -9,220 +9,300 @@ const SIDES = { union: '#4d8fdb', confederate: '#c0392b' }
 const fortDonelson: Battle = {
   name: 'Battle of Fort Donelson',
   date: 'February 12-16, 1862',
-  sides: SIDES,
+  sides: { union: '#4d8fdb', confederate: '#c0392b' },
   strengths: { union: '~24,500 men', confederate: '~16,000 men' },
   // Camera stands NW on the river, looking SE across the fort and bluffs.
   fieldAzimuth: 315,
   areas: [
     {
+      // Fort earthworks: 36.4878, -87.8559 (NPS confirmed centroid).
+      // The works enclosed the bluff above the river on the N and Dover on the SE.
+      // Outline traces the ~100-acre earthwork perimeter.
       name: 'Fort Donelson',
       kind: 'terrain',
       outline: [
-        { lat: 36.4940, lng: -87.8650 },
-        { lat: 36.4955, lng: -87.8630 },
-        { lat: 36.4960, lng: -87.8600 },
-        { lat: 36.4945, lng: -87.8580 },
-        { lat: 36.4920, lng: -87.8575 },
-        { lat: 36.4905, lng: -87.8595 },
-        { lat: 36.4910, lng: -87.8630 },
-        { lat: 36.4928, lng: -87.8648 },
+        { lat: 36.49200, lng: -87.86200 }, // NW corner (toward river)
+        { lat: 36.49380, lng: -87.85900 }, // N edge along bluff
+        { lat: 36.49300, lng: -87.85500 }, // NE corner
+        { lat: 36.49000, lng: -87.85300 }, // E side
+        { lat: 36.48550, lng: -87.85350 }, // SE corner (toward Dover)
+        { lat: 36.48350, lng: -87.85650 }, // S edge
+        { lat: 36.48450, lng: -87.86050 }, // SW corner
+        { lat: 36.48800, lng: -87.86300 }, // W side back to NW
       ],
     },
     {
+      // Dover TN: county seat, SE of the fort on the Cumberland River.
+      // Apple Maps / NPS address: 120 Fort Donelson Rd, Dover TN 37058.
+      // Dover center is ~36.486, -87.848.
       name: 'Dover',
       kind: 'settlement',
       outline: [
-        { lat: 36.4900, lng: -87.8510 },
-        { lat: 36.4905, lng: -87.8475 },
-        { lat: 36.4880, lng: -87.8460 },
-        { lat: 36.4858, lng: -87.8470 },
-        { lat: 36.4855, lng: -87.8500 },
-        { lat: 36.4875, lng: -87.8518 },
+        { lat: 36.48800, lng: -87.85100 },
+        { lat: 36.48850, lng: -87.84700 },
+        { lat: 36.48650, lng: -87.84400 },
+        { lat: 36.48350, lng: -87.84350 },
+        { lat: 36.48200, lng: -87.84600 },
+        { lat: 36.48400, lng: -87.85000 },
       ],
     },
     {
+      // Confederate outer trench arc: 3-mile semicircle from Hickman Creek (W/NW)
+      // to Lick Creek (SE). Source: Wikipedia; "breastworks in a three-mile arc
+      // which inclosed the bluff on the north and Dover on the south."
+      // Buckner's right anchored on Hickman Creek (NW); Pillow's left near Lick Creek (SE).
+      // Indian Creek runs through the center of the arc.
+      //
+      // Computed at 1.5km radius from fort (36.4878, -87.8559), bearings 280°→100°
+      // (sweeping WNW through S to ESE). Arc length at this radius ≈ 4660m ≈ 2.9 miles,
+      // acceptably close to the documented "3 miles." The N-facing flanks close toward
+      // the river (Hickman Cr on W, Lick Cr on E) — added as closing endpoints.
       name: 'Outer Confederate Trenches',
       kind: 'terrain',
       outline: [
-        { lat: 36.5150, lng: -87.8950 },
-        { lat: 36.5100, lng: -87.8900 },
-        { lat: 36.5050, lng: -87.8850 },
-        { lat: 36.4980, lng: -87.8750 },
-        { lat: 36.4920, lng: -87.8700 },
-        { lat: 36.4880, lng: -87.8680 },
-        { lat: 36.4850, lng: -87.8620 },
-        { lat: 36.4870, lng: -87.8550 },
-        { lat: 36.4930, lng: -87.8520 },
-        { lat: 36.5020, lng: -87.8560 },
-        { lat: 36.5100, lng: -87.8650 },
-        { lat: 36.5180, lng: -87.8780 },
+        { lat: 36.49014, lng: -87.87242 }, // WNW (280°, 1.5km): Hickman Creek anchor (Buckner right)
+        { lat: 36.48319, lng: -87.87167 }, // WSW (250°, 1.5km): Smith's front
+        { lat: 36.47747, lng: -87.86668 }, // SW  (220°, 1.5km): SW sector
+        { lat: 36.47452, lng: -87.85881 }, // S   (190°, 1.5km): Indian Creek center
+        { lat: 36.47512, lng: -87.85016 }, // SSE (160°, 1.5km): S sector
+        { lat: 36.47913, lng: -87.84305 }, // SE  (130°, 1.5km): McClernand's front
+        { lat: 36.48546, lng: -87.83938 }, // ESE (100°, 1.5km): Lick Creek anchor (Pillow left)
       ],
     },
   ],
   phases: [
     {
       caption:
-        "Grant's infantry closes the land ring around the fort while Foote's gunboat flotilla steams up the Cumberland — McClernand's division anchors the right, Smith's the left, Wallace's in reserve.",
+        "Grant's infantry closes the land ring around the fort while Foote's gunboat flotilla steams up the Cumberland — McClernand's division anchors the right (SE sector near Lick Creek), Smith's the left (W sector facing Hickman Creek), Wallace's in reserve.",
       duration: 7,
       movements: [
         {
+          // McClernand approached from the W (same road as all Union forces from Fort Henry),
+          // then swept around the S of the Confederate arc to occupy the SE/right sector
+          // facing Pillow's left. His right flank was near Lick Creek (SE of Dover).
           side: 'union',
           style: 'advance',
           unit: 'McClernand — 1st Division',
           path: [
-            { lat: 36.545, lng: -87.930 },
-            { lat: 36.520, lng: -87.910 },
-            { lat: 36.505, lng: -87.895 },
+            { lat: 36.49500, lng: -87.93500 }, // approaching from W (Fort Henry direction)
+            { lat: 36.48000, lng: -87.90000 }, // swings south of Confederate arc
+            { lat: 36.46800, lng: -87.86800 }, // moving to SE sector
+            { lat: 36.46200, lng: -87.83600 }, // right flank near Lick Creek
           ],
         },
         {
+          // Smith on the Union LEFT: stayed on the W/NW sector facing Buckner's right,
+          // which was anchored on Hickman Creek. Smith approached from W and anchored
+          // his division west of the fort works.
           side: 'union',
           style: 'advance',
           unit: 'C. F. Smith — 2nd Division',
           path: [
-            { lat: 36.448, lng: -87.920 },
-            { lat: 36.468, lng: -87.890 },
-            { lat: 36.485, lng: -87.868 },
+            { lat: 36.45500, lng: -87.93000 }, // from W, left (southern) flank
+            { lat: 36.46200, lng: -87.91200 }, // advancing NE
+            { lat: 36.47000, lng: -87.89800 }, // settling into position W of Confederate right
           ],
         },
         {
+          // Foote's flotilla: came UP the Cumberland from downstream (NW direction).
+          // OSM nodes confirm river runs SE-NW in this reach.
+          // Phase 1 shows the advance stage — staging downstream of the batteries.
+          // River nodes (OSM way 163974730) sampled at 5-node intervals.
           side: 'union',
           style: 'advance',
           unit: "Foote's Gunboat Flotilla",
           path: [
-            { lat: 36.530, lng: -87.840 },
-            { lat: 36.510, lng: -87.845 },
-            { lat: 36.498, lng: -87.852 },
+            { lat: 36.55135, lng: -87.88307 }, // downstream NW (OSM node)
+            { lat: 36.54445, lng: -87.87672 }, // OSM node
+            { lat: 36.52915, lng: -87.87672 }, // OSM node — staging point downstream
+            { lat: 36.51742, lng: -87.87501 }, // OSM node — advancing upstream (SE)
+            { lat: 36.50887, lng: -87.86865 }, // OSM node — nearing batteries
           ],
         },
       ],
     },
     {
       caption:
-        "Foote's four ironclads press within 400 yards of the water batteries — accurate plunging fire cripples the fleet; St. Louis and Louisville are both hulled and driven back downriver.",
+        "Foote's four ironclads press within 400 yards of the water batteries — accurate plunging fire from the bluff cripples the fleet; St. Louis and Louisville are both hulled and driven back downriver.",
       duration: 8,
       events: [
-        { coords: { lat: 36.496, lng: -87.856 }, label: "Gunboats repulsed — Foote wounded aboard St. Louis" },
+        {
+          // Water batteries are on the 100-ft bluff above the river, just N of the earthworks.
+          // Foote's closest approach was the river directly below, ~400yd from the guns.
+          coords: { lat: 36.50003, lng: -87.86041 },
+          label: "Gunboats repulsed — Foote wounded aboard St. Louis",
+        },
       ],
       movements: [
         {
+          // Foote ADVANCE: up the river from downstream staging to within ~400yd of batteries.
+          // All nodes are real OSM river nodes (way 163974730).
+          // Closest approach: 36.50003, -87.86041 (river directly below the bluff battery).
           side: 'union',
           style: 'advance',
           unit: "Foote's Gunboat Flotilla",
           path: [
-            { lat: 36.510, lng: -87.845 },
-            { lat: 36.496, lng: -87.856 },
+            { lat: 36.52915, lng: -87.87672 }, // downstream staging (OSM node)
+            { lat: 36.51742, lng: -87.87501 }, // OSM node
+            { lat: 36.51328, lng: -87.87260 }, // OSM node
+            { lat: 36.50887, lng: -87.86865 }, // OSM node
+            { lat: 36.50417, lng: -87.86385 }, // OSM node
+            { lat: 36.50003, lng: -87.86041 }, // OSM node — closest approach (~400yd from battery)
           ],
         },
         {
+          // Foote RETREAT: disabled boats "drifted down the river" (NPS source).
+          // Same river nodes, reversed direction — back downstream NW.
           side: 'union',
           style: 'retreat',
           unit: "Foote's Gunboat Flotilla",
           path: [
-            { lat: 36.496, lng: -87.856 },
-            { lat: 36.520, lng: -87.840 },
+            { lat: 36.50003, lng: -87.86041 }, // OSM — repulse point
+            { lat: 36.50417, lng: -87.86385 }, // OSM node
+            { lat: 36.50887, lng: -87.86865 }, // OSM node
+            { lat: 36.51742, lng: -87.87501 }, // OSM node
+            { lat: 36.52915, lng: -87.87672 }, // OSM node — retiring downstream
+            { lat: 36.55135, lng: -87.88307 }, // OSM node — safely downstream
           ],
         },
         {
+          // Confederate river batteries: on the bluff at ~36.497, -87.858.
+          // NOTE: Original code labelled this "Maney's river battery" — CORRECTED.
+          // Capt. Frank Maney commanded a LAND battery on the outer defensive line
+          // (attached to Heiman/Johnson). The river batteries were commanded by
+          // Capt. Joseph Dixon (lower) and Capt. Bidwell (upper).
+          // This feint arrow represents the battery firing position on the bluff.
           side: 'confederate',
           style: 'feint',
-          unit: "Maney's river battery",
+          unit: "Confederate river batteries",
           path: [
-            { lat: 36.493, lng: -87.862 },
-            { lat: 36.492, lng: -87.858 },
+            { lat: 36.49700, lng: -87.85800 }, // lower battery on bluff (facing downstream NW)
+            { lat: 36.50000, lng: -87.86000 }, // upper battery on bluff
           ],
         },
       ],
     },
     {
       caption:
-        "Pillow and Buckner break through McClernand's right, nearly forcing the Forge Road to Nashville — then Pillow, fearing Grant's return, orders the men back into the fort.",
+        "Pillow and Buckner break through McClernand's right (SE sector), nearly forcing the Wynn's Ferry and Forge Roads open to Nashville — then Pillow, fearing Grant's return, orders the men back into the fort.",
       duration: 8,
       movements: [
         {
+          // Pillow's division: on the Confederate LEFT (E/SE sector of the arc,
+          // near Lick Creek). Attacked S/SW, driving McClernand's right back.
+          // Goal: reach Wynn's Ferry Rd / Forge Rd junctions running toward Nashville (SE).
+          // The attack opened the road but Pillow recalled the men by ~1:30 p.m.
           side: 'confederate',
           style: 'advance',
           unit: "Pillow's division",
           path: [
-            { lat: 36.492, lng: -87.862 },
-            { lat: 36.510, lng: -87.900 },
-            { lat: 36.525, lng: -87.928 },
+            { lat: 36.47500, lng: -87.85500 }, // start: E side of Confederate arc (Lick Cr sector)
+            { lat: 36.46700, lng: -87.85800 }, // pushing south
+            { lat: 36.46000, lng: -87.86200 }, // driving toward road junction
+            { lat: 36.45500, lng: -87.87000 }, // at Wynn's Ferry / Forge Rd area
           ],
         },
         {
+          // Buckner acted as rear guard, sweeping S across Wynn's Ferry Road
+          // from his right-flank position (W/NW sector) toward the road junction.
+          // His movement was more westward, pinning Union center while Pillow attacked SE.
           side: 'confederate',
           style: 'advance',
           unit: "Buckner's division",
           path: [
-            { lat: 36.488, lng: -87.868 },
-            { lat: 36.498, lng: -87.890 },
-            { lat: 36.510, lng: -87.912 },
+            { lat: 36.48800, lng: -87.88200 }, // start: Confederate right (W sector near Hickman Cr)
+            { lat: 36.47800, lng: -87.87800 }, // moving S as rear guard
+            { lat: 36.47000, lng: -87.87200 }, // crossing toward Wynn's Ferry Rd
           ],
         },
         {
+          // McClernand's right was pushed S/SE — back toward Lick Creek and beyond,
+          // approximately 1–2 miles. His men fell back ESE, away from the arc.
           side: 'union',
           style: 'retreat',
           unit: 'McClernand — 1st Division',
           path: [
-            { lat: 36.512, lng: -87.902 },
-            { lat: 36.532, lng: -87.928 },
+            { lat: 36.46200, lng: -87.83600 }, // his right-flank position (near Lick Creek)
+            { lat: 36.45500, lng: -87.82800 }, // retreating SE
+            { lat: 36.44800, lng: -87.82000 }, // pushed back ~1.5 miles from arc
           ],
         },
         {
+          // Pillow's recall: ordered back into the fort, surrendering all gained ground.
+          // Reversed from the road junction back NE into the Confederate arc.
           side: 'confederate',
           style: 'retreat',
           unit: "Pillow's division",
           path: [
-            { lat: 36.525, lng: -87.928 },
-            { lat: 36.492, lng: -87.862 },
+            { lat: 36.45500, lng: -87.87000 }, // from road junction
+            { lat: 36.46200, lng: -87.86200 }, // returning NE
+            { lat: 36.47500, lng: -87.85500 }, // back into Confederate left sector
           ],
         },
       ],
     },
     {
       caption:
-        "Grant orders an immediate counterattack; Smith's division breaks through the Confederate right while McClernand recovers the lost ground — Buckner asks for terms.",
+        "Grant orders an immediate counterattack; Smith's division breaks through the Confederate right (near Hickman Creek) while McClernand and Wallace recover the lost SE ground — Buckner surrenders at dawn.",
       duration: 9,
       events: [
-        { coords: { lat: 36.492, lng: -87.862 }, label: '"No terms except unconditional surrender" — Grant to Buckner' },
+        {
+          // Grant delivered his surrender demand from his HQ near the river landing area.
+          // The fort HQ (Dover Hotel) was in Dover: ~36.4860, -87.8480.
+          coords: { lat: 36.48600, lng: -87.84800 },
+          label: '"No terms except unconditional surrender" — Grant to Buckner',
+        },
       ],
       movements: [
         {
+          // McClernand counterattack: retakes the SE ground pushed back during the breakout.
+          // Advances N from his retreat position back toward the outer Confederate arc.
           side: 'union',
           style: 'advance',
           unit: 'McClernand — 1st Division',
           path: [
-            { lat: 36.532, lng: -87.928 },
-            { lat: 36.510, lng: -87.905 },
-            { lat: 36.495, lng: -87.882 },
+            { lat: 36.44800, lng: -87.82000 }, // from retreat position
+            { lat: 36.45500, lng: -87.82800 }, // advancing N
+            { lat: 36.46200, lng: -87.83600 }, // recovering right-flank position near Lick Creek
           ],
         },
         {
+          // Smith's attack: on the Union LEFT (W sector), Grant ordered Smith to
+          // assault the Confederate right (near Hickman Creek) which had been weakened
+          // when troops were pulled for Pillow's breakout. Smith's 2nd Iowa led the charge,
+          // breaking through the outer works and capturing the ridge. Grant confirmed:
+          // "Smith had carried the works." Attack direction: NE into the Confederate right.
           side: 'union',
           style: 'advance',
           unit: 'C. F. Smith — 2nd Division',
           path: [
-            { lat: 36.480, lng: -87.870 },
-            { lat: 36.488, lng: -87.862 },
-            { lat: 36.492, lng: -87.855 },
+            { lat: 36.46200, lng: -87.91000 }, // from his assembly position W of fort
+            { lat: 36.47200, lng: -87.90000 }, // advancing NE
+            { lat: 36.49000, lng: -87.87200 }, // breaking through Confederate right (NW arc, near Hickman Cr)
           ],
         },
         {
+          // Wallace advances in center to fill the gap and restore the Union line.
+          // His division moved NE from the reserve position into the center of the arc.
           side: 'union',
           style: 'advance',
           unit: "Lew Wallace — 3rd Division",
           path: [
-            { lat: 36.510, lng: -87.888 },
-            { lat: 36.500, lng: -87.876 },
+            { lat: 36.46500, lng: -87.87000 }, // reserve/center position
+            { lat: 36.47200, lng: -87.86200 }, // advancing toward the S arc
           ],
         },
         {
+          // Buckner's division: Confederate right collapsed under Smith's assault.
+          // Retreated NE back inside the fort perimeter (toward earthworks).
+          // Buckner then asked Grant for terms — surrender Feb 16 at dawn.
           side: 'confederate',
           style: 'retreat',
           unit: "Buckner's division",
           path: [
-            { lat: 36.492, lng: -87.862 },
-            { lat: 36.490, lng: -87.856 },
+            { lat: 36.49000, lng: -87.87200 }, // point of Smith's breakthrough (NW arc)
+            { lat: 36.49200, lng: -87.86600 }, // retreating E toward fort
+            { lat: 36.49200, lng: -87.86100 }, // back inside fort earthwork perimeter
           ],
         },
       ],
@@ -243,235 +323,327 @@ const shiloh: Battle = {
   fieldAzimuth: 70,
   areas: [
     {
+      // Hornet's Nest / Sunken Road: corrected to HMDB-anchored position.
+      // HMDB marker at 35.13810, -88.34008. Sunken Road ran ~600 yds E-W from Duncan Field
+      // (W) curving SE toward the Peach Orchard. The defensive thicket + road = the 'woods' zone.
       name: "Hornet's Nest",
       kind: 'woods',
       outline: [
-        { lat: 35.1420, lng: -88.3480 },
-        { lat: 35.1425, lng: -88.3460 },
-        { lat: 35.1418, lng: -88.3435 },
-        { lat: 35.1402, lng: -88.3420 },
-        { lat: 35.1388, lng: -88.3428 },
-        { lat: 35.1382, lng: -88.3455 },
-        { lat: 35.1392, lng: -88.3475 },
-        { lat: 35.1408, lng: -88.3482 },
+        { lat: 35.13920, lng: -88.34380 },
+        { lat: 35.13950, lng: -88.34180 },
+        { lat: 35.13880, lng: -88.33980 },
+        { lat: 35.13780, lng: -88.33850 },
+        { lat: 35.13650, lng: -88.33800 },
+        { lat: 35.13560, lng: -88.33900 },
+        { lat: 35.13570, lng: -88.34100 },
+        { lat: 35.13650, lng: -88.34300 },
+        { lat: 35.13790, lng: -88.34420 },
       ],
     },
     {
+      // Pittsburg Landing: corrected to OSM-confirmed location on the west bank of the
+      // Tennessee River. OSM Way 765321525 centroid ~35.14939, -88.31858. The bluff-top
+      // landing area and Grant's command post were just west of the river bank.
       name: 'Pittsburg Landing',
       kind: 'settlement',
       outline: [
-        { lat: 35.1420, lng: -88.3430 },
-        { lat: 35.1428, lng: -88.3415 },
-        { lat: 35.1415, lng: -88.3398 },
-        { lat: 35.1398, lng: -88.3395 },
-        { lat: 35.1388, lng: -88.3410 },
-        { lat: 35.1395, lng: -88.3428 },
+        { lat: 35.15060, lng: -88.32280 },
+        { lat: 35.15080, lng: -88.32050 },
+        { lat: 35.14960, lng: -88.31860 },
+        { lat: 35.14810, lng: -88.31820 },
+        { lat: 35.14680, lng: -88.31960 },
+        { lat: 35.14720, lng: -88.32180 },
+        { lat: 35.14900, lng: -88.32320 },
       ],
     },
     {
+      // Owl Creek Swamps: NW boundary of the battlefield. Owl Creek flows SW-to-NE,
+      // entering the Tennessee River north of the battlefield. The swampy bottomland
+      // formed the natural barrier on the Union right (Sherman's flank).
+      // Corrected to proper NW position consistent with 35.15-35.17, -88.37 to -88.39.
       name: 'Owl Creek Swamps',
       kind: 'water',
       outline: [
-        { lat: 35.1600, lng: -88.3900 },
-        { lat: 35.1580, lng: -88.3850 },
-        { lat: 35.1555, lng: -88.3810 },
-        { lat: 35.1530, lng: -88.3830 },
-        { lat: 35.1520, lng: -88.3870 },
-        { lat: 35.1545, lng: -88.3920 },
-        { lat: 35.1575, lng: -88.3930 },
+        { lat: 35.17200, lng: -88.39500 },
+        { lat: 35.17000, lng: -88.38200 },
+        { lat: 35.16400, lng: -88.37500 },
+        { lat: 35.15800, lng: -88.37200 },
+        { lat: 35.15200, lng: -88.37400 },
+        { lat: 35.15000, lng: -88.38000 },
+        { lat: 35.15500, lng: -88.38900 },
+        { lat: 35.16400, lng: -88.39600 },
       ],
     },
     {
+      // Peach Orchard (Sarah Bell's): east side of battlefield along the Hamburg-Savannah Road.
+      // Confederate right (Chalmers/Jackson) and Johnston personally directed fighting here.
+      // Johnston mortally wounded ~35.13020, -88.32953 (NPS); orchard was just NW of that point.
+      // Placed at ~35.1325-35.1360, -88.3290 to -88.3360.
       name: 'Peach Orchard',
       kind: 'terrain',
       outline: [
-        { lat: 35.1328, lng: -88.3290 },
-        { lat: 35.1335, lng: -88.3272 },
-        { lat: 35.1320, lng: -88.3258 },
-        { lat: 35.1302, lng: -88.3262 },
-        { lat: 35.1298, lng: -88.3280 },
-        { lat: 35.1312, lng: -88.3295 },
+        { lat: 35.13600, lng: -88.33580 },
+        { lat: 35.13620, lng: -88.33240 },
+        { lat: 35.13480, lng: -88.32980 },
+        { lat: 35.13280, lng: -88.32880 },
+        { lat: 35.13100, lng: -88.32980 },
+        { lat: 35.13080, lng: -88.33260 },
+        { lat: 35.13260, lng: -88.33520 },
+        { lat: 35.13460, lng: -88.33620 },
       ],
     },
   ],
   phases: [
     {
       caption:
-        "Before dawn Johnston's army crashes through the Union pickets — Hardee's corps leads, Bragg follows close; Sherman and McClernand are overwhelmed near Shiloh Church and fall back.",
+        "Dawn Apr 6 — Johnston's army bursts from the woods along the Corinth road: Hardee's corps leads the front line NNE into Sherman's camps at Shiloh Church; Bragg's corps follows close, striking the center. Sherman and McClernand are overwhelmed and fall back NE toward the Landing.",
       duration: 8,
       movements: [
         {
+          // Hardee's corps: front wave. Bivouacked ~2 miles S of Union camps, advanced NNE
+          // along the Corinth-Pittsburg Landing road into Sherman's position at Shiloh Church.
+          // Start point S of battlefield consistent with Corinth approach bearing (~30° from S).
           side: 'confederate',
           style: 'advance',
           unit: "Hardee — III Corps (front wave)",
           path: [
-            { lat: 35.110, lng: -88.385 },
-            { lat: 35.128, lng: -88.368 },
-            { lat: 35.138, lng: -88.357 },
+            { lat: 35.09800, lng: -88.38500 },
+            { lat: 35.11400, lng: -88.37200 },
+            { lat: 35.12600, lng: -88.36200 },
+            { lat: 35.13368, lng: -88.35499 },  // Shiloh Church (OSM confirmed)
           ],
         },
         {
+          // Bragg's corps: second wave, slightly E of Hardee, driving N toward center of
+          // Union camps (Prentiss / W.H.L. Wallace sector).
           side: 'confederate',
           style: 'advance',
           unit: "Bragg — II Corps (second wave)",
           path: [
-            { lat: 35.105, lng: -88.375 },
-            { lat: 35.120, lng: -88.362 },
-            { lat: 35.135, lng: -88.350 },
+            { lat: 35.09800, lng: -88.36500 },
+            { lat: 35.11300, lng: -88.35800 },
+            { lat: 35.12300, lng: -88.34700 },
+            { lat: 35.12800, lng: -88.34000 },
           ],
         },
         {
+          // Sherman retreats NE from Shiloh Church toward Pittsburg Landing.
+          // Bearing ~58° (confirmed). He fell back through successive defensive lines.
           side: 'union',
           style: 'retreat',
           unit: 'Sherman — 5th Division',
           path: [
-            { lat: 35.138, lng: -88.357 },
-            { lat: 35.145, lng: -88.348 },
-            { lat: 35.150, lng: -88.340 },
+            { lat: 35.13368, lng: -88.35499 },  // Shiloh Church
+            { lat: 35.13900, lng: -88.34500 },   // intermediate ridge
+            { lat: 35.14500, lng: -88.33200 },   // Jones Field area
+            { lat: 35.14800, lng: -88.32600 },   // near Landing perimeter
           ],
         },
         {
+          // McClernand (E of Sherman) also retreats NE, parallel to Sherman.
+          // His division was camped E of Shiloh Church, retreated toward the Landing.
           side: 'union',
           style: 'retreat',
           unit: 'McClernand — 1st Division',
           path: [
-            { lat: 35.142, lng: -88.360 },
-            { lat: 35.148, lng: -88.348 },
-            { lat: 35.152, lng: -88.338 },
+            { lat: 35.13600, lng: -88.34800 },
+            { lat: 35.14000, lng: -88.33800 },
+            { lat: 35.14600, lng: -88.32900 },
+            { lat: 35.14850, lng: -88.32500 },
           ],
         },
       ],
     },
     {
       caption:
-        "Prentiss anchors the Hornet's Nest with 2,200 men and repulses eleven Confederate charges for six hours; Johnston rides forward to direct the Peach Orchard assault and is hit.",
+        "Mid-morning to dusk Apr 6 — Prentiss and W.H.L. Wallace anchor the Sunken Road / Hornet's Nest, repulsing 11 Confederate charges for ~6 hours. Ruggles masses 62 guns in Duncan Field. Johnston rides personally to direct the Peach Orchard assault on the Confederate right and is mortally wounded.",
       duration: 9,
       events: [
-        { coords: { lat: 35.131, lng: -88.327 }, label: 'Johnston mortally wounded leading the Peach Orchard charge' },
-        { coords: { lat: 35.141, lng: -88.345 }, label: "Prentiss holds the Hornet's Nest — eleven charges repulsed" },
+        {
+          // NPS Monument M017 confirmed: 35.1302, -88.32953 ("mortally wounded at 2:30 p.m.").
+          // The Peach Orchard was where he was directing the assault; he was hit on his horse
+          // near the orchard, then taken 50 yards SE into a ravine where he died.
+          coords: { lat: 35.13020, lng: -88.32953 },
+          label: "Johnston mortally wounded directing Peach Orchard assault",
+        },
+        {
+          // Hornet's Nest: HMDB marker 35.13810, -88.34008 (confirmed).
+          coords: { lat: 35.13810, lng: -88.34008 },
+          label: "Prentiss & W.H.L. Wallace hold the Hornet's Nest — eleven",
+        },
       ],
       movements: [
         {
+          // Prentiss holds the Sunken Road. The road ran E-W; show as a short W-to-E line
+          // along the defensive position. 'feint' = static defensive holding action.
           side: 'union',
           style: 'feint',
-          unit: "Prentiss — 6th Division (Hornet's Nest)",
+          unit: "Prentiss — 6th Div. + W.H.L. Wallace",
           path: [
-            { lat: 35.141, lng: -88.346 },
-            { lat: 35.140, lng: -88.344 },
+            { lat: 35.13860, lng: -88.34380 },  // Sunken Road west end (Duncan Field edge)
+            { lat: 35.13810, lng: -88.34008 },  // HMDB marker center
+            { lat: 35.13560, lng: -88.33500 },  // Sunken Road east end (toward Peach Orchard)
           ],
         },
         {
+          // Ruggles assembles 62 guns in Duncan Field (W of Hornet's Nest) and fires E.
+          // Duncan Field is just W/NW of the Sunken Road, bearing ~90° toward the Nest.
           side: 'confederate',
           style: 'advance',
-          unit: "Ruggles' massed artillery (62 guns)",
+          unit: "Ruggles' massed artillery — 62 guns",
           path: [
-            { lat: 35.130, lng: -88.352 },
-            { lat: 35.136, lng: -88.347 },
+            { lat: 35.13900, lng: -88.35000 },  // assembly point (Duncan Field W)
+            { lat: 35.13880, lng: -88.34400 },  // firing position (Duncan Field E edge)
           ],
         },
         {
+          // Chalmers & Jackson brigades: attacked up from the SE (Lick Creek flank),
+          // driving NNW toward the Peach Orchard and the eastern end of the Sunken Road.
           side: 'confederate',
           style: 'advance',
           unit: "Chalmers & Jackson — brigades",
           path: [
-            { lat: 35.126, lng: -88.322 },
-            { lat: 35.132, lng: -88.327 },
+            { lat: 35.11800, lng: -88.31800 },  // start near Lick Creek SE boundary
+            { lat: 35.12500, lng: -88.32000 },
+            { lat: 35.13020, lng: -88.32953 },  // Peach Orchard / Johnston wound site
           ],
         },
         {
+          // Webster's artillery last line: ~50 guns on the ridge above Dill Branch ravine,
+          // running E-W from Tilghman Branch to the river bluff, just S of the Landing.
+          // This is a defensive 'advance' to position, facing S.
           side: 'union',
           style: 'advance',
-          unit: "Webster's artillery line — Landing",
+          unit: "Webster's artillery — Grant's Last Line",
           path: [
-            { lat: 35.148, lng: -88.342 },
-            { lat: 35.150, lng: -88.338 },
+            { lat: 35.14600, lng: -88.33200 },  // Tilghman Branch / left anchor
+            { lat: 35.14700, lng: -88.32800 },  // center of line
+            { lat: 35.14800, lng: -88.32100 },  // river bluff / right anchor
           ],
         },
       ],
     },
     {
       caption:
-        "Prentiss's force, surrounded, surrenders at dusk; overnight Buell's Army of the Ohio crosses the river and Lew Wallace's lost division finally arrives on the right.",
+        "Dusk Apr 6 — Prentiss surrenders ~2,200 men; Beauregard halts the Confederate advance short of the Landing. Overnight: gunboats Tyler & Lexington shell Confederate positions from the river; Buell's Army of the Ohio crosses the Tennessee at the Landing; Lew Wallace's lost division arrives from the north.",
       duration: 7,
       events: [
-        { coords: { lat: 35.141, lng: -88.344 }, label: "Prentiss surrenders ~2,200 men — dusk, Apr 6" },
+        {
+          coords: { lat: 35.13810, lng: -88.34008 },  // HMDB marker (surrender site)
+          label: "Prentiss surrenders ~2,200 men — dusk, Apr 6",
+        },
       ],
       movements: [
         {
+          // Gunboats Tyler & Lexington shelled Confederate positions from the river on the
+          // evening of Apr 6. The river channel at this latitude runs along the east edge
+          // of the field. Path stays on the OSM river centerline (Way 164267067 nodes).
+          // Tyler/Lexington shelled N-to-S positions from the river.
           side: 'union',
           style: 'advance',
-          unit: "Nelson's div. (Buell) — river crossing",
+          unit: "Gunboats Tyler & Lexington — Tennessee",
           path: [
-            { lat: 35.140, lng: -88.328 },
-            { lat: 35.143, lng: -88.336 },
-            { lat: 35.148, lng: -88.342 },
+            { lat: 35.15925, lng: -88.31606 },  // OSM river node (north)
+            { lat: 35.14956, lng: -88.31648 },  // OSM river node (near Landing)
+            { lat: 35.14445, lng: -88.31735 },  // OSM river node (south)
+            { lat: 35.13856, lng: -88.31728 },  // OSM river node (further S)
           ],
         },
         {
+          // Nelson's division (Buell's lead): crossed from east bank to Pittsburg Landing
+          // (west bank). Path starts on the east bank of the river and terminates at
+          // the actual landing site (OSM Way 765321525: 35.14939, -88.31858).
+          // River centerline at this lat: 35.14956,-88.31648 (OSM node).
+          side: 'union',
+          style: 'advance',
+          unit: "Nelson's div. (Buell) — Tennessee River",
+          path: [
+            { lat: 35.14900, lng: -88.30900 },  // east bank (Savannah side) embarkation
+            { lat: 35.14956, lng: -88.31648 },  // OSM river centerline node (midstream)
+            { lat: 35.14939, lng: -88.31858 },  // Pittsburg Landing west bank (OSM confirmed)
+            { lat: 35.14900, lng: -88.32300 },  // staging area inland from the landing
+          ],
+        },
+        {
+          // Lew Wallace's 3rd Division: came from Crump's Landing (~5 miles N on the river).
+          // He marched south down the River Road, crossed Snake Creek, arrived from the north
+          // at the Union right flank near the Landing. Arrived after dark, Apr 6.
           side: 'union',
           style: 'advance',
           unit: "Lew Wallace — 3rd Division",
           path: [
-            { lat: 35.165, lng: -88.310 },
-            { lat: 35.155, lng: -88.325 },
-            { lat: 35.150, lng: -88.338 },
+            { lat: 35.22000, lng: -88.32800 },  // Crump's Landing (~5 miles N of Landing)
+            { lat: 35.19000, lng: -88.32500 },  // River Road south
+            { lat: 35.16500, lng: -88.32200 },  // Snake Creek crossing
+            { lat: 35.15200, lng: -88.32200 },  // arrival at Union right flank
           ],
         },
         {
+          // Crittenden & McCook divisions (Buell): followed Nelson's crossing overnight/early
+          // Apr 7. Path mirrors Nelson's crossing then fans out to assembly positions.
           side: 'union',
           style: 'advance',
-          unit: "Crittenden & McCook divisions (Buell)",
+          unit: "Crittenden & McCook divs. (Buell)",
           path: [
-            { lat: 35.138, lng: -88.328 },
-            { lat: 35.140, lng: -88.334 },
-            { lat: 35.145, lng: -88.340 },
+            { lat: 35.14700, lng: -88.30900 },  // east bank
+            { lat: 35.14700, lng: -88.31858 },  // Pittsburg Landing west bank
+            { lat: 35.14500, lng: -88.32800 },  // assembly position W of Landing
           ],
         },
       ],
     },
     {
       caption:
-        "Dawn on the 7th: the full Union line surges west — Sherman retakes Shiloh Church, Lew Wallace envelops the Confederate left, and Beauregard orders a general retreat toward Corinth.",
+        "Dawn Apr 7 — the full Union line surges WSW: Sherman retakes Shiloh Church; Lew Wallace envelops the Confederate left from the north; Hurlbut and Buell's divisions push the center. By mid-afternoon Beauregard orders a general retreat toward Corinth.",
       duration: 8,
       movements: [
         {
+          // Sherman drives WSW back from his rally point near the Landing, retaking Shiloh Church.
+          // Bearing ~238° (confirmed). This reverses his Day-1 retreat path.
           side: 'union',
           style: 'advance',
           unit: 'Sherman — 5th Division',
           path: [
-            { lat: 35.148, lng: -88.344 },
-            { lat: 35.140, lng: -88.354 },
-            { lat: 35.138, lng: -88.358 },
+            { lat: 35.14800, lng: -88.32600 },  // rally point near Landing
+            { lat: 35.14200, lng: -88.33800 },  // intermediate ridge
+            { lat: 35.13700, lng: -88.34900 },  // approaching church
+            { lat: 35.13368, lng: -88.35499 },  // Shiloh Church (OSM confirmed)
           ],
         },
         {
+          // Lew Wallace: arrived from the N, occupied the Union far right.
+          // On Day 2 he drove WSW, enveloping the Confederate left flank.
+          // Bearing ~245° (confirmed).
           side: 'union',
           style: 'advance',
           unit: "Lew Wallace — 3rd Division",
           path: [
-            { lat: 35.152, lng: -88.340 },
-            { lat: 35.148, lng: -88.352 },
-            { lat: 35.143, lng: -88.362 },
+            { lat: 35.15200, lng: -88.32200 },  // overnight position (far right)
+            { lat: 35.14900, lng: -88.33800 },  // advancing WSW
+            { lat: 35.14400, lng: -88.35600 },  // Confederate left collapsed here
           ],
         },
         {
+          // Hurlbut (Union center) + Buell's divisions push WSW through the recaptured camps.
           side: 'union',
           style: 'advance',
-          unit: "Hurlbut & McCook — center push",
+          unit: "Hurlbut & Buell's Army — center push",
           path: [
-            { lat: 35.145, lng: -88.342 },
-            { lat: 35.138, lng: -88.352 },
-            { lat: 35.130, lng: -88.363 },
+            { lat: 35.14600, lng: -88.32800 },  // starting line near Landing
+            { lat: 35.14000, lng: -88.34200 },  // retaking mid-battlefield camps
+            { lat: 35.13500, lng: -88.35200 },  // approaching Shiloh Church area
           ],
         },
         {
+          // Beauregard orders retreat SW toward Corinth.
+          // Bearing ~220° from Shiloh Church area toward Corinth (SSW confirmed).
           side: 'confederate',
           style: 'retreat',
           unit: "Beauregard — Army of the Mississippi",
           path: [
-            { lat: 35.138, lng: -88.357 },
-            { lat: 35.120, lng: -88.372 },
-            { lat: 35.105, lng: -88.388 },
+            { lat: 35.13368, lng: -88.35499 },  // Shiloh Church / HQ evening Apr 6
+            { lat: 35.12000, lng: -88.37000 },  // withdrawing SSW
+            { lat: 35.10500, lng: -88.38800 },  // rearguard / Fallen Timbers skirmish
           ],
         },
       ],
@@ -494,231 +666,355 @@ const vicksburg: Battle = {
   fieldAzimuth: 250,
   areas: [
     {
+      // Vicksburg fortress polygon traces the Confederate defensive arc:
+      // Fort Hill (N river anchor, bluff above the 1863/Yazoo-canal channel)
+      // → NE along the ridge through Stockade Redan, 3rd Louisiana Redan,
+      //   Great Redoubt, 2nd Texas Lunette, Railroad Redoubt, Fort Garrott
+      // → South Fort (S river anchor) → back N along the waterfront bluffs.
+      // Stockade Redan position confirmed 32.36992, –90.84474 (FortWiki GPS).
       name: 'Vicksburg Fortress',
       kind: 'settlement',
       outline: [
-        { lat: 32.3650, lng: -90.8900 },
-        { lat: 32.3620, lng: -90.8820 },
-        { lat: 32.3580, lng: -90.8760 },
-        { lat: 32.3520, lng: -90.8720 },
-        { lat: 32.3460, lng: -90.8740 },
-        { lat: 32.3420, lng: -90.8800 },
-        { lat: 32.3440, lng: -90.8880 },
-        { lat: 32.3500, lng: -90.8930 },
-        { lat: 32.3580, lng: -90.8940 },
+        { lat: 32.38000, lng: -90.90500 }, // Fort Hill — N anchor at 1863 river bluff
+        { lat: 32.37800, lng: -90.85500 }, // Fort Hill — ridge top (above old channel)
+        { lat: 32.36992, lng: -90.84474 }, // Stockade Redan (confirmed)
+        { lat: 32.35800, lng: -90.84000 }, // 3rd Louisiana Redan / Jackson Rd area
+        { lat: 32.35000, lng: -90.84000 }, // Great Redoubt
+        { lat: 32.34100, lng: -90.84300 }, // 2nd Texas Lunette
+        { lat: 32.33300, lng: -90.85200 }, // Railroad Redoubt / Fort Garrott
+        { lat: 32.32700, lng: -90.87000 }, // South Fort — ridge
+        { lat: 32.32500, lng: -90.91000 }, // South Fort — S anchor at 1863 river bluff
+        { lat: 32.34000, lng: -90.91500 }, // Waterfront SW
+        { lat: 32.35300, lng: -90.91200 }, // City-centre waterfront (Water Battery lon)
+        { lat: 32.37000, lng: -90.90800 }, // Waterfront NW
       ],
     },
     {
+      // Champion Hill (Baker's Creek) battlefield, Hinds County.
+      // Wikipedia gives battle coords 32.33333, –90.52778.
+      // The Confederate 3-mile defensive ridge ran SW–NE; Baker's Creek
+      // anchored the W/SW escape route; the Jackson Road crossed the E side.
       name: 'Champion Hill',
       kind: 'terrain',
       outline: [
-        { lat: 32.3360, lng: -90.5700 },
-        { lat: 32.3380, lng: -90.5650 },
-        { lat: 32.3340, lng: -90.5600 },
-        { lat: 32.3280, lng: -90.5590 },
-        { lat: 32.3220, lng: -90.5620 },
-        { lat: 32.3210, lng: -90.5680 },
-        { lat: 32.3260, lng: -90.5730 },
-        { lat: 32.3320, lng: -90.5730 },
+        { lat: 32.34500, lng: -90.56000 }, // NW — ridge N terminus
+        { lat: 32.34200, lng: -90.52800 }, // N — ridge crest centre
+        { lat: 32.33300, lng: -90.51200 }, // NE — Jackson Road intersection
+        { lat: 32.32000, lng: -90.50500 }, // SE corner
+        { lat: 32.31500, lng: -90.52500 }, // S — Raymond Road area
+        { lat: 32.31800, lng: -90.55500 }, // SW — Baker's Creek drainage
+        { lat: 32.33000, lng: -90.57000 }, // W — ridge foot above creek
       ],
     },
   ],
   phases: [
     {
+      // Phase 1 — Porter's run, night Apr 16 1863, plus Sherman's Yazoo feint Apr 29.
+      // CRITICAL: Porter's path follows the 1863 channel alignment past the city
+      // waterfront (lon ≈ –90.905 to –90.908), NOT the modern Mississippi which
+      // lies ~10–12 km west at the same latitudes after the 1876 De Soto cutoff.
+      // The fleet assembled near Young's Point / Milliken's Bend (W bank,
+      // Louisiana) and ran DOWNSTREAM (southward), rounding the De Soto bend
+      // and passing the battery arc from Fort Hill (N) through the city front
+      // to South Fort (S), then continuing south toward Grand Gulf.
+      //
+      // Sherman's feint (Apr 29 – May 1) went UP the Yazoo River (NE) from
+      // the Mississippi confluence toward Snyder's/Haynes' Bluff — the reverse
+      // of the SW direction shown in the original data.
       caption:
-        "Porter's gunboats and transport fleet run the Vicksburg batteries in darkness — hulls ablaze with burning cotton, guns firing continuously — opening the southern crossing route.",
+        "Porter's gunboats and transport fleet run the Vicksburg batteries in darkness — hulls ablaze with burning cotton, guns firing continuously — opening the southern crossing route. Simultaneously Sherman stages a noisy Yazoo River feint toward Snyder's Bluff to fix Confederate attention north of the city.",
       duration: 8,
       events: [
-        { coords: { lat: 32.353, lng: -90.878 }, label: "Porter's fleet runs the batteries — night of April 16" },
+        {
+          coords: { lat: 32.35200, lng: -90.90800 },
+          label: "Porter's fleet runs the water batteries — night of April 16",
+        },
       ],
       movements: [
         {
+          // Porter's fleet: downstream run, FOLLOWING THE 1863 CHANNEL.
+          // Start at Young's Point (W bank, ~32.50, –91.09).
+          // The river there is essentially unchanged from 1863 (OSM node
+          // 32.49326, –91.11917 is the modern channel upstream of the bend).
+          // After rounding the De Soto bend the fleet entered the OLD channel
+          // running S along the city bluffs at lon ≈ –90.905 to –90.908.
+          // Below the city the channel trends SW toward Grand Gulf.
           side: 'union',
           style: 'advance',
-          unit: "Porter's gunboat fleet — river run",
+          unit: "Porter's gunboat fleet — downstream run",
           path: [
-            { lat: 32.500, lng: -90.880 },
-            { lat: 32.353, lng: -90.878 },
-            { lat: 32.100, lng: -91.100 },
+            { lat: 32.50000, lng: -91.09000 }, // Young's Point / Milliken's Bend staging area
+            { lat: 32.44700, lng: -90.91600 }, // Past Yazoo R. confluence — entering De Soto bend
+            { lat: 32.39500, lng: -90.91000 }, // De Soto Point — 1863 channel bend apex
+            { lat: 32.37800, lng: -90.90500 }, // Fort Hill / N batteries (1863 channel)
+            { lat: 32.35200, lng: -90.90800 }, // City-front Water Battery (1863 channel)
+            { lat: 32.33300, lng: -90.92200 }, // Past South Fort — leaving the battery arc
+            { lat: 32.05000, lng: -91.00000 }, // Below Grand Gulf — rally point
           ],
         },
         {
+          // Confederate river batteries along the Vicksburg bluffs.
+          // Fort Hill to South Fort covers ~5 km of waterfront.
           side: 'confederate',
           style: 'feint',
-          unit: "Vicksburg river batteries",
+          unit: "Vicksburg river batteries — Fort Hill",
           path: [
-            { lat: 32.358, lng: -90.880 },
-            { lat: 32.355, lng: -90.875 },
+            { lat: 32.37800, lng: -90.85500 }, // Fort Hill (N anchor, ridge top)
+            { lat: 32.35200, lng: -90.85200 }, // Water Battery / city centre
+            { lat: 32.32700, lng: -90.87000 }, // South Fort (S anchor)
           ],
         },
         {
+          // Sherman's feint: XV Corps transports and Breese's gunboats
+          // entered the Yazoo River from its Mississippi confluence and
+          // steamed NE toward Snyder's/Haynes' Bluff (Apr 29 – May 1).
+          // Snyder's Bluff confirmed at 32.4964, –90.8000 (Wikipedia GPS).
+          // Chickasaw Bayou junction ~32.468, –90.842 was the approach route.
           side: 'union',
           style: 'feint',
-          unit: "Sherman's corps — Haines' Bluff feint",
+          unit: "Sherman / Breese — Yazoo River feint",
           path: [
-            { lat: 32.420, lng: -90.820 },
-            { lat: 32.400, lng: -90.835 },
+            { lat: 32.44700, lng: -90.91600 }, // Yazoo R. confluence with Mississippi
+            { lat: 32.46800, lng: -90.84200 }, // Chickasaw Bayou junction on Yazoo
+            { lat: 32.49639, lng: -90.80000 }, // Snyder's / Haynes' Bluff (confirmed)
           ],
         },
       ],
     },
     {
+      // Phase 2 — Bruinsburg crossing & Battle of Port Gibson, Apr 30 – May 1.
+      // Fleet delivered troops to Bruinsburg landing (31.9665, –91.1262),
+      // the largest unopposed amphibious operation in US history to that date.
+      // Both XIII Corps (McClernand) and XVII Corps (McPherson) crossed here.
+      // Battle of Port Gibson site: 31.95583, –91.02278 (Wikipedia).
+      // Port Gibson town: ~31.956, –90.979.
       caption:
-        "McClernand's and McPherson's corps cross at Bruinsburg — the largest unopposed amphibious landing in American history — then push inland to Port Gibson, cutting Grand Gulf's supply line.",
+        "McClernand's and McPherson's corps cross at Bruinsburg — the largest unopposed amphibious landing in American history — then push inland 10 miles to Port Gibson, crushing Bowen's outnumbered division and cutting Grand Gulf's supply line.",
       duration: 8,
       movements: [
         {
+          // McClernand XIII Corps — landed first, fought at Port Gibson.
+          // Battle of Port Gibson coordinates confirmed from Wikipedia.
           side: 'union',
           style: 'advance',
-          unit: "McClernand — XIII Corps",
+          unit: 'McClernand — XIII Corps',
           path: [
-            { lat: 31.967, lng: -91.126 },
-            { lat: 31.958, lng: -91.000 },
-            { lat: 31.965, lng: -90.983 },
+            { lat: 31.96650, lng: -91.12620 }, // Bruinsburg landing (river bank)
+            { lat: 31.95583, lng: -91.02278 }, // Port Gibson battle site (Magnolia Church area)
+            { lat: 31.95600, lng: -90.97870 }, // Port Gibson town — secured May 1
           ],
         },
         {
+          // McPherson XVII Corps — crossed behind McClernand, pushed through.
+          side: 'union',
+          style: 'advance',
+          unit: 'McPherson — XVII Corps',
+          path: [
+            { lat: 31.96650, lng: -91.12620 }, // Bruinsburg landing
+            { lat: 31.96000, lng: -91.01000 }, // Battle approach (N column)
+            { lat: 31.96500, lng: -90.97870 }, // Port Gibson area
+          ],
+        },
+        {
+          // Bowen's Confederate division retreated N after Port Gibson,
+          // ultimately abandoning Grand Gulf and falling back toward Vicksburg.
+          side: 'confederate',
+          style: 'retreat',
+          unit: "Bowen's division — retreat from Port",
+          path: [
+            { lat: 31.95583, lng: -91.02278 }, // Port Gibson battlefield
+            { lat: 32.00000, lng: -90.96000 }, // Grand Gulf (evacuated May 3)
+          ],
+        },
+      ],
+    },
+    {
+      // Phase 3 — Inland drive to Jackson, then the wheel west, May 7–14.
+      // McPherson (XVII) advanced NE through Utica then NE to Raymond (May 12).
+      // Raymond battle site confirmed 32.23917, –90.44861 (Fourteen Mile Creek,
+      // SW of Raymond town). After Raymond, both McPherson and Sherman drove NE
+      // to Jackson (May 14). Jackson coordinates: 32.2988, –90.1848.
+      // Johnston retreated N toward Canton.  Grant immediately pivoted WEST
+      // to interpose between Johnston and Pemberton, heading toward Bolton →
+      // Champion Hill.
+      caption:
+        "Cutting loose from his supply line, Grant drives northeast: McPherson defeats Gregg at Raymond (May 12), then Sherman and McPherson capture Jackson (May 14), destroying Confederate rail facilities. Johnston retreats north. Grant immediately wheels his army west to isolate Pemberton.",
+      duration: 8,
+      movements: [
+        {
+          // McPherson XVII Corps: Port Gibson → Utica → Raymond → Jackson.
+          // Raymond battle at Fourteen Mile Creek (confirmed coords).
           side: 'union',
           style: 'advance',
           unit: "McPherson — XVII Corps",
           path: [
-            { lat: 31.980, lng: -91.120 },
-            { lat: 31.975, lng: -91.005 },
-            { lat: 31.980, lng: -90.970 },
+            { lat: 31.95600, lng: -90.97870 }, // Port Gibson
+            { lat: 32.08700, lng: -90.75000 }, // Utica area (approximate waypoint)
+            { lat: 32.23917, lng: -90.44861 }, // Raymond battlefield (Fourteen Mile Creek)
+            { lat: 32.29880, lng: -90.18480 }, // Jackson, MS
           ],
         },
-      ],
-    },
-    {
-      caption:
-        "Turning east before Confederate forces can concentrate, McPherson takes Raymond; Sherman's corps marches from Milliken's Bend to join the drive on Jackson, which falls in a single day.",
-      duration: 8,
-      movements: [
         {
+          // Sherman XV Corps: crossed river later, advanced via Raymond Road
+          // to converge on Jackson from SW.
           side: 'union',
           style: 'advance',
-          unit: "McPherson — XVII Corps (Raymond→Jackson)",
+          unit: "Sherman — XV Corps",
           path: [
-            { lat: 32.000, lng: -90.900 },
-            { lat: 32.160, lng: -90.680 },
-            { lat: 32.299, lng: -90.185 },
+            { lat: 31.96000, lng: -90.97000 }, // Port Gibson / Bayou Pierre area
+            { lat: 32.15000, lng: -90.55000 }, // NE through Mississippi interior
+            { lat: 32.25850, lng: -90.41180 }, // Raymond town (N side)
+            { lat: 32.29880, lng: -90.18480 }, // Jackson, MS
           ],
         },
         {
-          side: 'union',
-          style: 'advance',
-          unit: "Sherman — XV Corps (Jackson flank)",
-          path: [
-            { lat: 32.050, lng: -90.820 },
-            { lat: 32.200, lng: -90.500 },
-            { lat: 32.299, lng: -90.185 },
-          ],
-        },
-        {
-          side: 'union',
-          style: 'advance',
-          unit: "McPherson — XVII Corps (wheel west)",
-          path: [
-            { lat: 32.299, lng: -90.185 },
-            { lat: 32.326, lng: -90.574 },
-          ],
-        },
-        {
+          // Johnston's Confederates retreated N from Jackson toward Canton.
           side: 'confederate',
           style: 'retreat',
-          unit: "Johnston's force — retreats north",
+          unit: "Johnston's Army of Relief — retreat",
           path: [
-            { lat: 32.299, lng: -90.185 },
-            { lat: 32.360, lng: -90.200 },
+            { lat: 32.29880, lng: -90.18480 }, // Jackson
+            { lat: 32.41100, lng: -90.07200 }, // Canton area (~25 mi N)
+          ],
+        },
+        {
+          // McPherson wheels WEST immediately after Jackson falls (May 14).
+          // Route: Jackson → Clinton → Bolton → toward Champion Hill.
+          side: 'union',
+          style: 'advance',
+          unit: "McPherson — XVII Corps",
+          path: [
+            { lat: 32.29880, lng: -90.18480 }, // Jackson
+            { lat: 32.33600, lng: -90.46200 }, // Bolton, MS (Southern RR junction)
+            { lat: 32.33333, lng: -90.52778 }, // Champion Hill
           ],
         },
       ],
     },
     {
+      // Phase 4 — Champion Hill & Big Black River, May 16–17.
+      // Champion Hill confirmed at 32.33333, –90.52778 (Wikipedia).
+      // Big Black River Bridge confirmed at 32.34694, –90.70417 (Wikipedia).
+      // Hovey's division hit Pemberton's Confederate left/center from the NE
+      // on the Middle Road; Logan's division (McPherson) outflanked from the E,
+      // cutting the Raymond Road escape route at the crossroads.
+      // McClernand's corps attacked the Confederate right (S) but weakly.
+      // After the ridge fell, Confederates fled W via the Raymond Road crossing
+      // of Baker's Creek, then to Big Black, then into Vicksburg.
       caption:
-        "At Champion Hill, Hovey's division cracks Pemberton's center; Logan's division cuts the Raymond Road — Pemberton's army is shattered and flees across the Big Black River.",
+        "At Champion Hill (May 16), Hovey's division storms the ridge from the northeast and Logan's division cuts the Raymond Road — Pemberton's army shatters. The remnants are routed again at Big Black River (May 17) and retreat into Vicksburg's works.",
       duration: 7,
       movements: [
         {
+          // Hovey's 12th Division (XII Corps / McClernand): attacked center-left
+          // from the NE, approaching via the Middle Road.
           side: 'union',
           style: 'advance',
-          unit: "Hovey — 12th Division (center assault)",
+          unit: "Hovey — 12th Division",
           path: [
-            { lat: 32.310, lng: -90.545 },
-            { lat: 32.326, lng: -90.574 },
+            { lat: 32.32500, lng: -90.49500 }, // Approach from E on Middle Road
+            { lat: 32.33333, lng: -90.52778 }, // Champion Hill crest
           ],
         },
         {
+          // Logan's 3rd Division (XVII Corps / McPherson): flanked S,
+          // cut the Raymond Road behind Baker's Creek crossing.
           side: 'union',
           style: 'advance',
-          unit: "Logan — 3rd Division (flank cut)",
+          unit: "Logan — 3rd Division",
           path: [
-            { lat: 32.315, lng: -90.560 },
-            { lat: 32.340, lng: -90.590 },
+            { lat: 32.32000, lng: -90.50500 }, // Approach from SE
+            { lat: 32.31800, lng: -90.52800 }, // Baker's Creek crossroads
+            { lat: 32.33333, lng: -90.52778 }, // Joins on the ridge
           ],
         },
         {
+          // McClernand's XIII Corps: attacked Confederate right (S) toward
+          // the Raymond Road, then drove W toward Big Black.
           side: 'union',
           style: 'advance',
-          unit: "McClernand — XIII Corps (Big Black)",
+          unit: "McClernand — XIII Corps",
           path: [
-            { lat: 32.326, lng: -90.574 },
-            { lat: 32.348, lng: -90.730 },
+            { lat: 32.33333, lng: -90.52778 }, // Champion Hill
+            { lat: 32.34694, lng: -90.70417 }, // Big Black River Bridge (confirmed)
           ],
         },
         {
+          // Pemberton's army: routed W from Champion Hill, rearguard shattered
+          // at Big Black River Bridge, then into Vicksburg works.
           side: 'confederate',
           style: 'retreat',
-          unit: "Pemberton's army — flight to Vicksburg",
+          unit: "Pemberton's Army of Mississippi",
           path: [
-            { lat: 32.326, lng: -90.574 },
-            { lat: 32.353, lng: -90.878 },
+            { lat: 32.33333, lng: -90.52778 }, // Champion Hill (collapse)
+            { lat: 32.34694, lng: -90.70417 }, // Big Black River Bridge (rout, May 17)
+            { lat: 32.35260, lng: -90.87790 }, // Vicksburg — into the works
           ],
         },
       ],
     },
     {
+      // Phase 5 — Siege, May 18 – July 4, 1863.
+      // Grant's three corps invested the Confederate perimeter from the N, E, and S.
+      // Sherman (XV) covered the Graveyard Road sector (NE/N arc).
+      // McPherson (XVII) held the center on the Jackson Road (E arc).
+      // McClernand then Ord (XIII) held the south on the Baldwin Ferry / Southern RR.
+      // Two infantry assaults (May 19 and May 22) were repulsed.
+      // Pemberton surrendered 30,000 men on July 4.
+      // Stockade Redan (Sherman's target) confirmed at 32.36992, –90.84474.
       caption:
-        "Forty-seven days of siege: Grant's three corps invest the city; two infantry assaults are repulsed, then mines and starvation do the work — Pemberton surrenders July 4.",
+        "Forty-seven days of siege: Grant's three corps close a ring around the city; two infantry assaults are repulsed, then mines, approach saps, and starvation do the work — Pemberton surrenders 30,000 men on July 4.",
       duration: 9,
       events: [
-        { coords: { lat: 32.353, lng: -90.878 }, label: "Pemberton surrenders 30,000 men — July 4, 1863" },
+        {
+          coords: { lat: 32.35260, lng: -90.87790 },
+          label: 'Pemberton surrenders 30,000 men — July 4, 1863',
+        },
       ],
       movements: [
         {
+          // Sherman XV Corps: north arc from the Yazoo bluffs (after Haynes'
+          // Bluff occupied May 18) curving SW to Graveyard Road / Stockade Redan.
           side: 'union',
           style: 'advance',
-          unit: "Sherman — XV Corps (north siege line)",
+          unit: "Sherman — XV Corps",
           path: [
-            { lat: 32.380, lng: -90.870 },
-            { lat: 32.365, lng: -90.875 },
+            { lat: 32.41500, lng: -90.86000 }, // Yazoo R. / Haynes' Bluff approach (N flank anchor)
+            { lat: 32.38500, lng: -90.85800 }, // N siege line exterior
+            { lat: 32.37200, lng: -90.84500 }, // Opposite Stockade Redan (Sherman's objective)
           ],
         },
         {
+          // McPherson XVII Corps: center / E arc along Jackson Road.
+          // Great Redoubt ~32.350, –90.840 was McPherson's primary objective.
           side: 'union',
           style: 'advance',
-          unit: "McPherson — XVII Corps (center siege)",
+          unit: "McPherson — XVII Corps",
           path: [
-            { lat: 32.358, lng: -90.905 },
-            { lat: 32.353, lng: -90.882 },
+            { lat: 32.36000, lng: -90.86500 }, // E exterior siege line
+            { lat: 32.35200, lng: -90.85400 }, // Opposite Great Redoubt / 3rd Louisiana Redan
           ],
         },
         {
+          // McClernand / Ord XIII Corps: south arc from Southern Railroad
+          // to the river bluffs at South Fort.
           side: 'union',
           style: 'advance',
-          unit: "McClernand/Ord — XIII Corps (south line)",
+          unit: "McClernand / Ord — XIII Corps",
           path: [
-            { lat: 32.332, lng: -90.910 },
-            { lat: 32.340, lng: -90.890 },
+            { lat: 32.33800, lng: -90.87500 }, // SE exterior (Railroad Redoubt approach)
+            { lat: 32.32800, lng: -90.89000 }, // S exterior toward South Fort bluff
           ],
         },
         {
+          // Pemberton's garrison: pinned in the works.
+          // Short token path at the city center / surrender point.
           side: 'confederate',
           style: 'retreat',
-          unit: "Pemberton — Vicksburg garrison",
+          unit: "Pemberton's garrison — 47-day defence",
           path: [
-            { lat: 32.353, lng: -90.878 },
-            { lat: 32.350, lng: -90.875 },
+            { lat: 32.35260, lng: -90.87790 }, // City / headquarters
+            { lat: 32.35000, lng: -90.87500 }, // (token: no retreat, in place)
           ],
         },
       ],
@@ -736,210 +1032,343 @@ const chattanooga: Battle = {
   date: 'November 23-25, 1863',
   sides: SIDES,
   strengths: { union: '~56,000 men', confederate: '~44,000 men' },
-  // Camera stands SE of the city, looking NW — Lookout Mountain rises on the left,
-  // Missionary Ridge stretches across the frame, Orchard Knob in the middle distance.
+  // Camera stands SE of city looking NW — Lookout Mountain on left,
+  // Missionary Ridge spanning the frame, Orchard Knob in centre-left.
   fieldAzimuth: 135,
   areas: [
     {
+      // Missionary Ridge: true OSM crest (way 1235937432) sampled to ~15 pts,
+      // widened ~250 m either side of centreline to form a polygon band.
+      // Ridge runs SSE–NNW; south end at Rossville Gap, north end near Tunnel Hill.
       name: 'Missionary Ridge',
       kind: 'terrain',
-      // Elongated NE-SW band ~10 km, centered ~35.022, -85.249
       outline: [
-        { lat: 35.0550, lng: -85.2350 },
-        { lat: 35.0480, lng: -85.2280 },
-        { lat: 35.0380, lng: -85.2330 },
-        { lat: 35.0280, lng: -85.2420 },
-        { lat: 35.0150, lng: -85.2560 },
-        { lat: 35.0080, lng: -85.2650 },
-        { lat: 35.0100, lng: -85.2720 },
-        { lat: 35.0180, lng: -85.2680 },
-        { lat: 35.0300, lng: -85.2560 },
-        { lat: 35.0420, lng: -85.2440 },
-        { lat: 35.0520, lng: -85.2370 },
+        // West / left edge (city-facing slope), south to north
+        { lat: 34.98600, lng: -85.28200 },
+        { lat: 34.99100, lng: -85.27950 },
+        { lat: 34.99900, lng: -85.27500 },
+        { lat: 35.00500, lng: -85.27450 },
+        { lat: 35.01400, lng: -85.27000 },
+        { lat: 35.02200, lng: -85.26500 },
+        { lat: 35.03000, lng: -85.26000 },
+        { lat: 35.04000, lng: -85.25700 },
+        { lat: 35.05000, lng: -85.25300 },
+        { lat: 35.06000, lng: -85.24900 },
+        // North tip (Tunnel Hill)
+        { lat: 35.07000, lng: -85.24400 },
+        { lat: 35.07900, lng: -85.24350 },
+        // East / back slope, north to south
+        { lat: 35.07800, lng: -85.23750 },
+        { lat: 35.06900, lng: -85.23650 },
+        { lat: 35.05900, lng: -85.24000 },
+        { lat: 35.04900, lng: -85.24600 },
+        { lat: 35.04000, lng: -85.24900 },
+        { lat: 35.03000, lng: -85.25200 },
+        { lat: 35.02200, lng: -85.25750 },
+        { lat: 35.01400, lng: -85.26300 },
+        { lat: 35.00400, lng: -85.26800 },
+        { lat: 34.99800, lng: -85.27050 },
+        { lat: 34.99100, lng: -85.27400 },
+        { lat: 34.98600, lng: -85.27600 },
       ],
     },
     {
+      // Lookout Mountain massif: the prow-shaped plateau.
+      // OSM administrative boundary (relation 195845) spans lat 34.983–35.013,
+      // lng -85.365 to -85.342.  Point Park / palisades at 35.011, -85.344.
+      // The battle was fought on the NW / W face and the bench below the palisades.
       name: 'Lookout Mountain',
       kind: 'terrain',
       outline: [
-        { lat: 35.0200, lng: -85.3500 },
-        { lat: 35.0180, lng: -85.3420 },
-        { lat: 35.0100, lng: -85.3380 },
-        { lat: 34.9980, lng: -85.3420 },
-        { lat: 34.9950, lng: -85.3520 },
-        { lat: 35.0020, lng: -85.3600 },
-        { lat: 35.0120, lng: -85.3590 },
+        { lat: 35.01280, lng: -85.34350 }, // Point Park NE corner
+        { lat: 35.01150, lng: -85.34510 }, // Point Park NW
+        { lat: 35.00950, lng: -85.34700 }, // NW palisade base
+        { lat: 35.00400, lng: -85.35200 }, // N slope
+        { lat: 34.99900, lng: -85.35600 }, // W face
+        { lat: 34.98350, lng: -85.36450 }, // SW foot (Lookout Mountain town)
+        { lat: 34.98000, lng: -85.36000 }, // S face
+        { lat: 34.98500, lng: -85.34800 }, // SE face
+        { lat: 34.99000, lng: -85.34200 }, // E base / Chattanooga Valley
+        { lat: 35.00000, lng: -85.33800 }, // NE foot / Lookout Creek valley
+        { lat: 35.01000, lng: -85.33700 }, // NE base
+        { lat: 35.01380, lng: -85.34100 }, // Cravens House area / NE bench
       ],
     },
     {
+      // Orchard Knob Reservation: NPS historic battlefield site.
+      // OSM way 147177617 — bounds 35.0384–35.0405, -85.2746 to -85.2725.
+      // NOTE: The original code placed this ~750 m too far south at 35.033.
       name: 'Orchard Knob',
       kind: 'terrain',
       outline: [
-        { lat: 35.0352, lng: -85.2790 },
-        { lat: 35.0360, lng: -85.2768 },
-        { lat: 35.0348, lng: -85.2748 },
-        { lat: 35.0330, lng: -85.2742 },
-        { lat: 35.0318, lng: -85.2758 },
-        { lat: 35.0325, lng: -85.2782 },
+        { lat: 35.04048, lng: -85.27379 },
+        { lat: 35.04045, lng: -85.27370 },
+        { lat: 35.04004, lng: -85.27258 },
+        { lat: 35.03966, lng: -85.27272 },
+        { lat: 35.03882, lng: -85.27307 },
+        { lat: 35.03844, lng: -85.27325 },
+        { lat: 35.03894, lng: -85.27463 },
+        { lat: 35.03945, lng: -85.27436 },
+      ],
+    },
+    {
+      // Tennessee River — Moccasin Bend / downtown reach.
+      // Built from OSM ways 639283335 (S bank, E of city), 973340976 (S bank, neck),
+      // and 77442838 (N bank, Moccasin Bend → Brown's Ferry).
+      // Simplified to a representative ~10-pt polygon of the river channel.
+      name: 'Tennessee River',
+      kind: 'water',
+      outline: [
+        // S bank, E approach (from NE, flowing SW):
+        { lat: 35.09800, lng: -85.23500 },
+        { lat: 35.09000, lng: -85.25900 },
+        { lat: 35.08000, lng: -85.27600 },
+        { lat: 35.06700, lng: -85.28000 },
+        // Moccasin Bend neck (river turns NW):
+        { lat: 35.05570, lng: -85.28900 },
+        { lat: 35.05560, lng: -85.31500 },
+        // Brown's Ferry crossing area:
+        { lat: 35.05700, lng: -85.32800 },
+        { lat: 35.06100, lng: -85.33700 },
+        // N bank, heading upstream NW:
+        { lat: 35.06900, lng: -85.34000 },
+        { lat: 35.07500, lng: -85.34900 },
+        { lat: 35.08600, lng: -85.35200 },
+        { lat: 35.09700, lng: -85.35200 },
+        // Close back to NE
+        { lat: 35.10400, lng: -85.24000 },
       ],
     },
   ],
   phases: [
     {
       caption:
-        "Nov 23: Thomas's Army of the Cumberland moves out in parade formation and storms Orchard Knob, a bold daylight demonstration that seizes the Confederate outpost and anchors the Union center.",
+        "Nov 23: Thomas's Army of the Cumberland advances in parade formation from Chattanooga, " +
+        'seizing Orchard Knob in a sharp two-hour fight — a Confederate outpost that becomes ' +
+        "Grant's command post for the battle.",
       duration: 7,
+      events: [
+        {
+          coords: { lat: 35.03960, lng: -85.27350 },
+          label: 'Orchard Knob seized — Grant establishes HQ here',
+        },
+      ],
       movements: [
         {
           side: 'union',
           style: 'advance',
-          unit: "Wood's division — Orchard Knob",
+          unit: "Wood's division — centre column",
+          // Starts at Union line just E of Chattanooga (~35.047,-85.295),
+          // advances ENE straight to Orchard Knob crest.
           path: [
-            { lat: 35.042, lng: -85.295 },
-            { lat: 35.036, lng: -85.282 },
-            { lat: 35.033, lng: -85.277 },
+            { lat: 35.04700, lng: -85.29500 },
+            { lat: 35.04300, lng: -85.28500 },
+            { lat: 35.04000, lng: -85.27750 },
+            { lat: 35.03960, lng: -85.27350 },
           ],
         },
         {
           side: 'union',
           style: 'advance',
-          unit: "Sheridan's division — right of Wood",
+          unit: "Sheridan's division",
+          // Advances slightly SE of Wood's axis toward the S end of the knob.
           path: [
-            { lat: 35.038, lng: -85.288 },
-            { lat: 35.032, lng: -85.274 },
+            { lat: 35.04300, lng: -85.29200 },
+            { lat: 35.04000, lng: -85.28200 },
+            { lat: 35.03850, lng: -85.27400 },
           ],
         },
         {
           side: 'confederate',
           style: 'retreat',
-          unit: "Walthall's brigade — outpost line",
+          unit: "Walthall's brigade — Orchard Knob",
+          // Retreats ~1 mile E from knob to the rifle-pits at the base of Missionary Ridge.
+          // Ridge base at this latitude is ~lng -85.264 (OSM ridge W edge).
           path: [
-            { lat: 35.033, lng: -85.277 },
-            { lat: 35.025, lng: -85.262 },
+            { lat: 35.03960, lng: -85.27350 },
+            { lat: 35.03500, lng: -85.27000 },
+            { lat: 35.03000, lng: -85.26500 },
+            { lat: 35.02800, lng: -85.26200 },
           ],
         },
       ],
     },
     {
       caption:
-        "Nov 24: Hooker's three divisions climb Lookout Mountain through morning clouds; Walthall's brigade is outflanked and the summit is cleared by afternoon — the 'Battle Above the Clouds.'",
+        "Nov 24: Hooker's three divisions climb Lookout Mountain from Lookout Valley. " +
+        "Crossing Lookout Creek at Wauhatchie, they assault the bench below the palisades, " +
+        "outflank Walthall's line at the Cravens House by mid-morning, and seize the summit — " +
+        "the 'Battle Above the Clouds.'",
       duration: 8,
       events: [
-        { coords: { lat: 35.010, lng: -85.340 }, label: '"Battle Above the Clouds" — Lookout Mountain summit cleared' },
+        {
+          coords: { lat: 35.01140, lng: -85.34410 },
+          label: '"Battle Above the Clouds" — Lookout Mountain summit cleared',
+        },
       ],
       movements: [
         {
           side: 'union',
           style: 'advance',
-          unit: "Geary's division — up the east slope",
+          unit: "Geary's division — crossed Lookout",
+          // Starts in Lookout Valley S of the creek (~34.985,-85.390),
+          // crosses creek, advances up the western bench to Cravens House,
+          // then rounds the NE face toward Point Park / the summit prow.
           path: [
-            { lat: 34.992, lng: -85.368 },
-            { lat: 35.002, lng: -85.352 },
-            { lat: 35.010, lng: -85.340 },
+            { lat: 34.98500, lng: -85.39000 },
+            { lat: 34.99500, lng: -85.37500 },
+            { lat: 35.00500, lng: -85.36500 },
+            { lat: 35.01380, lng: -85.34140 }, // Cravens House bench
+            { lat: 35.01140, lng: -85.34410 }, // Point Park / summit prow
           ],
         },
         {
           side: 'union',
           style: 'advance',
-          unit: "Osterhaus's division — along the base",
+          unit: "Osterhaus's / Cruft's divisions",
+          // Cross the creek slightly further SE, advance along the lower bench
+          // joining Geary near Cravens House.
           path: [
-            { lat: 34.990, lng: -85.358 },
-            { lat: 35.000, lng: -85.345 },
-            { lat: 35.008, lng: -85.335 },
+            { lat: 34.99000, lng: -85.38000 },
+            { lat: 35.00000, lng: -85.36800 },
+            { lat: 35.01000, lng: -85.35500 },
+            { lat: 35.01300, lng: -85.34300 }, // reaching Cravens House level
           ],
         },
         {
           side: 'confederate',
           style: 'retreat',
-          unit: "Stevenson's division — south face",
+          unit: "Stevenson's / Walthall's forces",
+          // Confederate forces on Lookout Mountain withdrawn overnight via Summertown Road
+          // eastward into Chattanooga Valley then NE to Missionary Ridge (NOT south).
           path: [
-            { lat: 35.010, lng: -85.340 },
-            { lat: 35.018, lng: -85.312 },
-            { lat: 35.022, lng: -85.280 },
+            { lat: 35.01140, lng: -85.34410 }, // summit
+            { lat: 35.02000, lng: -85.32000 }, // descending NE slope
+            { lat: 35.02500, lng: -85.30000 }, // Chattanooga Valley road
+            { lat: 35.02800, lng: -85.27500 }, // reaching Missionary Ridge W base
           ],
         },
       ],
     },
     {
       caption:
-        "Nov 25 morning: Sherman's four divisions assault Tunnel Hill at the north end of Missionary Ridge but are pinned on the false crest by Cleburne's division all day.",
+        "Nov 25 morning: Sherman's four divisions assault Tunnel Hill at the north end of " +
+        'Missionary Ridge, crossing south from the Tennessee River. All-day attacks ' +
+        "are pinned by Cleburne's division on the false crest.",
       duration: 7,
+      events: [
+        {
+          coords: { lat: 35.06003, lng: -85.24561 },
+          label: "Tunnel Hill — Cleburne holds; Sherman's assaults repulsed",
+        },
+      ],
       movements: [
         {
           side: 'union',
           style: 'advance',
           unit: "Ewing's division — north approach",
+          // Sherman's men crossed the Tennessee to a bridgehead ~35.09,-85.265,
+          // advanced south along/across the hills toward Tunnel Hill.
           path: [
-            { lat: 35.068, lng: -85.258 },
-            { lat: 35.060, lng: -85.255 },
+            { lat: 35.09000, lng: -85.26500 },
+            { lat: 35.08000, lng: -85.26000 },
+            { lat: 35.07000, lng: -85.25500 },
+            { lat: 35.06400, lng: -85.24800 },
+            { lat: 35.06003, lng: -85.24561 }, // Tunnel Hill crest
           ],
         },
         {
           side: 'union',
           style: 'advance',
-          unit: "M. L. Smith's division — tunnel flank",
+          unit: "M. L. Smith's division — SW flank",
+          // Attacked via the valley E of Tunnel Hill, across open fields.
           path: [
-            { lat: 35.065, lng: -85.260 },
-            { lat: 35.058, lng: -85.255 },
+            { lat: 35.08500, lng: -85.25500 },
+            { lat: 35.07500, lng: -85.25000 },
+            { lat: 35.06800, lng: -85.24700 },
+            { lat: 35.06300, lng: -85.24400 },
           ],
         },
         {
           side: 'confederate',
           style: 'feint',
           unit: "Cleburne's division — Tunnel Hill",
+          // Cleburne holds the Tunnel Hill crest and knocks back every attack.
+          // Short segment showing the defended line on the actual ridge crest.
           path: [
-            { lat: 35.058, lng: -85.253 },
-            { lat: 35.055, lng: -85.250 },
+            { lat: 35.06553, lng: -85.24027 }, // N anchor of Cleburne's line
+            { lat: 35.06207, lng: -85.24303 }, // mid-Tunnel Hill
+            { lat: 35.06003, lng: -85.24561 }, // S end near the tunnel itself
           ],
         },
       ],
     },
     {
       caption:
-        "Nov 25 afternoon: Thomas's men, ordered only to take the rifle-pits at the base, keep climbing — division after division pours over the crest; Bragg's center collapses and the army dissolves southward.",
+        "Nov 25 afternoon: Thomas's men, ordered only to take the rifle-pits at the ridge base, " +
+        "spontaneously keep climbing — four divisions pour over the crest; Bragg's centre " +
+        'collapses and his army dissolves south toward Chickamauga Station.',
       duration: 9,
       events: [
-        { coords: { lat: 35.022, lng: -85.249 }, label: "Unauthorized charge — Thomas's men crest Missionary Ridge" },
+        {
+          coords: { lat: 35.03106, lng: -85.25664 },
+          label: "Unauthorized charge — Thomas's men crest Missionary Ridge",
+        },
       ],
       movements: [
         {
           side: 'union',
           style: 'advance',
-          unit: "Wood's division — center of the ridge",
+          unit: "Wood's division — centre charge",
+          // From Orchard Knob (35.040,-85.274), due east to the ridge crest
+          // at the corresponding latitude (OSM ridge pt ~35.031, -85.257).
           path: [
-            { lat: 35.033, lng: -85.277 },
-            { lat: 35.027, lng: -85.262 },
-            { lat: 35.022, lng: -85.249 },
+            { lat: 35.03960, lng: -85.27350 }, // Orchard Knob
+            { lat: 35.03700, lng: -85.27000 },
+            { lat: 35.03400, lng: -85.26500 },
+            { lat: 35.03200, lng: -85.26100 },
+            { lat: 35.03106, lng: -85.25664 }, // ridge crest (OSM pt 47)
           ],
         },
         {
           side: 'union',
           style: 'advance',
-          unit: "Sheridan's division — right flank charge",
+          unit: "Sheridan's division",
+          // Sheridan's axis: slightly south of Wood's, angling SE to crest
+          // at OSM ridge pt ~35.020,-85.262 (OSM pt 37).
           path: [
-            { lat: 35.028, lng: -85.272 },
-            { lat: 35.022, lng: -85.258 },
-            { lat: 35.018, lng: -85.247 },
+            { lat: 35.03500, lng: -85.27500 },
+            { lat: 35.03000, lng: -85.26800 },
+            { lat: 35.02500, lng: -85.26400 },
+            { lat: 35.02191, lng: -85.26155 }, // Sheridan's breakthrough point (OSM pt 38)
           ],
         },
         {
           side: 'union',
           style: 'advance',
-          unit: "Baird's division — left of Wood",
+          unit: "Baird's division — left / north of Wood",
+          // Baird's axis: north of Wood, advances from city's NE and hits the ridge
+          // near OSM pt 35.038,-85.254 (OSM pts 50-52).
           path: [
-            { lat: 35.038, lng: -85.282 },
-            { lat: 35.032, lng: -85.265 },
-            { lat: 35.026, lng: -85.252 },
+            { lat: 35.04500, lng: -85.27800 },
+            { lat: 35.04300, lng: -85.27000 },
+            { lat: 35.04000, lng: -85.26500 },
+            { lat: 35.03800, lng: -85.25900 },
+            { lat: 35.03613, lng: -85.25436 }, // Baird's crest point (OSM pt 52)
           ],
         },
         {
           side: 'confederate',
           style: 'retreat',
-          unit: "Bragg's center — general collapse",
+          unit: "Bragg's centre — general rout",
+          // CSA forces flee SE off the back (E) slope in two columns:
+          // one toward Chickamauga Station (~34.97,-85.21), one via Rossville Gap south.
           path: [
-            { lat: 35.022, lng: -85.249 },
-            { lat: 35.010, lng: -85.240 },
-            { lat: 34.990, lng: -85.228 },
+            { lat: 35.03106, lng: -85.25664 }, // ridge crest at breakthrough
+            { lat: 35.02500, lng: -85.24500 }, // back slope
+            { lat: 35.01000, lng: -85.23500 }, // descending SE
+            { lat: 35.00000, lng: -85.22500 }, // heading toward Chickamauga Station
+            { lat: 34.97500, lng: -85.21000 }, // Chickamauga Station area
           ],
         },
       ],
