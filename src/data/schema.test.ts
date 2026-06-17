@@ -4,6 +4,7 @@ import { journeySchema } from './schema'
 const validStop = { name: 'Toulon', coords: { lat: 43.12, lng: 5.93 }, date: 'Dec 1793', story: 'Siege.' }
 const validJourney = {
   id: 'test', figure: 'X', title: 'T', years: '1-2', color: '#e8b54a', intro: 'i',
+  protagonistSide: 'french',
   stops: [validStop, { ...validStop, name: 'Paris' }],
 }
 
@@ -162,5 +163,29 @@ describe('journeySchema', () => {
         movements: [{ side: 'french', style: 'advance', unit: 'A'.repeat(41), path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
       }],
     })).toThrow()
+  })
+
+  // ── protagonistSide ────────────────────────────────────────────────────
+  it('rejects a journey missing protagonistSide', () => {
+    const { protagonistSide: _, ...noProtagSide } = validJourney
+    expect(() => journeySchema.parse(noProtagSide)).toThrow()
+  })
+  it("rejects a journey where protagonistSide is not a key in a battle's sides", () => {
+    const battleStop = {
+      ...validStop,
+      battle: {
+        name: 'Austerlitz', date: '2 Dec 1805',
+        sides: { french: '#4d8fdb', coalition: '#c0392b' },
+        phases: [{
+          caption: 'The trap.',
+          movements: [{ side: 'french', style: 'feint', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+        }],
+      },
+    }
+    expect(() => journeySchema.parse({
+      ...validJourney,
+      protagonistSide: 'union', // 'union' is not in sides { french, coalition }
+      stops: [battleStop, validStop],
+    })).toThrow(/protagonistSide/)
   })
 })

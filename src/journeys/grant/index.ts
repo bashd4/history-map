@@ -16,4 +16,5 @@ export const grant: Journey = {
   color: '#7da7c4', // steel union blue — distinct from Napoleon's gold on the shared globe
   intro: 'Seventy chapters in his own words — from an Ohio farm boy who hated the sight of blood to the general who received Lee\'s surrender at Appomattox.',
   stops: allStops,
+  protagonistSide: 'union',
 }

@@ -7,6 +7,7 @@ export const napoleon: Journey = {
   years: '1769–1821',
   color: '#e8b54a',
   intro: 'From a Corsican backwater to master of Europe and back to a rock in the South Atlantic — the most improbable arc in modern history.',
+  protagonistSide: 'french',
   stops: [
     { name: 'Ajaccio, Corsica', coords: { lat: 41.9192, lng: 8.7386 }, date: 'Aug 1769',
       story: 'Napoleone di Buonaparte is born into minor Corsican nobility, a year after France buys the island from Genoa. He grows up speaking Italian and resenting the French.' },

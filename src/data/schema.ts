@@ -7,6 +7,9 @@ const movement = z.object({
   style: z.enum(['advance', 'retreat', 'feint']),
   path: z.array(latLng).min(2),
   unit: z.string().min(1).max(40).optional(), // e.g. "Soult — IV Corps"
+  branch: z.enum(['infantry', 'cavalry', 'artillery', 'naval', 'command']).optional(),
+  echelon: z.enum(['corps', 'division', 'brigade', 'regiment', 'flotilla']).optional(),
+  strength: z.number().int().positive().optional(),
 })
 
 const event = z.object({
@@ -76,15 +79,26 @@ const stop = z.object({
   battle: battle.optional(),
 })
 
-export const journeySchema = z.object({
-  id: z.string().regex(/^[a-z0-9-]+$/),
-  figure: z.string().min(1),
-  title: z.string().min(1),
-  years: z.string().min(1),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-  intro: z.string().min(1),
-  stops: z.array(stop).min(2),
-})
+export const journeySchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9-]+$/),
+    figure: z.string().min(1),
+    title: z.string().min(1),
+    years: z.string().min(1),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+    intro: z.string().min(1),
+    stops: z.array(stop).min(2),
+    protagonistSide: z.string().min(1),
+  })
+  .superRefine((j, ctx) => {
+    for (const s of j.stops) {
+      if (s.battle && !(j.protagonistSide in s.battle.sides)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom,
+          message: `protagonistSide "${j.protagonistSide}" missing from sides of battle "${s.battle.name}"`,
+          path: ['protagonistSide'] })
+      }
+    }
+  })
 
 export type Journey = z.infer<typeof journeySchema>
 export type Stop = Journey['stops'][number]
