@@ -59,7 +59,7 @@ function buildTrail(track: CommanderTrack): { points: THREE.Vector3[]; times: nu
       const b = geodeticToVector3(path[j + 1].lat, path[j + 1].lng).normalize()
       for (let s = 0; s < TRAIL_SUB; s++) {
         const v = slerpUnit(a, b, s / TRAIL_SUB)
-        const { lat, lng } = vector3ToGeodetic(v)
+        const { lat } = vector3ToGeodetic(v)
         points.push(v.clone().multiplyScalar(ellipsoidSceneRadius(lat) + TRAIL_LIFT))
         times.push(seg.phaseIndex + (j + s / TRAIL_SUB) / legs)
       }
