@@ -1,9 +1,11 @@
 import { useEffect, useMemo } from 'react'
+import { useFrame } from '@react-three/fiber'
 import type { Battle, Journey, LatLng } from '../data/schema'
 import { battleUnitTracks } from '../lib/battleUnitTracks'
 import { UnitCounter } from './UnitCounter'
 import { useTerrainHeightsVersion } from './useTerrainHeights'
 import { terrainSampler } from './useTerrainHeights'
+import { counterLayout } from './counterLayout'
 
 /**
  * Persistent NATO APP-6 unit counters for a battle.
@@ -29,6 +31,11 @@ export function BattleUnits({ battle, journey }: { battle: Battle; journey: Jour
     }
     terrainSampler.registerPoints('units', points)
   }, [tracks, heightsVersion])
+
+  // Resolve counter collisions once per frame (after the counters have reported
+  // their positions in their own useFrame). Clear the layout on unmount.
+  useFrame(() => counterLayout.resolve())
+  useEffect(() => () => counterLayout.clear(), [])
 
   return (
     <group>

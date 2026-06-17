@@ -9,10 +9,14 @@ import { echelonTicks } from '../lib/unitSymbol'
 import { type UnitTrack, unitPositionAt } from '../lib/battleUnitTracks'
 import { useAppStore } from '../state/store'
 import { terrainSampler } from './useTerrainHeights'
+import { counterLayout } from './counterLayout'
 
 // Clearance above the sampled terrain surface (~50 m in scene units).
 // depthTest is off so nothing gets buried at this tight clearance.
 const SURFACE_CLEARANCE = 0.000008
+
+// Scratch vector for projecting the counter to screen space (collision avoidance).
+const _proj = new THREE.Vector3()
 
 // Serif + dark text-shadow treatment so unit text reads over any imagery.
 // Same serif/shadow treatment used for battle labels.
@@ -184,8 +188,9 @@ export function UnitCounter({
   const affiliation = affiliationOf(journey, track.side)
   const sideColor = battle.sides[track.side] ?? '#ffffff'
 
-  useFrame(() => {
+  useFrame((state) => {
     const group = groupRef.current
+    const content = contentRef.current
     if (!group) return
 
     const { mode, battleElapsed } = useAppStore.getState()
@@ -196,29 +201,49 @@ export function UnitCounter({
     // group's visible=false. Before a unit first appears (pos null) the group
     // has no valid position, so the counter would sit at the scene origin
     // (≈ screen centre at battle zoom). Toggle the DOM visibility directly to
-    // truly hide a not-yet-appeared (or finished-and-gone) unit.
+    // truly hide a not-yet-appeared (or finished-and-gone) unit, and drop it
+    // from the collision-avoidance layout so it stops nudging others.
     if (pos == null) {
       group.visible = false
-      if (contentRef.current) contentRef.current.style.visibility = 'hidden'
+      if (content) {
+        content.style.visibility = 'hidden'
+        content.style.transform = 'none'
+      }
+      counterLayout.forget(track.unit)
       return
     }
 
     group.visible = true
-    if (contentRef.current) contentRef.current.style.visibility = 'visible'
     const r = terrainSampler.sampleRadius(pos.lat, pos.lng) + SURFACE_CLEARANCE
     group.position.copy(geodeticToVector3(pos.lat, pos.lng, r))
+
+    // Report our true screen position and apply the resolved de-overlap offset
+    // so clustered counters (and their numbers) stay legible and hover targets
+    // don't overlap. Offset is from the previous frame's resolve — imperceptible.
+    group.getWorldPosition(_proj).project(state.camera)
+    const sx = (_proj.x * 0.5 + 0.5) * state.size.width
+    const sy = (-_proj.y * 0.5 + 0.5) * state.size.height
+    counterLayout.report(track.unit, sx, sy)
+    const off = counterLayout.offset(track.unit)
+    if (content) {
+      content.style.visibility = 'visible'
+      content.style.transform = `translate(${off.x}px, ${off.y}px)`
+    }
   })
 
   return (
     <group ref={groupRef}>
       <Html
         center
-        zIndexRange={[15, 0]}
+        zIndexRange={[12, 12]} /* constant z: counters at similar depth, so don't
+          let drei reshuffle stacking each frame (caused hover flicker between
+          overlapping counters) */
         style={{ pointerEvents: 'none' }}
       >
         <div
           ref={contentRef}
           style={{
+            position: 'relative',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -258,14 +283,19 @@ export function UnitCounter({
               {track.strength.toLocaleString()}
             </div>
           )}
-          {/* Unit name — hover-only. */}
+          {/* Unit name — hover-only. Absolutely positioned so revealing it does
+              not change the counter's box size (which would make drei <Html
+              center> re-centre, jumping the counter on hover). */}
           <div
             ref={labelRef}
             style={{
+              position: 'absolute',
+              top: 'calc(100% + 1px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
               opacity: 0,
               transition: 'opacity 0.12s ease',
               pointerEvents: 'none',
-              marginTop: '1px',
               fontSize: '11px',
               fontWeight: 600,
               color: '#f0e8d6',
