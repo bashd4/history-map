@@ -227,10 +227,9 @@ export function UnitCounter({
             visibility: 'hidden', // shown by useFrame once the unit has a valid position
           }}
         >
-          {/* The compact APP-6 symbol is always visible; hovering it reveals the
-              unit name + strength. Names are hover-only so converging units don't
-              bury each other in text (matches the battle map's clean-by-default
-              treatment). */}
+          {/* The compact APP-6 symbol + strength number are always visible (the
+              wargame chit's face). Hovering reveals the unit NAME — hover-only so
+              converging units don't bury each other in text. */}
           <div
             style={{ pointerEvents: 'auto', cursor: 'default' }}
             onPointerEnter={() => { if (labelRef.current) labelRef.current.style.opacity = '1' }}
@@ -243,43 +242,39 @@ export function UnitCounter({
               sideColor={sideColor}
             />
           </div>
+          {/* Strength on the face — always visible where a sourced figure exists. */}
+          {track.strength != null && (
+            <div
+              style={{
+                marginTop: '1px',
+                fontSize: '9.5px',
+                fontWeight: 700,
+                color: '#f2eee6',
+                textShadow: TEXT_SHADOW,
+                whiteSpace: 'nowrap',
+                lineHeight: 1.1,
+              }}
+            >
+              {track.strength.toLocaleString()}
+            </div>
+          )}
+          {/* Unit name — hover-only. */}
           <div
             ref={labelRef}
             style={{
               opacity: 0,
               transition: 'opacity 0.12s ease',
               pointerEvents: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              marginTop: '1px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: '#f0e8d6',
+              textShadow: TEXT_SHADOW,
+              whiteSpace: 'nowrap',
+              lineHeight: 1.15,
             }}
           >
-            <div
-              style={{
-                marginTop: '1px',
-                fontSize: '11px',
-                fontWeight: 600,
-                color: '#f0e8d6',
-                textShadow: TEXT_SHADOW,
-                whiteSpace: 'nowrap',
-                lineHeight: 1.15,
-              }}
-            >
-              {track.unit}
-            </div>
-            {track.strength != null && (
-              <div
-                style={{
-                  fontSize: '9px',
-                  color: '#e8dcc4',
-                  textShadow: TEXT_SHADOW,
-                  whiteSpace: 'nowrap',
-                  lineHeight: 1.15,
-                }}
-              >
-                {track.strength.toLocaleString()}
-              </div>
-            )}
+            {track.unit}
           </div>
         </div>
       </Html>

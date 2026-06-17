@@ -447,6 +447,7 @@ const shiloh: Battle = {
           unit: "Hardee — III Corps (front wave)",
           branch: 'infantry',
           echelon: 'corps',
+          strength: 6789,
           path: [
             { lat: 35.09800, lng: -88.38500 },
             { lat: 35.11400, lng: -88.37200 },
@@ -462,6 +463,7 @@ const shiloh: Battle = {
           unit: "Bragg — II Corps (second wave)",
           branch: 'infantry',
           echelon: 'corps',
+          strength: 16279,
           path: [
             { lat: 35.09800, lng: -88.36500 },
             { lat: 35.11300, lng: -88.35800 },
@@ -477,6 +479,7 @@ const shiloh: Battle = {
           unit: 'Sherman — 5th Division',
           branch: 'infantry',
           echelon: 'division',
+          strength: 8580,
           path: [
             { lat: 35.13368, lng: -88.35499 },  // Shiloh Church
             { lat: 35.13900, lng: -88.34500 },   // intermediate ridge
@@ -492,6 +495,7 @@ const shiloh: Battle = {
           unit: 'McClernand — 1st Division',
           branch: 'infantry',
           echelon: 'division',
+          strength: 6941,
           path: [
             { lat: 35.13600, lng: -88.34800 },
             { lat: 35.14000, lng: -88.33800 },
@@ -555,6 +559,7 @@ const shiloh: Battle = {
           unit: "Chalmers & Jackson — brigades",
           branch: 'infantry',
           echelon: 'brigade',
+          strength: 3779,
           path: [
             { lat: 35.11800, lng: -88.31800 },  // start near Lick Creek SE boundary
             { lat: 35.12500, lng: -88.32000 },
@@ -616,6 +621,7 @@ const shiloh: Battle = {
           unit: "Nelson's div. (Buell) — Tennessee River",
           branch: 'infantry',
           echelon: 'division',
+          strength: 4500,
           path: [
             { lat: 35.14900, lng: -88.30900 },  // east bank (Savannah side) embarkation
             { lat: 35.14956, lng: -88.31648 },  // OSM river centerline node (midstream)
@@ -632,6 +638,7 @@ const shiloh: Battle = {
           unit: "Lew Wallace — 3rd Division",
           branch: 'infantry',
           echelon: 'division',
+          strength: 7564,
           path: [
             { lat: 35.22000, lng: -88.32800 },  // Crump's Landing (~5 miles N of Landing)
             { lat: 35.19000, lng: -88.32500 },  // River Road south
@@ -647,6 +654,7 @@ const shiloh: Battle = {
           unit: "Crittenden & McCook divs. (Buell)",
           branch: 'infantry',
           echelon: 'division',
+          strength: 11377,
           path: [
             { lat: 35.14700, lng: -88.30900 },  // east bank
             { lat: 35.14700, lng: -88.31858 },  // Pittsburg Landing west bank
@@ -668,6 +676,7 @@ const shiloh: Battle = {
           unit: 'Sherman — 5th Division',
           branch: 'infantry',
           echelon: 'division',
+          strength: 8580,
           path: [
             { lat: 35.14800, lng: -88.32600 },  // rally point near Landing
             { lat: 35.14200, lng: -88.33800 },  // intermediate ridge
@@ -684,6 +693,7 @@ const shiloh: Battle = {
           unit: "Lew Wallace — 3rd Division",
           branch: 'infantry',
           echelon: 'division',
+          strength: 7564,
           path: [
             { lat: 35.15200, lng: -88.32200 },  // overnight position (far right)
             { lat: 35.14900, lng: -88.33800 },  // advancing WSW
@@ -711,6 +721,7 @@ const shiloh: Battle = {
           unit: "Beauregard — Army of the Mississippi",
           branch: 'command', // army-level command marker
           echelon: 'corps', // "Army of …" → largest available echelon
+          strength: 44699,
           path: [
             { lat: 35.13368, lng: -88.35499 },  // Shiloh Church / HQ evening Apr 6
             { lat: 35.12000, lng: -88.37000 },  // withdrawing SSW
@@ -877,6 +888,7 @@ const vicksburg: Battle = {
           unit: 'McClernand — XIII Corps',
           branch: 'infantry',
           echelon: 'corps',
+          strength: 17000,
           path: [
             { lat: 31.96650, lng: -91.12620 }, // Bruinsburg landing (river bank)
             { lat: 31.95583, lng: -91.02278 }, // Port Gibson battle site (Magnolia Church area)
@@ -890,6 +902,7 @@ const vicksburg: Battle = {
           unit: 'McPherson — XVII Corps',
           branch: 'infantry',
           echelon: 'corps',
+          strength: 11000,
           path: [
             { lat: 31.96650, lng: -91.12620 }, // Bruinsburg landing
             { lat: 31.96000, lng: -91.01000 }, // Battle approach (N column)
@@ -904,6 +917,7 @@ const vicksburg: Battle = {
           unit: "Bowen's division — retreat from Port",
           branch: 'infantry',
           echelon: 'division',
+          strength: 8000,
           path: [
             { lat: 31.95583, lng: -91.02278 }, // Port Gibson battlefield
             { lat: 32.00000, lng: -90.96000 }, // Grand Gulf (evacuated May 3)
@@ -932,6 +946,7 @@ const vicksburg: Battle = {
           unit: "McPherson — XVII Corps",
           branch: 'infantry',
           echelon: 'corps',
+          strength: 11000,
           path: [
             { lat: 31.95600, lng: -90.97870 }, // Port Gibson
             { lat: 32.08700, lng: -90.75000 }, // Utica area (approximate waypoint)
@@ -947,6 +962,7 @@ const vicksburg: Battle = {
           unit: "Sherman — XV Corps",
           branch: 'infantry',
           echelon: 'corps',
+          strength: 18000,
           path: [
             { lat: 31.96000, lng: -90.97000 }, // Port Gibson / Bayou Pierre area
             { lat: 32.15000, lng: -90.55000 }, // NE through Mississippi interior
@@ -961,6 +977,7 @@ const vicksburg: Battle = {
           unit: "Johnston's Army of Relief — retreat",
           branch: 'command', // army-level command marker
           echelon: 'corps', // "Army of …" → largest available echelon
+          strength: 6000,
           path: [
             { lat: 32.29880, lng: -90.18480 }, // Jackson
             { lat: 32.41100, lng: -90.07200 }, // Canton area (~25 mi N)
@@ -981,6 +998,7 @@ const vicksburg: Battle = {
           unit: "McPherson — XVII Corps",
           branch: 'infantry',
           echelon: 'corps',
+          strength: 11000,
           path: [
             { lat: 32.29880, lng: -90.18480 }, // Jackson
             { lat: 32.33600, lng: -90.46200 }, // Bolton, MS (Southern RR junction)
@@ -1011,6 +1029,7 @@ const vicksburg: Battle = {
           unit: "Hovey — 12th Division",
           branch: 'infantry',
           echelon: 'division',
+          strength: 3600,
           path: [
             { lat: 32.32500, lng: -90.49500 }, // Approach from E on Middle Road
             { lat: 32.33333, lng: -90.52778 }, // Champion Hill crest
@@ -1040,6 +1059,7 @@ const vicksburg: Battle = {
           unit: "McClernand — XIII Corps",
           branch: 'infantry',
           echelon: 'corps',
+          strength: 17000,
           path: [
             { lat: 31.95600, lng: -90.97870 }, // continuity: resumes from Port Gibson (phase 2 end)
             { lat: 32.23917, lng: -90.44861 }, // up via Raymond Road / Fourteen Mile Creek
@@ -1055,6 +1075,7 @@ const vicksburg: Battle = {
           unit: "Pemberton's Army of Mississippi",
           branch: 'command', // army-level command marker
           echelon: 'corps', // "Army of …" → largest available echelon
+          strength: 22000,
           path: [
             { lat: 32.33333, lng: -90.52778 }, // Champion Hill (collapse)
             { lat: 32.34694, lng: -90.70417 }, // Big Black River Bridge (rout, May 17)
@@ -1092,6 +1113,7 @@ const vicksburg: Battle = {
           unit: "Sherman — XV Corps",
           branch: 'infantry',
           echelon: 'corps',
+          strength: 18000,
           path: [
             { lat: 32.29880, lng: -90.18480 }, // continuity: resumes from Jackson (phase 3 end)
             { lat: 32.33600, lng: -90.46200 }, // W via Bolton (Southern RR junction)
@@ -1110,6 +1132,7 @@ const vicksburg: Battle = {
           unit: "McPherson — XVII Corps",
           branch: 'infantry',
           echelon: 'corps',
+          strength: 11000,
           path: [
             { lat: 32.33333, lng: -90.52778 }, // continuity: resumes from Champion Hill (phase 4 end)
             { lat: 32.34694, lng: -90.70417 }, // W via Big Black River crossing
@@ -1138,6 +1161,7 @@ const vicksburg: Battle = {
           unit: "Pemberton's garrison — 47-day defence",
           branch: 'command', // army-level command marker (besieged garrison HQ)
           echelon: 'corps',
+          strength: 30000,
           path: [
             { lat: 32.35260, lng: -90.87790 }, // City / headquarters
             { lat: 32.35000, lng: -90.87500 }, // (token: no retreat, in place)
@@ -1301,6 +1325,7 @@ const chattanooga: Battle = {
           unit: "Sheridan's division",
           branch: 'infantry',
           echelon: 'division',
+          strength: 6000,
           // Advances slightly SE of Wood's axis toward the S end of the knob.
           path: [
             { lat: 35.04300, lng: -85.29200 },
@@ -1314,6 +1339,7 @@ const chattanooga: Battle = {
           unit: "Walthall's brigade — Orchard Knob",
           branch: 'infantry',
           echelon: 'brigade',
+          strength: 1500,
           // Retreats ~1 mile E from knob to the rifle-pits at the base of Missionary Ridge.
           // Ridge base at this latitude is ~lng -85.264 (OSM ridge W edge).
           path: [
@@ -1377,6 +1403,7 @@ const chattanooga: Battle = {
           unit: "Stevenson's / Walthall's forces",
           branch: 'infantry',
           echelon: 'division', // mixed Stevenson + Walthall infantry, division-level grouping
+          strength: 8726,
           // Confederate forces on Lookout Mountain withdrawn overnight via Summertown Road
           // eastward into Chattanooga Valley then NE to Missionary Ridge (NOT south).
           path: [
@@ -1437,6 +1464,7 @@ const chattanooga: Battle = {
           unit: "Cleburne's division — Tunnel Hill",
           branch: 'infantry',
           echelon: 'division',
+          strength: 4000,
           // Cleburne holds the Tunnel Hill crest and knocks back every attack.
           // Short segment showing the defended line on the actual ridge crest.
           path: [
@@ -1482,6 +1510,7 @@ const chattanooga: Battle = {
           unit: "Sheridan's division",
           branch: 'infantry',
           echelon: 'division',
+          strength: 6000,
           // Sheridan's axis: slightly south of Wood's, angling SE to crest
           // at OSM ridge pt ~35.020,-85.262 (OSM pt 37).
           path: [

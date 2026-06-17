@@ -114,6 +114,7 @@ export const napoleon: Journey = {
           side: 'french', style: 'feint',
           unit: "Soult — IV Corps",
           branch: 'infantry', echelon: 'corps',
+          strength: 23600,
           path: [
             { lat: 49.12800, lng: 16.76200 }, // Pratzen plateau center
             { lat: 49.13200, lng: 16.75000 }, // W slope
@@ -127,6 +128,7 @@ export const napoleon: Journey = {
           side: 'french', style: 'feint',
           unit: "Lannes — V Corps",
           branch: 'infantry', echelon: 'corps',
+          strength: 12700,
           path: [
             { lat: 49.18837, lng: 16.76376 }, // Santon hill top
             { lat: 49.17600, lng: 16.75800 }, // SE toward Tvarožná
@@ -138,6 +140,7 @@ export const napoleon: Journey = {
           side: 'french', style: 'feint',
           unit: "Murat — Cavalry Reserve",
           branch: 'cavalry', echelon: 'corps',
+          strength: 7400,
           path: [
             { lat: 49.18000, lng: 16.75000 }, // N, near Bosenitz road
             { lat: 49.16500, lng: 16.76000 }, // S toward Blažovice road
@@ -155,6 +158,7 @@ export const napoleon: Journey = {
           side: 'coalition', style: 'advance',
           unit: "Buxhöwden — three left-wing columns",
           branch: 'infantry', echelon: 'corps', // three columns = corps-level wing
+          strength: 32190,
           path: [
             { lat: 49.12800, lng: 16.76200 }, // Pratzen plateau
             { lat: 49.11800, lng: 16.75800 }, // W slope / Újezd approach
@@ -168,6 +172,7 @@ export const napoleon: Journey = {
           side: 'coalition', style: 'advance',
           unit: "Kienmayer — Austrian advance guard",
           branch: 'cavalry', echelon: 'division', // light-cavalry-led advance guard (mixed; cavalry was the defining arm)
+          strength: 6880,
           path: [
             { lat: 49.11000, lng: 16.74500 }, // Plateau W slope
             { lat: 49.10200, lng: 16.73000 }, // Valley approach
@@ -180,6 +185,7 @@ export const napoleon: Journey = {
           side: 'french', style: 'advance',
           unit: "Davout — III Corps",
           branch: 'infantry', echelon: 'corps',
+          strength: 6300,
           path: [
             { lat: 49.09028, lng: 16.60389 }, // Rajhrad (Gross-Raigern)
             { lat: 49.09800, lng: 16.64000 }, // March N along road
@@ -193,6 +199,7 @@ export const napoleon: Journey = {
           side: 'coalition', style: 'advance',
           unit: "Bagration — right wing",
           branch: 'infantry', echelon: 'corps', // combined-arms right wing
+          strength: 13700,
           path: [
             { lat: 49.19500, lng: 16.80000 }, // Allied right start, NE
             { lat: 49.18837, lng: 16.76376 }, // Santon hill (repelled)
@@ -240,6 +247,7 @@ export const napoleon: Journey = {
           side: 'french', style: 'advance',
           unit: "Bernadotte — I Corps",
           branch: 'infantry', echelon: 'corps',
+          strength: 13000,
           path: [
             { lat: 49.15500, lng: 16.74500 }, // Ponětovice area
             { lat: 49.16000, lng: 16.76500 }, // NE toward Blažovice
@@ -252,6 +260,7 @@ export const napoleon: Journey = {
           side: 'coalition', style: 'retreat',
           unit: "Kollowrath — Allied centre",
           branch: 'infantry', echelon: 'corps', // large IV-Column centre under Kollowrat/Miloradovich
+          strength: 13900,
           path: [
             { lat: 49.13800, lng: 16.76500 }, // Plateau centre
             { lat: 49.14000, lng: 16.79000 }, // E edge of heights
@@ -287,6 +296,7 @@ export const napoleon: Journey = {
           side: 'coalition', style: 'advance',
           unit: "Russian Imperial Guard — Grand Duke",
           branch: 'infantry', echelon: 'corps', // Guard reserve (corps-sized); the counter-attack here was infantry-led
+          strength: 10430,
           path: [
             { lat: 49.16583, lng: 16.78611 }, // Blažovice (Blasowitz) — Guard reserve
             { lat: 49.15500, lng: 16.78000 }, // Advance W
@@ -311,6 +321,7 @@ export const napoleon: Journey = {
           side: 'coalition', style: 'retreat',
           unit: "Allied left wing — Dokhturov / Langeron",
           branch: 'infantry', echelon: 'corps', // two-column left wing
+          strength: 25040,
           path: [
             { lat: 49.11389, lng: 16.72167 }, // Sokolnice — collapse point
             { lat: 49.10194, lng: 16.71778 }, // Telnice — southern anchor lost
