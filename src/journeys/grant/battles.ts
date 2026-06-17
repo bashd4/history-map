@@ -87,9 +87,9 @@ const fortDonelson: Battle = {
           echelon: 'division',
           path: [
             { lat: 36.49500, lng: -87.93500 }, // approaching from W (Fort Henry direction)
-            { lat: 36.48000, lng: -87.90000 }, // swings south of Confederate arc
-            { lat: 36.46800, lng: -87.86800 }, // moving to SE sector
-            { lat: 36.46200, lng: -87.83600 }, // right flank near Lick Creek
+            { lat: 36.48000, lng: -87.90000 }, // swings around the S of the Confederate arc
+            { lat: 36.47800, lng: -87.87000 }, // into the SW/S sector
+            { lat: 36.47600, lng: -87.86200 }, // right flank astride the Forge & Wynn's Ferry roads, SW of Dover
           ],
         },
         {
@@ -200,52 +200,58 @@ const fortDonelson: Battle = {
     },
     {
       caption:
-        "Pillow and Buckner burst out of the SE works at dawn, driving McClernand's right back nearly two miles and forcing open the Wynn's Ferry and Forge Roads toward Nashville.",
+        "At dawn Pillow's division bursts out of the southern works while Buckner swings down from the right, driving McClernand's division back toward Dover and forcing open the Wynn's Ferry and Forge Roads south toward Nashville.",
       duration: 6,
       movements: [
         {
-          // Pillow's division: on the Confederate LEFT (E/SE sector of the arc,
-          // near Lick Creek). Attacked S/SW, driving McClernand's right back.
-          // Goal: reach Wynn's Ferry Rd / Forge Rd junctions running toward Nashville (SE).
+          // Pillow's division: Confederate LEFT, the SOUTHERN sector just SW of Dover
+          // (flank toward Lick Creek / the river). At dawn it attacked WEST/SW into
+          // McClernand's exposed Union right, wheeling around his unanchored flank to
+          // open the Forge & Wynn's Ferry roads running south toward Charlotte/Nashville.
+          // (Corrected per NPS/ABT + the Confederate Breakout marker, 36.4801,-87.8440.)
           side: 'confederate',
           style: 'advance',
           unit: "Pillow's division",
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.47500, lng: -87.85500 }, // start: E side of Confederate arc (Lick Cr sector)
-            { lat: 36.46700, lng: -87.85800 }, // pushing south
-            { lat: 36.46000, lng: -87.86200 }, // driving toward road junction
-            { lat: 36.45500, lng: -87.87000 }, // at Wynn's Ferry / Forge Rd area
+            { lat: 36.48300, lng: -87.84700 }, // start: left works SW of Dover
+            { lat: 36.48050, lng: -87.84750 }, // attack W/SW into McClernand by the roads (breakout marker)
+            { lat: 36.47700, lng: -87.85400 }, // wheel out along the Forge Road
+            { lat: 36.47600, lng: -87.86000 }, // high-water mark on the roads toward Nashville (~1 mi)
           ],
         },
         {
-          // Buckner acted as rear guard, sweeping S across Wynn's Ferry Road
-          // from his right-flank position (W/NW sector) toward the road junction.
-          // His movement was more westward, pinning Union center while Pillow attacked SE.
+          // Buckner's division: Confederate RIGHT, anchored on Hickman Creek to the
+          // N/NW (opposite C.F. Smith). Per the plan it left a screen against Smith and
+          // swung SOUTH to the centre to strike McClernand across Wynn's Ferry Road and
+          // act as rear guard — but its attack on the strong Union centre stalled.
           side: 'confederate',
           style: 'advance',
           unit: "Buckner's division",
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.48800, lng: -87.88200 }, // start: Confederate right (W sector near Hickman Cr)
-            { lat: 36.47800, lng: -87.87800 }, // moving S as rear guard
-            { lat: 36.47000, lng: -87.87200 }, // crossing toward Wynn's Ferry Rd
+            { lat: 36.48950, lng: -87.86800 }, // start: right flank on Hickman Creek (N/NW)
+            { lat: 36.48300, lng: -87.85900 }, // swing S toward the centre
+            { lat: 36.47900, lng: -87.85400 }, // strike the Union centre across Wynn's Ferry Road
+            { lat: 36.47700, lng: -87.85800 }, // engaged W of Dover; the attack stalls
           ],
         },
         {
-          // McClernand's right was pushed S/SE — back toward Lick Creek and beyond,
-          // approximately 1–2 miles. His men fell back ESE, away from the arc.
+          // McClernand's right (astride the Forge & Wynn's Ferry roads SW of Dover, its
+          // southern flank unanchored) was rolled back to the SE/ESE toward Dover, nearly
+          // a mile, before Thayer's brigade stabilised a ridge across Wynn's Ferry Road.
           side: 'union',
           style: 'retreat',
           unit: 'McClernand — 1st Division',
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.46200, lng: -87.83600 }, // his right-flank position (near Lick Creek)
-            { lat: 36.45500, lng: -87.82800 }, // retreating SE
-            { lat: 36.44800, lng: -87.82000 }, // pushed back ~1.5 miles from arc
+            { lat: 36.47600, lng: -87.86200 }, // continuity: from his investment position SW of Dover
+            { lat: 36.47500, lng: -87.85600 }, // pressed back ESE
+            { lat: 36.47700, lng: -87.85000 }, // driven toward Dover
+            { lat: 36.47900, lng: -87.84700 }, // rallied at Thayer's ridge near the Dover edge
           ],
         },
       ],
@@ -256,17 +262,17 @@ const fortDonelson: Battle = {
       duration: 4,
       movements: [
         {
-          // Pillow's recall: ordered back into the fort, surrendering all gained ground.
-          // Reversed from the road junction back NE into the Confederate arc.
+          // Pillow's recall: with the roads open, he inexplicably ordered the division
+          // back NE off the roads into its original left works — surrendering the ground.
           side: 'confederate',
           style: 'retreat',
           unit: "Pillow's division",
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.45500, lng: -87.87000 }, // from road junction
-            { lat: 36.46200, lng: -87.86200 }, // returning NE
-            { lat: 36.47500, lng: -87.85500 }, // back into Confederate left sector
+            { lat: 36.47600, lng: -87.86000 }, // continuity: from the high-water mark on the roads
+            { lat: 36.48050, lng: -87.84750 }, // marching back NE
+            { lat: 36.48300, lng: -87.84700 }, // back into the Confederate left works SW of Dover
           ],
         },
       ],
@@ -285,17 +291,17 @@ const fortDonelson: Battle = {
       ],
       movements: [
         {
-          // McClernand counterattack: retakes the SE ground pushed back during the breakout.
-          // Advances N from his retreat position back toward the outer Confederate arc.
+          // McClernand counterattack: with Wallace, recovers the ground lost in the
+          // breakout, pushing back W/SW to the road junctions SW of Dover.
           side: 'union',
           style: 'advance',
           unit: 'McClernand — 1st Division',
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.44800, lng: -87.82000 }, // from retreat position
-            { lat: 36.45500, lng: -87.82800 }, // advancing N
-            { lat: 36.46200, lng: -87.83600 }, // recovering right-flank position near Lick Creek
+            { lat: 36.47900, lng: -87.84700 }, // continuity: from the rally near Dover
+            { lat: 36.47700, lng: -87.85400 }, // recovering the lost ground
+            { lat: 36.47600, lng: -87.86200 }, // back astride the Forge & Wynn's Ferry roads
           ],
         },
         {
@@ -332,19 +338,19 @@ const fortDonelson: Battle = {
           ],
         },
         {
-          // Buckner's division: Confederate right collapsed under Smith's assault.
-          // Retreated NE back inside the fort perimeter (toward earthworks).
-          // Buckner then asked Grant for terms — surrender Feb 16 at dawn.
+          // Buckner's division: recalled to its right works, where C.F. Smith's assault
+          // broke through. It fell back NW to the Hickman Creek sector, then into the
+          // fort earthworks. Buckner asked Grant for terms — surrender Feb 16 at dawn.
           side: 'confederate',
           style: 'retreat',
           unit: "Buckner's division",
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.47000, lng: -87.87200 }, // continuity: resumes from Buckner's Wynn's Ferry Rd position (phase 4 end)
-            { lat: 36.49000, lng: -87.87200 }, // pulled back to defend NW arc — point of Smith's breakthrough
-            { lat: 36.49200, lng: -87.86600 }, // retreating E toward fort
-            { lat: 36.49200, lng: -87.86100 }, // back inside fort earthwork perimeter
+            { lat: 36.47700, lng: -87.85800 }, // continuity: from the stalled centre attack
+            { lat: 36.48500, lng: -87.86200 }, // falling back NW toward the right works
+            { lat: 36.49000, lng: -87.86400 }, // the NW arc near Hickman — point of Smith's breakthrough
+            { lat: 36.48800, lng: -87.85800 }, // pulled inside the fort earthwork perimeter near Dover
           ],
         },
       ],
