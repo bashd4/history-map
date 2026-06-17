@@ -102,9 +102,9 @@ const fortDonelson: Battle = {
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.45500, lng: -87.93000 }, // from W, left (southern) flank
-            { lat: 36.46200, lng: -87.91200 }, // advancing NE
-            { lat: 36.47000, lng: -87.89800 }, // settling into position W of Confederate right
+            { lat: 36.47500, lng: -87.93000 }, // from the W/NW (Fort Henry direction)
+            { lat: 36.48000, lng: -87.91000 }, // advancing ENE
+            { lat: 36.48500, lng: -87.88500 }, // settling NW of the fort, fronting Buckner's right on Hickman Creek
           ],
         },
         {
@@ -160,8 +160,8 @@ const fortDonelson: Battle = {
           branch: 'artillery',
           echelon: 'regiment', // battery-level formation (smallest echelon available)
           path: [
-            { lat: 36.49700, lng: -87.85800 }, // lower battery on bluff (facing downstream NW)
-            { lat: 36.50000, lng: -87.86000 }, // upper battery on bluff
+            { lat: 36.50000, lng: -87.86000 }, // lower battery on the bluff (downstream, further N/NW)
+            { lat: 36.49700, lng: -87.85800 }, // upper battery on the bluff (upstream, nearer the fort)
           ],
         },
       ],
@@ -316,9 +316,9 @@ const fortDonelson: Battle = {
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.47000, lng: -87.89800 }, // continuity: resumes from Smith's phase-1 position W of Confederate right
-            { lat: 36.47200, lng: -87.90000 }, // advancing NE
-            { lat: 36.49000, lng: -87.87200 }, // breaking through Confederate right (NW arc, near Hickman Cr)
+            { lat: 36.48500, lng: -87.88500 }, // continuity: from Smith's investment position NW of the fort
+            { lat: 36.48700, lng: -87.87800 }, // advancing E/NE into the Confederate right works
+            { lat: 36.49000, lng: -87.87200 }, // breaking through the Confederate right (NW arc, near Hickman Cr)
           ],
         },
         {
@@ -333,8 +333,8 @@ const fortDonelson: Battle = {
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.46500, lng: -87.87000 }, // reserve/center position
-            { lat: 36.47200, lng: -87.86200 }, // advancing toward the S arc
+            { lat: 36.47200, lng: -87.87000 }, // reserve/centre position (between Smith NW and McClernand SW)
+            { lat: 36.47500, lng: -87.86200 }, // advancing into the centre arc
           ],
         },
         {
@@ -640,9 +640,10 @@ const shiloh: Battle = {
           ],
         },
         {
-          // Lew Wallace's 3rd Division: came from Crump's Landing (~5 miles N on the river).
-          // He marched south down the River Road, crossed Snake Creek, arrived from the north
-          // at the Union right flank near the Landing. Arrived after dark, Apr 6.
+          // Lew Wallace's 3rd Division: from Crump's Landing (~5 mi N), he countermarched
+          // and took the River Road INLAND to the NW, crossed the Snake Creek bridge, and
+          // came onto the Union FAR RIGHT by Owl Creek — W of the Landing, not down the
+          // river edge. Arrived after dark, Apr 6.
           side: 'union',
           style: 'advance',
           unit: "Lew Wallace — 3rd Division",
@@ -652,9 +653,9 @@ const shiloh: Battle = {
           arrives: true,
           path: [
             { lat: 35.22000, lng: -88.32800 },  // Crump's Landing (~5 miles N of Landing)
-            { lat: 35.19000, lng: -88.32500 },  // River Road south
-            { lat: 35.16500, lng: -88.32200 },  // Snake Creek crossing
-            { lat: 35.15200, lng: -88.32200 },  // arrival at Union right flank
+            { lat: 35.19000, lng: -88.34200 },  // River Road bending SW inland
+            { lat: 35.16600, lng: -88.35500 },  // Snake Creek bridge crossing (W of the river)
+            { lat: 35.15200, lng: -88.35200 },  // arrival on the Union far right (Owl/Snake Creek)
           ],
         },
         {
@@ -708,9 +709,9 @@ const shiloh: Battle = {
           strength: 7564,
           arrives: true,
           path: [
-            { lat: 35.15200, lng: -88.32200 },  // overnight position (far right)
-            { lat: 35.14900, lng: -88.33800 },  // advancing WSW
-            { lat: 35.14400, lng: -88.35600 },  // Confederate left collapsed here
+            { lat: 35.15200, lng: -88.35200 },  // overnight position (far right, by Snake/Owl Creek)
+            { lat: 35.14800, lng: -88.36500 },  // advancing WSW
+            { lat: 35.14300, lng: -88.37600 },  // enveloping the Confederate left flank
           ],
         },
         {
@@ -1038,12 +1039,13 @@ const vicksburg: Battle = {
       // After the ridge fell, Confederates fled W via the Raymond Road crossing
       // of Baker's Creek, then to Big Black, then into Vicksburg.
       caption:
-        "At Champion Hill (May 16), Hovey's division storms the ridge from the northeast and Logan's division cuts the Raymond Road — Pemberton's army shatters. The remnants are routed again at Big Black River (May 17) and retreat into Vicksburg's works.",
+        "At Champion Hill (May 16), Hovey's division storms the crest from the northeast down the Jackson Road and Logan's cuts the crossroads behind it — Pemberton's army shatters. The remnants are routed again at Big Black River (May 17) and retreat into Vicksburg's works.",
       duration: 7,
       movements: [
         {
-          // Hovey's 12th Division (XII Corps / McClernand): attacked center-left
-          // from the NE, approaching via the Middle Road.
+          // Hovey's 12th Division (lead of McClernand's XIII Corps, under Grant's hand):
+          // marched WEST down the Jackson Road from Bolton and stormed the crest, striking
+          // Pemberton's exposed LEFT flank from the NE.
           side: 'union',
           style: 'advance',
           unit: "Hovey — 12th Division",
@@ -1052,13 +1054,15 @@ const vicksburg: Battle = {
           strength: 3600,
           arrives: true,
           path: [
-            { lat: 32.32500, lng: -90.49500 }, // Approach from E on Middle Road
-            { lat: 32.33333, lng: -90.52778 }, // Champion Hill crest
+            { lat: 32.34200, lng: -90.50200 }, // Jackson Road descending SW from Bolton (NE of crest)
+            { lat: 32.33800, lng: -90.51800 }, // strikes Pemberton's left, NE shoulder of the hill
+            { lat: 32.33333, lng: -90.52778 }, // Champion Hill crest (carried ~1 p.m.)
           ],
         },
         {
-          // Logan's 3rd Division (XVII Corps / McPherson): flanked S,
-          // cut the Raymond Road behind Baker's Creek crossing.
+          // Logan's 3rd Division (McPherson's XVII Corps): advanced WEST on Hovey's RIGHT
+          // (N of the Jackson Road), enveloping Pemberton's far left and cutting the
+          // Jackson/Middle Road crossroads — the Confederate escape route.
           side: 'union',
           style: 'advance',
           unit: "Logan — 3rd Division",
@@ -1066,9 +1070,9 @@ const vicksburg: Battle = {
           echelon: 'division',
           arrives: true,
           path: [
-            { lat: 32.32000, lng: -90.50500 }, // Approach from SE
-            { lat: 32.31800, lng: -90.52800 }, // Baker's Creek crossroads
-            { lat: 32.33333, lng: -90.52778 }, // Joins on the ridge
+            { lat: 32.34300, lng: -90.51500 }, // advancing W/SW on Hovey's right, N of the Jackson Road
+            { lat: 32.33600, lng: -90.52600 }, // envelops the Confederate far left on the crest
+            { lat: 32.32900, lng: -90.52600 }, // Jackson/Middle Road crossroads — escape route cut
           ],
         },
         {
@@ -1364,12 +1368,14 @@ const chattanooga: Battle = {
         {
           side: 'confederate',
           style: 'retreat',
-          unit: "Walthall's brigade — Orchard Knob",
+          unit: "Manigault's brigade — Orchard Knob",
           branch: 'infantry',
           echelon: 'brigade',
-          strength: 1500,
-          // Retreats ~1 mile E from knob to the rifle-pits at the base of Missionary Ridge.
-          // Ridge base at this latitude is ~lng -85.264 (OSM ridge W edge).
+          strength: 634,
+          // CORRECTED: the Orchard Knob outpost (Nov 23) was held by ~634 men of Manigault's
+          // brigade (24th & 28th Alabama), NOT Walthall — whose Mississippians were on Lookout
+          // Mountain (see "Stevenson's / Walthall's forces"). They fired a volley and fell back
+          // ~1 mi E to the rifle-pits at the base of Missionary Ridge (W edge ~lng -85.264).
           path: [
             { lat: 35.03960, lng: -85.27350 },
             { lat: 35.03500, lng: -85.27000 },

@@ -311,28 +311,33 @@ export const napoleon: Journey = {
           ],
         },
         {
-          // Russian Imperial Guard counter-attacks from Blažovice NW toward N Pratzen
-          // (Vandamme sector). They briefly recapture ground near the summit before being repulsed.
+          // Russian Imperial Guard (Grand Duke Constantine) — the reserve lay E of the
+          // Pratzen behind the centre (toward Křenovice/Slavkov); it counter-attacked the
+          // N plateau (Staré Vinohrady, Vandamme's sector) from the E/NE, briefly taking a
+          // French eagle before being repulsed. (CORRECTED: not staged from Blažovice, which
+          // was the French Bernadotte/Lannes sector.)
           side: 'coalition', style: 'advance',
           unit: "Russian Imperial Guard — Grand Duke",
           branch: 'infantry', echelon: 'corps', // Guard reserve (corps-sized); the counter-attack here was infantry-led
           strength: 10430,
           path: [
-            { lat: 49.16583, lng: 16.78611 }, // Blažovice (Blasowitz) — Guard reserve
-            { lat: 49.15500, lng: 16.78000 }, // Advance W
-            { lat: 49.14800, lng: 16.77200 }, // N Pratzen — brief penetration
+            { lat: 49.14500, lng: 16.81500 }, // Guard reserve, W of Křenovice / behind the centre
+            { lat: 49.14600, lng: 16.79500 }, // advance W up the NE flank of Staré Vinohrady
+            { lat: 49.14600, lng: 16.78000 }, // strikes the N plateau (Vandamme's sector)
           ],
         },
         {
-          // Rapp's Guard cavalry (horse grenadiers + Mamelukes) counter-charges the
-          // Russian Guard cavalry near Blažovice, driving them back.
+          // Rapp's Guard cavalry (horse grenadiers + Mamelukes), committed by Napoleon from
+          // the centre, counter-charges the Russian Guard over the N Pratzen / Staré Vinohrady
+          // and drives it back E toward Křenovice. (CORRECTED: the clash was on the plateau,
+          // not at Blažovice.)
           side: 'french', style: 'advance',
           unit: "Rapp — Guard cavalry",
           branch: 'cavalry', echelon: 'division', // Guard cavalry (horse grenadiers + Mamelukes)
           path: [
-            { lat: 49.16000, lng: 16.77000 }, // French Guard cavalry start
-            { lat: 49.16583, lng: 16.78611 }, // Charge through to Blažovice
-            { lat: 49.17000, lng: 16.79500 }, // Pursuit NE
+            { lat: 49.15200, lng: 16.76500 }, // committed from the W/centre
+            { lat: 49.14700, lng: 16.78200 }, // charge home on the N plateau (meets the Russian Guard)
+            { lat: 49.14600, lng: 16.80500 }, // pursuit E toward Křenovice
           ],
         },
         {
