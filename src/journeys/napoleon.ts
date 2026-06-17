@@ -113,6 +113,7 @@ export const napoleon: Journey = {
           // This is the feint that invites the Allied assault on the southern flank.
           side: 'french', style: 'feint',
           unit: "Soult — IV Corps",
+          branch: 'infantry', echelon: 'corps',
           path: [
             { lat: 49.12800, lng: 16.76200 }, // Pratzen plateau center
             { lat: 49.13200, lng: 16.75000 }, // W slope
@@ -125,6 +126,7 @@ export const napoleon: Journey = {
           // extending SE toward Bosenitz/Tvarožná along the Olmütz road.
           side: 'french', style: 'feint',
           unit: "Lannes — V Corps",
+          branch: 'infantry', echelon: 'corps',
           path: [
             { lat: 49.18837, lng: 16.76376 }, // Santon hill top
             { lat: 49.17600, lng: 16.75800 }, // SE toward Tvarožná
@@ -135,6 +137,7 @@ export const napoleon: Journey = {
           // along the Brünn–Austerlitz road (roughly the N part of the field).
           side: 'french', style: 'feint',
           unit: "Murat — Cavalry Reserve",
+          branch: 'cavalry', echelon: 'corps',
           path: [
             { lat: 49.18000, lng: 16.75000 }, // N, near Bosenitz road
             { lat: 49.16500, lng: 16.76000 }, // S toward Blažovice road
@@ -151,6 +154,7 @@ export const napoleon: Journey = {
           // Route: from plateau center, through Újezd (49.104,16.758), then SW to Sokolnice.
           side: 'coalition', style: 'advance',
           unit: "Buxhöwden — three left-wing columns",
+          branch: 'infantry', echelon: 'corps', // three columns = corps-level wing
           path: [
             { lat: 49.12800, lng: 16.76200 }, // Pratzen plateau
             { lat: 49.11800, lng: 16.75800 }, // W slope / Újezd approach
@@ -163,6 +167,7 @@ export const napoleon: Journey = {
           // Kienmayer's Austrian advance guard attacks Telnice directly from the E/NE.
           side: 'coalition', style: 'advance',
           unit: "Kienmayer — Austrian advance guard",
+          branch: 'cavalry', echelon: 'division', // light-cavalry-led advance guard (mixed; cavalry was the defining arm)
           path: [
             { lat: 49.11000, lng: 16.74500 }, // Plateau W slope
             { lat: 49.10200, lng: 16.73000 }, // Valley approach
@@ -174,6 +179,7 @@ export const napoleon: Journey = {
           // along the Vienna road, fanning out to hold Telnice and Sokolnice.
           side: 'french', style: 'advance',
           unit: "Davout — III Corps",
+          branch: 'infantry', echelon: 'corps',
           path: [
             { lat: 49.09028, lng: 16.60389 }, // Rajhrad (Gross-Raigern)
             { lat: 49.09800, lng: 16.64000 }, // March N along road
@@ -186,6 +192,7 @@ export const napoleon: Journey = {
           // Bagration attacks the Santon from the NE (from Krenovice road / Prostějov direction).
           side: 'coalition', style: 'advance',
           unit: "Bagration — right wing",
+          branch: 'infantry', echelon: 'corps', // combined-arms right wing
           path: [
             { lat: 49.19500, lng: 16.80000 }, // Allied right start, NE
             { lat: 49.18837, lng: 16.76376 }, // Santon hill (repelled)
@@ -206,6 +213,7 @@ export const napoleon: Journey = {
           // up the southern Pratzen slope toward Sokolnice–Újezd ridge line.
           side: 'french', style: 'advance',
           unit: "St. Hilaire — division",
+          branch: 'infantry', echelon: 'division',
           path: [
             { lat: 49.13000, lng: 16.73000 }, // Assembly E of Kobylnice (Goldbach)
             { lat: 49.12800, lng: 16.74500 }, // Climbing W slope of heights
@@ -218,6 +226,7 @@ export const napoleon: Journey = {
           // up the northern Pratzen slope toward Prácě village.
           side: 'french', style: 'advance',
           unit: "Vandamme — division",
+          branch: 'infantry', echelon: 'division',
           path: [
             { lat: 49.14500, lng: 16.73500 }, // Kobylnice / N Goldbach
             { lat: 49.14300, lng: 16.75000 }, // W slope
@@ -230,6 +239,7 @@ export const napoleon: Journey = {
           // to cover gap between Soult and Lannes, threatening Allied centre.
           side: 'french', style: 'advance',
           unit: "Bernadotte — I Corps",
+          branch: 'infantry', echelon: 'corps',
           path: [
             { lat: 49.15500, lng: 16.74500 }, // Ponětovice area
             { lat: 49.16000, lng: 16.76500 }, // NE toward Blažovice
@@ -241,6 +251,7 @@ export const napoleon: Journey = {
           // and pushed eastward off the plateau toward Slavkov town.
           side: 'coalition', style: 'retreat',
           unit: "Kollowrath — Allied centre",
+          branch: 'infantry', echelon: 'corps', // large IV-Column centre under Kollowrat/Miloradovich
           path: [
             { lat: 49.13800, lng: 16.76500 }, // Plateau centre
             { lat: 49.14000, lng: 16.79000 }, // E edge of heights
@@ -262,6 +273,7 @@ export const napoleon: Journey = {
           // toward Újezd and the ponds. Direction: from plateau, S/SW toward Sokolnice–Újezd.
           side: 'french', style: 'advance',
           unit: "St. Hilaire & Vandamme — wheel south",
+          branch: 'infantry', echelon: 'division', // two infantry divisions wheeling together
           path: [
             { lat: 49.12800, lng: 16.76200 }, // Plateau centre
             { lat: 49.11500, lng: 16.76000 }, // S along E face of heights
@@ -274,6 +286,7 @@ export const napoleon: Journey = {
           // (Vandamme sector). They briefly recapture ground near the summit before being repulsed.
           side: 'coalition', style: 'advance',
           unit: "Russian Imperial Guard — Grand Duke",
+          branch: 'infantry', echelon: 'corps', // Guard reserve (corps-sized); the counter-attack here was infantry-led
           path: [
             { lat: 49.16583, lng: 16.78611 }, // Blažovice (Blasowitz) — Guard reserve
             { lat: 49.15500, lng: 16.78000 }, // Advance W
@@ -285,6 +298,7 @@ export const napoleon: Journey = {
           // Russian Guard cavalry near Blažovice, driving them back.
           side: 'french', style: 'advance',
           unit: "Rapp — Guard cavalry",
+          branch: 'cavalry', echelon: 'division', // Guard cavalry (horse grenadiers + Mamelukes)
           path: [
             { lat: 49.16000, lng: 16.77000 }, // French Guard cavalry start
             { lat: 49.16583, lng: 16.78611 }, // Charge through to Blažovice
@@ -296,6 +310,7 @@ export const napoleon: Journey = {
           // toward Újezd, then S along the causeway between the frozen ponds.
           side: 'coalition', style: 'retreat',
           unit: "Allied left wing — Dokhturov / Langeron",
+          branch: 'infantry', echelon: 'corps', // two-column left wing
           path: [
             { lat: 49.11389, lng: 16.72167 }, // Sokolnice — collapse point
             { lat: 49.10194, lng: 16.71778 }, // Telnice — southern anchor lost

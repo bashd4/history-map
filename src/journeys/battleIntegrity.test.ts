@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { journeys } from './index'
 import type { Battle } from '../data/schema'
+import { geodeticToVector3 } from '../lib/geo'
 
 /**
  * Guard against the "two flotillas going opposite directions" bug: a single unit
@@ -38,4 +39,27 @@ describe('battle phase integrity', () => {
     }
     expect(offenders, `units moving twice in one phase:\n${offenders.join('\n')}`).toEqual([])
   })
+
+  it('a unit never teleports between its consecutive movements (>1km)', () => {
+    const offenders: string[] = []
+    for (const { journey, stop, battle } of allBattles()) {
+      const byUnit = new Map<string, {lat:number;lng:number}[][]>()
+      battle.phases.forEach((ph) => ph.movements.forEach((m) => {
+        if (!m.unit) return
+        if (!byUnit.has(m.unit)) byUnit.set(m.unit, [])
+        byUnit.get(m.unit)!.push(m.path)
+      }))
+      for (const [unit, paths] of byUnit) {
+        for (let i = 1; i < paths.length; i++) {
+          const d = gapKm(paths[i-1].at(-1)!, paths[i][0])
+          if (d > 1) offenders.push(`${journey}/${stop} · "${unit}" gap ${d.toFixed(2)}km`)
+        }
+      }
+    }
+    expect(offenders, `unit teleports:\n${offenders.join('\n')}`).toEqual([])
+  })
 })
+
+function gapKm(a: {lat:number;lng:number}, b: {lat:number;lng:number}) {
+  return geodeticToVector3(a.lat,a.lng).angleTo(geodeticToVector3(b.lat,b.lng)) * 6371
+}

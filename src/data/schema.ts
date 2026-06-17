@@ -7,8 +7,8 @@ const movement = z.object({
   style: z.enum(['advance', 'retreat', 'feint']),
   path: z.array(latLng).min(2),
   unit: z.string().min(1).max(40).optional(), // e.g. "Soult — IV Corps"
-  branch: z.enum(['infantry', 'cavalry', 'artillery', 'naval', 'command']).optional(),
-  echelon: z.enum(['corps', 'division', 'brigade', 'regiment', 'flotilla']).optional(),
+  branch: z.enum(['infantry', 'cavalry', 'artillery', 'naval', 'command']),
+  echelon: z.enum(['corps', 'division', 'brigade', 'regiment', 'flotilla']),
   strength: z.number().int().positive().optional(),
 })
 

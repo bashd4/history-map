@@ -27,7 +27,7 @@ describe('journeySchema', () => {
         sides: { french: '#4d8fdb', coalition: '#c0392b' },
         phases: [{
           caption: 'The trap.',
-          movements: [{ side: 'french', style: 'feint', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+          movements: [{ side: 'french', style: 'feint', branch: 'infantry', echelon: 'corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
         }],
       },
     }
@@ -42,7 +42,7 @@ describe('journeySchema', () => {
         sides: { french: '#4d8fdb' },
         phases: [{
           caption: 'The trap.',
-          movements: [{ side: 'unknown-side', style: 'advance', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+          movements: [{ side: 'unknown-side', style: 'advance', branch: 'infantry', echelon: 'corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
         }],
       },
     }
@@ -56,7 +56,7 @@ describe('journeySchema', () => {
         sides: { french: 'blue' },
         phases: [{
           caption: 'The trap.',
-          movements: [{ side: 'french', style: 'advance', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+          movements: [{ side: 'french', style: 'advance', branch: 'infantry', echelon: 'corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
         }],
       },
     }
@@ -69,7 +69,7 @@ describe('journeySchema', () => {
     sides: { french: '#4d8fdb', coalition: '#c0392b' },
     phases: [{
       caption: 'Phase.',
-      movements: [{ side: 'french', style: 'advance', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+      movements: [{ side: 'french', style: 'advance', branch: 'infantry', echelon: 'corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
     }],
   }
   const withBattle = (battle: object) =>
@@ -150,7 +150,7 @@ describe('journeySchema', () => {
       ...baseBattle,
       phases: [{
         caption: 'Phase.',
-        movements: [{ side: 'french', style: 'advance', unit: 'Soult — IV Corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+        movements: [{ side: 'french', style: 'advance', unit: 'Soult — IV Corps', branch: 'infantry', echelon: 'corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
       }],
     })
     expect(j.stops[0].battle?.phases[0].movements[0].unit).toBe('Soult — IV Corps')
@@ -160,7 +160,7 @@ describe('journeySchema', () => {
       ...baseBattle,
       phases: [{
         caption: 'Phase.',
-        movements: [{ side: 'french', style: 'advance', unit: 'A'.repeat(41), path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+        movements: [{ side: 'french', style: 'advance', unit: 'A'.repeat(41), branch: 'infantry', echelon: 'corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
       }],
     })).toThrow()
   })
@@ -178,7 +178,7 @@ describe('journeySchema', () => {
         sides: { french: '#4d8fdb', coalition: '#c0392b' },
         phases: [{
           caption: 'The trap.',
-          movements: [{ side: 'french', style: 'feint', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
+          movements: [{ side: 'french', style: 'feint', branch: 'infantry', echelon: 'corps', path: [{ lat: 49.1, lng: 16.7 }, { lat: 49.2, lng: 16.8 }] }],
         }],
       },
     }
