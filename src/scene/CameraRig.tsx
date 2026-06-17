@@ -3,7 +3,7 @@ import { useRef } from 'react'
 import * as THREE from 'three'
 import { journeyById } from '../journeys'
 import { cameraAt, stopsForCamera } from '../lib/journeyCamera'
-import { latLngToVector3, offsetLatLng } from '../lib/geo'
+import { geodeticToVector3, latLngToVector3, offsetLatLng } from '../lib/geo'
 import { battleFrameAltitude } from '../lib/battleExtent'
 import { useAppStore, type FlightState } from '../state/store'
 import type { LatLng } from '../data/schema'
@@ -86,8 +86,10 @@ export function CameraRig() {
       // own waypoints/landmarks rather than a fixed altitude.
       const frameAlt = stop.battle ? battleFrameAltitude(stop.battle, site) : BATTLE_ALT
       if (battleView === 'map') {
-        targetPos.current.copy(latLngToVector3(site.lat, site.lng, 1 + frameAlt * zoom))
-        targetLook.current.copy(latLngToVector3(site.lat, site.lng, 1)) // straight down
+        // Geodetic placement so the camera centres on the (geodetic) arrows and
+        // the tile terrain beneath them — not ~20 km off. See geo.ts.
+        targetPos.current.copy(geodeticToVector3(site.lat, site.lng, 1 + frameAlt * zoom))
+        targetLook.current.copy(geodeticToVector3(site.lat, site.lng, 1)) // straight down
         targetUp.current.copy(WORLD_UP)
       } else {
         // field / orbit: stand off from the site at a low oblique altitude and
@@ -103,9 +105,9 @@ export function CameraRig() {
         const groundDist = frameAlt * 0.9 * zoom // angular standoff (radians)
         const camLL = offsetLatLng(site, ((bearing % 360) + 360) % 360, groundDist)
         targetPos.current.copy(
-          latLngToVector3(camLL.lat, camLL.lng, 1 + frameAlt * 0.55 * zoom))
-        targetLook.current.copy(latLngToVector3(site.lat, site.lng, 1))
-        targetUp.current.copy(latLngToVector3(site.lat, site.lng, 1)) // radial up: level horizon
+          geodeticToVector3(camLL.lat, camLL.lng, 1 + frameAlt * 0.55 * zoom))
+        targetLook.current.copy(geodeticToVector3(site.lat, site.lng, 1))
+        targetUp.current.copy(geodeticToVector3(site.lat, site.lng, 1)) // radial up: level horizon
       }
     }
 

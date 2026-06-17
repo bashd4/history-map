@@ -12,6 +12,7 @@ import { useAppStore } from '../state/store'
 import { TerrainErrorBoundary } from './TerrainErrorBoundary'
 import { BattleArrows } from './BattleArrows'
 import { BattleAnnotations } from './BattleAnnotations'
+import { BattleGroundTruth } from './BattleGroundTruth'
 import { BattleBasemap, prefetchBasemap } from './BattleBasemap'
 import { PerfSampler } from './PerfSampler'
 
@@ -19,6 +20,11 @@ import { PerfSampler } from './PerfSampler'
 const TerrainLayer = lazy(() =>
   import('./TerrainLayer').then((m) => ({ default: m.TerrainLayer })),
 )
+
+// Battle ground-truth verifier: on in dev, or on the live site when ?gt is set.
+const groundTruthEnabled =
+  import.meta.env.DEV ||
+  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('gt'))
 
 // Module-level strike counter: survives component remounts (incl. StrictMode
 // double-mount, which would reset a ref) — losing the context twice in one
@@ -174,6 +180,11 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
           {activeBattle && <BattleArrows battle={activeBattle} />}
           {/* Landmark/event labels — also outside the terrain boundary. */}
           {activeBattle && <BattleAnnotations battle={activeBattle} />}
+          {/* Ground-truth verification overlay — press "g" to drop pins at every
+              authored coordinate, draped on the real tiles. On by default in dev;
+              on the live site append ?gt=1 to the URL to enable it (so you can
+              verify where the tiles actually stream). */}
+          {groundTruthEnabled && activeBattle && <BattleGroundTruth battle={activeBattle} />}
         </Suspense>
         <CameraRig />
         {mode === 'hub' && (

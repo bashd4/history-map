@@ -3,7 +3,16 @@ import type { LatLng } from '../data/schema'
 
 export const GLOBE_RADIUS = 1
 
-/** Matches equirectangular texture mapping on THREE.SphereGeometry. */
+/**
+ * Matches equirectangular texture mapping on THREE.SphereGeometry. Treats `lat`
+ * as the spherical polar angle — correct for the sepia sphere and fine at
+ * journey/hub zoom, but it does NOT agree with the Google 3D-Tiles globe at
+ * close (battle) range: those tiles sit on the WGS84 *ellipsoid*, where geodetic
+ * latitude differs from the spherical angle by up to ~0.19° (≈21 km) at
+ * mid-latitudes. For anything that must register against the streamed tiles
+ * (battle arrows, areas, the battle camera, terrain raycasts) use
+ * `geodeticToVector3` instead. See geo.test.ts for the measured divergence.
+ */
 export function latLngToVector3(lat: number, lng: number, radius = GLOBE_RADIUS): THREE.Vector3 {
   const phi = (90 - lat) * (Math.PI / 180)
   const theta = (lng + 180) * (Math.PI / 180)
@@ -12,6 +21,54 @@ export function latLngToVector3(lat: number, lng: number, radius = GLOBE_RADIUS)
     radius * Math.cos(phi),
     radius * Math.sin(phi) * Math.sin(theta),
   )
+}
+
+// WGS84 ellipsoid — the datum Google Photorealistic 3D Tiles are authored on.
+const WGS84_A = 6_378_137 // semi-major axis (m)
+const WGS84_E2 = 0.00669437999014 // first eccentricity squared
+
+/**
+ * Convert geographic (geodetic) lat/lng to a scene-space direction that matches
+ * where the Google 3D-Tiles renderer places that coordinate.
+ *
+ * The tiles group applies `scale 1/WGS84_A, rotation X(-90°)` to true ECEF
+ * geometry, which maps ECEF (X,Y,Z) → scene (X/a, Z/a, -Y/a). We compute the
+ * geodetic ECEF surface point on the WGS84 ellipsoid and apply the same map,
+ * then normalise and scale to `radius`. The *direction* is what aligns battle
+ * geometry with the tiles; absolute height is set later by terrain draping.
+ *
+ * Agrees with `latLngToVector3` exactly at the equator and poles (where geodetic
+ * = geocentric) and diverges by up to ~21 km in between — see geo.test.ts.
+ */
+export function geodeticToVector3(lat: number, lng: number, radius = GLOBE_RADIUS): THREE.Vector3 {
+  const la = lat * (Math.PI / 180)
+  const lo = lng * (Math.PI / 180)
+  const sinLa = Math.sin(la)
+  const cosLa = Math.cos(la)
+  const N = WGS84_A / Math.sqrt(1 - WGS84_E2 * sinLa * sinLa)
+  const X = N * cosLa * Math.cos(lo)
+  const Y = N * cosLa * Math.sin(lo)
+  const Z = N * (1 - WGS84_E2) * sinLa
+  // ECEF → scene: (X, Y, Z) → (X, Z, -Y); then normalise to a pure direction.
+  return new THREE.Vector3(X, Z, -Y).normalize().multiplyScalar(radius)
+}
+
+/**
+ * Inverse of `geodeticToVector3` (on unit directions): recover geographic
+ * (geodetic) lat/lng from a scene-space vector. Exact bijection — feeding the
+ * result back through `geodeticToVector3` reproduces the same direction, so
+ * interpolated path points can be re-sampled for terrain height consistently.
+ */
+export function vector3ToGeodetic(v: THREE.Vector3): { lat: number; lng: number } {
+  // scene (x, y, z) → ECEF (X, Y, Z) = (x, -z, y) (inverse of the map above).
+  const X = v.x
+  const Y = -v.z
+  const Z = v.y
+  const lng = Math.atan2(Y, X) * (180 / Math.PI)
+  const hyp = Math.hypot(X, Y)
+  // Surface point (h=0): Z/hyp = (1-e²)·tan(φ_geodetic) ⇒ recover φ_geodetic.
+  const lat = Math.atan2(Z, hyp * (1 - WGS84_E2)) * (180 / Math.PI)
+  return { lat, lng }
 }
 
 /**

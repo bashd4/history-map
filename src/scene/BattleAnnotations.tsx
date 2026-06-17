@@ -2,7 +2,7 @@ import { useMemo, useRef, type CSSProperties } from 'react'
 import { Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Battle } from '../data/schema'
-import { latLngToVector3, slerpUnit } from '../lib/geo'
+import { geodeticToVector3, slerpUnit, vector3ToGeodetic } from '../lib/geo'
 import { playbackAt } from '../lib/battlePlayback'
 import { useAppStore } from '../state/store'
 import { terrainSampler, useTerrainHeightsVersion } from './useTerrainHeights'
@@ -31,26 +31,13 @@ const baseLabelStyle: CSSProperties = {
 }
 
 /**
- * Helper: recover geographic (lat, lng) from a unit THREE.Vector3 produced by
- * latLngToVector3 / slerpUnit.  Used to look up sampled terrain height.
- *
- * latLngToVector3 encodes longitude as theta = (lng + 180) * π/180, so a
- * naive atan2(v.z, -v.x) returns theta (degrees), not lng.  We subtract 180
- * and normalise to [-180, 180] to recover the actual geographic longitude.
- */
-function vec3ToLatLng(v: THREE.Vector3): { lat: number; lng: number } {
-  const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
-  const theta = Math.atan2(v.z, -v.x) * (180 / Math.PI) // = lng + 180
-  const lng = theta - 180 < -180 ? theta + 180 : theta - 180 // normalise to [-180, 180]
-  return { lat, lng }
-}
-
-/**
  * Build a closed, slerp-subdivided outline loop for an area, draped onto terrain.
  * Each interpolated point is lifted to sampledRadius + OUTLINE_CLEARANCE.
+ * Uses geodeticToVector3 so outlines register with the streamed tiles (the
+ * spherical mapping lands ~20 km off at battle latitudes — see geo.ts).
  */
 function buildOutlineLoop(outline: Array<{ lat: number; lng: number }>): THREE.Vector3[] {
-  const unitVerts = outline.map((p) => latLngToVector3(p.lat, p.lng).normalize())
+  const unitVerts = outline.map((p) => geodeticToVector3(p.lat, p.lng).normalize())
   const pts: THREE.Vector3[] = []
   const n = unitVerts.length
   for (let i = 0; i < n; i++) {
@@ -58,7 +45,7 @@ function buildOutlineLoop(outline: Array<{ lat: number; lng: number }>): THREE.V
     const b = unitVerts[(i + 1) % n]
     for (let s = 0; s < SEGS_PER_EDGE; s++) {
       const v = slerpUnit(a, b, s / SEGS_PER_EDGE)
-      const { lat, lng } = vec3ToLatLng(v)
+      const { lat, lng } = vector3ToGeodetic(v)
       const r = terrainSampler.sampleRadius(lat, lng) + OUTLINE_CLEARANCE
       pts.push(v.clone().multiplyScalar(r))
     }
@@ -75,19 +62,19 @@ function buildOutlineLoop(outline: Array<{ lat: number; lng: number }>): THREE.V
 function allAreaPoints(areas: Array<{ outline: Array<{ lat: number; lng: number }> }>): Array<{ lat: number; lng: number }> {
   const out: Array<{ lat: number; lng: number }> = []
   for (const area of areas) {
-    const unitVerts = area.outline.map((p) => latLngToVector3(p.lat, p.lng).normalize())
+    const unitVerts = area.outline.map((p) => geodeticToVector3(p.lat, p.lng).normalize())
     const n = unitVerts.length
     for (let i = 0; i < n; i++) {
       const a = unitVerts[i]
       const b = unitVerts[(i + 1) % n]
       for (let s = 0; s < SEGS_PER_EDGE; s++) {
-        out.push(vec3ToLatLng(slerpUnit(a, b, s / SEGS_PER_EDGE)))
+        out.push(vector3ToGeodetic(slerpUnit(a, b, s / SEGS_PER_EDGE)))
       }
     }
     // centroid
     const sum = new THREE.Vector3()
-    for (const p of area.outline) sum.add(latLngToVector3(p.lat, p.lng).normalize())
-    out.push(vec3ToLatLng(sum.normalize()))
+    for (const p of area.outline) sum.add(geodeticToVector3(p.lat, p.lng).normalize())
+    out.push(vector3ToGeodetic(sum.normalize()))
   }
   return out
 }
@@ -99,10 +86,10 @@ function allAreaPoints(areas: Array<{ outline: Array<{ lat: number; lng: number 
 function outlineCentroid(outline: Array<{ lat: number; lng: number }>): THREE.Vector3 {
   const sum = new THREE.Vector3()
   for (const p of outline) {
-    sum.add(latLngToVector3(p.lat, p.lng).normalize())
+    sum.add(geodeticToVector3(p.lat, p.lng).normalize())
   }
   const unit = sum.normalize()
-  const { lat, lng } = vec3ToLatLng(unit)
+  const { lat, lng } = vector3ToGeodetic(unit)
   const r = terrainSampler.sampleRadius(lat, lng) + LABEL_CLEARANCE
   return unit.clone().multiplyScalar(r)
 }
@@ -113,11 +100,11 @@ function outlineCentroid(outline: Array<{ lat: number; lng: number }>): THREE.Ve
  */
 function buildAreaFill(outline: Array<{ lat: number; lng: number }>): THREE.BufferGeometry {
   const center = new THREE.Vector3()
-  const verts = outline.map((p) => latLngToVector3(p.lat, p.lng).normalize())
+  const verts = outline.map((p) => geodeticToVector3(p.lat, p.lng).normalize())
   for (const v of verts) center.add(v)
   center.normalize()
   const drape = (u: THREE.Vector3) => {
-    const { lat, lng } = vec3ToLatLng(u)
+    const { lat, lng } = vector3ToGeodetic(u)
     return u.clone().multiplyScalar(terrainSampler.sampleRadius(lat, lng) + OUTLINE_CLEARANCE)
   }
   const c = drape(center)
@@ -235,7 +222,7 @@ export function BattleAnnotations({ battle }: { battle: Battle }) {
         out.push({
           phaseIndex,
           label: ev.label,
-          pos: latLngToVector3(ev.coords.lat, ev.coords.lng, r),
+          pos: geodeticToVector3(ev.coords.lat, ev.coords.lng, r),
         })
       }
     })

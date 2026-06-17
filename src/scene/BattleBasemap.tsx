@@ -26,7 +26,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import type { Battle, LatLng } from '../data/schema'
-import { latLngToVector3 } from '../lib/geo'
+import { geodeticToVector3 } from '../lib/geo'
 import { battleExtent } from '../lib/battleExtent'
 import { setFlatMode } from './useTerrainHeights'
 
@@ -73,7 +73,9 @@ function pickZoom(coverageLngDeg: number): number {
 }
 
 /** Build geometry: lat/lng grid patch with mercator V mapping.
- *  Vertices at latLngToVector3(lat, lng, 1.0001) — slightly above sepia sphere. */
+ *  Vertices at geodeticToVector3(lat, lng, 1.0001) — slightly above the sepia
+ *  sphere, and in the SAME geodetic frame as the battle arrows so imagery and
+ *  arrows stay registered when toggling imagery↔topo (see geo.ts). */
 function buildPatchGeometry(
   latMin: number, latMax: number,
   lngMin: number, lngMax: number,
@@ -93,7 +95,7 @@ function buildPatchGeometry(
 
       const lng = lngMin + u * (lngMax - lngMin)
       const lat = latMax - v * (latMax - latMin) // linear lat for position
-      const vt = latLngToVector3(lat, lng, 1.0001)
+      const vt = geodeticToVector3(lat, lng, 1.0001)
 
       positions.push(vt.x, vt.y, vt.z)
 

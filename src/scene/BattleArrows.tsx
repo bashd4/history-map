@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { Html, Line } from '@react-three/drei'
 import type { Line2 } from 'three-stdlib'
 import type { Battle, Movement } from '../data/schema'
-import { latLngToVector3, slerpUnit } from '../lib/geo'
+import { geodeticToVector3, slerpUnit, vector3ToGeodetic } from '../lib/geo'
 import { playbackAt } from '../lib/battlePlayback'
 import { screenScale } from '../lib/screenScale'
 import { useAppStore } from '../state/store'
@@ -43,31 +43,20 @@ const _tangent = new THREE.Vector3()
  * Collect all distinct (lat, lng) waypoints for a movement path, with
  * interpolated slerp steps, for pre-registering with the terrain sampler.
  */
-/**
- * Recover geographic longitude from a unit vector produced by latLngToVector3.
- * latLngToVector3 encodes as theta = (lng + 180)*π/180, so atan2(v.z, -v.x)
- * returns theta (in degrees), not lng. We must subtract 180 and normalise.
- */
-function recoverLng(v: THREE.Vector3): number {
-  const theta = Math.atan2(v.z, -v.x) * (180 / Math.PI) // = lng + 180
-  return theta - 180 < -180 ? theta + 180 : theta - 180  // normalise to [-180, 180]
-}
-
 function movementLatLngs(movement: Movement): Array<{ lat: number; lng: number }> {
   const out: Array<{ lat: number; lng: number }> = []
   for (let leg = 0; leg < movement.path.length - 1; leg++) {
     const from = movement.path[leg]
     const to = movement.path[leg + 1]
-    const a = latLngToVector3(from.lat, from.lng).normalize()
-    const b = latLngToVector3(to.lat, to.lng).normalize()
+    // geodeticToVector3 keeps these points registered with the streamed tiles
+    // (vs ~20 km off with the spherical mapping) — see geo.ts / geo.test.ts.
+    const a = geodeticToVector3(from.lat, from.lng).normalize()
+    const b = geodeticToVector3(to.lat, to.lng).normalize()
     const start = leg === 0 ? 0 : 1
     for (let i = start; i <= SEGS_PER_LEG; i++) {
       const t = i / SEGS_PER_LEG
-      // Recover lat/lng from the slerped unit vector.
-      const v = slerpUnit(a, b, t)
-      const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
-      const lng = recoverLng(v)
-      out.push({ lat, lng })
+      // Recover geodetic lat/lng from the slerped direction (exact inverse).
+      out.push(vector3ToGeodetic(slerpUnit(a, b, t)))
     }
   }
   return out
@@ -79,15 +68,14 @@ function buildMovementPoints(movement: Movement): THREE.Vector3[] {
   for (let leg = 0; leg < movement.path.length - 1; leg++) {
     const from = movement.path[leg]
     const to = movement.path[leg + 1]
-    const a = latLngToVector3(from.lat, from.lng).normalize()
-    const b = latLngToVector3(to.lat, to.lng).normalize()
+    const a = geodeticToVector3(from.lat, from.lng).normalize()
+    const b = geodeticToVector3(to.lat, to.lng).normalize()
     const start = leg === 0 ? 0 : 1 // avoid duplicate point at leg joints
     for (let i = start; i <= SEGS_PER_LEG; i++) {
       const t = i / SEGS_PER_LEG
       const v = slerpUnit(a, b, t)
-      // Recover lat/lng for this interpolated point to look up sampled height
-      const lat = Math.asin(Math.max(-1, Math.min(1, v.y))) * (180 / Math.PI)
-      const lng = recoverLng(v)
+      // Recover geodetic lat/lng for this interpolated point to sample height.
+      const { lat, lng } = vector3ToGeodetic(v)
       const surfaceR = terrainSampler.sampleRadius(lat, lng)
       pts.push(v.clone().multiplyScalar(surfaceR + SURFACE_CLEARANCE))
     }

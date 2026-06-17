@@ -123,16 +123,8 @@ const fortDonelson: Battle = {
     },
     {
       caption:
-        "Foote's four ironclads press within 400 yards of the water batteries — accurate plunging fire from the bluff cripples the fleet; St. Louis and Louisville are both hulled and driven back downriver.",
-      duration: 8,
-      events: [
-        {
-          // Water batteries are on the 100-ft bluff above the river, just N of the earthworks.
-          // Foote's closest approach was the river directly below, ~400yd from the guns.
-          coords: { lat: 36.50003, lng: -87.86041 },
-          label: "Gunboats repulsed — Foote wounded aboard St. Louis",
-        },
-      ],
+        "Foote's four ironclads steam to within 400 yards of the water batteries and open fire — the gunboats duel the Confederate guns on the bluff.",
+      duration: 5,
       movements: [
         {
           // Foote ADVANCE: up the river from downstream staging to within ~400yd of batteries.
@@ -151,6 +143,34 @@ const fortDonelson: Battle = {
           ],
         },
         {
+          // Confederate river batteries: on the bluff at ~36.497, -87.858.
+          // Capt. Joseph Dixon (lower) and Capt. Bidwell (upper) commanded the river
+          // batteries (NOT Maney, whose battery was a LAND battery on the outer line).
+          // This feint arrow represents the battery firing position on the bluff.
+          side: 'confederate',
+          style: 'feint',
+          unit: "Confederate river batteries",
+          path: [
+            { lat: 36.49700, lng: -87.85800 }, // lower battery on bluff (facing downstream NW)
+            { lat: 36.50000, lng: -87.86000 }, // upper battery on bluff
+          ],
+        },
+      ],
+    },
+    {
+      caption:
+        "Accurate plunging fire from the bluff cripples the fleet — St. Louis and Louisville are hulled and drift back downriver; Foote is wounded aboard the St. Louis.",
+      duration: 5,
+      events: [
+        {
+          // Water batteries are on the 100-ft bluff above the river, just N of the earthworks.
+          // Foote's closest approach was the river directly below, ~400yd from the guns.
+          coords: { lat: 36.50003, lng: -87.86041 },
+          label: "Gunboats repulsed — Foote wounded aboard St. Louis",
+        },
+      ],
+      movements: [
+        {
           // Foote RETREAT: disabled boats "drifted down the river" (NPS source).
           // Same river nodes, reversed direction — back downstream NW.
           side: 'union',
@@ -165,33 +185,17 @@ const fortDonelson: Battle = {
             { lat: 36.55135, lng: -87.88307 }, // OSM node — safely downstream
           ],
         },
-        {
-          // Confederate river batteries: on the bluff at ~36.497, -87.858.
-          // NOTE: Original code labelled this "Maney's river battery" — CORRECTED.
-          // Capt. Frank Maney commanded a LAND battery on the outer defensive line
-          // (attached to Heiman/Johnson). The river batteries were commanded by
-          // Capt. Joseph Dixon (lower) and Capt. Bidwell (upper).
-          // This feint arrow represents the battery firing position on the bluff.
-          side: 'confederate',
-          style: 'feint',
-          unit: "Confederate river batteries",
-          path: [
-            { lat: 36.49700, lng: -87.85800 }, // lower battery on bluff (facing downstream NW)
-            { lat: 36.50000, lng: -87.86000 }, // upper battery on bluff
-          ],
-        },
       ],
     },
     {
       caption:
-        "Pillow and Buckner break through McClernand's right (SE sector), nearly forcing the Wynn's Ferry and Forge Roads open to Nashville — then Pillow, fearing Grant's return, orders the men back into the fort.",
-      duration: 8,
+        "Pillow and Buckner burst out of the SE works at dawn, driving McClernand's right back nearly two miles and forcing open the Wynn's Ferry and Forge Roads toward Nashville.",
+      duration: 6,
       movements: [
         {
           // Pillow's division: on the Confederate LEFT (E/SE sector of the arc,
           // near Lick Creek). Attacked S/SW, driving McClernand's right back.
           // Goal: reach Wynn's Ferry Rd / Forge Rd junctions running toward Nashville (SE).
-          // The attack opened the road but Pillow recalled the men by ~1:30 p.m.
           side: 'confederate',
           style: 'advance',
           unit: "Pillow's division",
@@ -227,6 +231,13 @@ const fortDonelson: Battle = {
             { lat: 36.44800, lng: -87.82000 }, // pushed back ~1.5 miles from arc
           ],
         },
+      ],
+    },
+    {
+      caption:
+        "With the escape road open, Pillow — fearing Grant's return — inexplicably orders his division back into the fort by 1:30 p.m., surrendering every yard they had won.",
+      duration: 4,
+      movements: [
         {
           // Pillow's recall: ordered back into the fort, surrendering all gained ground.
           // Reversed from the road junction back NE into the Confederate arc.
@@ -838,8 +849,8 @@ const vicksburg: Battle = {
       // to interpose between Johnston and Pemberton, heading toward Bolton →
       // Champion Hill.
       caption:
-        "Cutting loose from his supply line, Grant drives northeast: McPherson defeats Gregg at Raymond (May 12), then Sherman and McPherson capture Jackson (May 14), destroying Confederate rail facilities. Johnston retreats north. Grant immediately wheels his army west to isolate Pemberton.",
-      duration: 8,
+        "Cutting loose from his supply line, Grant drives northeast: McPherson beats Gregg at Raymond (May 12), then he and Sherman storm Jackson (May 14), wrecking its rail yards as Johnston retreats north.",
+      duration: 6,
       movements: [
         {
           // McPherson XVII Corps: Port Gibson → Utica → Raymond → Jackson.
@@ -877,6 +888,13 @@ const vicksburg: Battle = {
             { lat: 32.41100, lng: -90.07200 }, // Canton area (~25 mi N)
           ],
         },
+      ],
+    },
+    {
+      caption:
+        "With Jackson in ruins behind him, Grant immediately wheels west — McPherson drives from Jackson through Bolton toward Champion Hill to cut Pemberton off from his last hope of relief.",
+      duration: 4,
+      movements: [
         {
           // McPherson wheels WEST immediately after Jackson falls (May 14).
           // Route: Jackson → Clinton → Bolton → toward Champion Hill.

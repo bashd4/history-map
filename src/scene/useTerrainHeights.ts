@@ -21,7 +21,7 @@
 
 import * as THREE from 'three'
 import { create } from 'zustand'
-import { latLngToVector3 } from '../lib/geo'
+import { geodeticToVector3 } from '../lib/geo'
 import { getActiveTiles } from './terrainRegistry'
 
 // ~4km above the ellipsoid — high enough that the ray origin clears any tile.
@@ -176,8 +176,10 @@ export class TerrainHeightSampler {
     // before the first render frame has run (r3f hasn't called updateMatrixWorld yet).
     try { tiles.group.updateWorldMatrix(true, true) } catch { /* no-op if not yet in scene */ }
 
-    // Ray: from above (radius 1.05) → toward globe center
-    _origin.copy(latLngToVector3(lat, lng, RAY_ORIGIN_RADIUS))
+    // Ray: from above (radius 1.05) → toward globe center. Geodetic direction so
+    // the ray hits the tile column directly under the battle coordinate (the
+    // spherical mapping would raycast ~20 km away — see geo.ts).
+    _origin.copy(geodeticToVector3(lat, lng, RAY_ORIGIN_RADIUS))
     _direction.subVectors(_globeCenter, _origin).normalize()
     _raycaster.set(_origin, _direction)
     _raycaster.firstHitOnly = true

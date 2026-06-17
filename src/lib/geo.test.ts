@@ -1,5 +1,88 @@
+import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
-import { GLOBE_RADIUS, greatCirclePoints, latLngToVector3, offsetLatLng } from './geo'
+import {
+  GLOBE_RADIUS,
+  geodeticToVector3,
+  greatCirclePoints,
+  latLngToVector3,
+  offsetLatLng,
+  vector3ToGeodetic,
+} from './geo'
+
+/**
+ * Independent reference: where the Google 3D-Tiles renderer actually places a
+ * geodetic coordinate. Tiles are true ECEF (WGS84) under a group transform of
+ * scale 1/a + rotationX(-90°), i.e. ECEF (X,Y,Z) → scene (X/a, Z/a, -Y/a).
+ * Computed from first principles here so the test can't drift with the
+ * implementation it checks.
+ */
+function ecefTileSceneDir(lat: number, lng: number): THREE.Vector3 {
+  const a = 6378137, e2 = 0.00669437999014, D2R = Math.PI / 180
+  const la = lat * D2R, lo = lng * D2R
+  const N = a / Math.sqrt(1 - e2 * Math.sin(la) ** 2)
+  const X = N * Math.cos(la) * Math.cos(lo)
+  const Y = N * Math.cos(la) * Math.sin(lo)
+  const Z = N * (1 - e2) * Math.sin(la)
+  return new THREE.Vector3(X / a, Z / a, -Y / a).normalize()
+}
+
+// Angular gap between two unit directions, expressed as ground distance (km).
+function groundGapKm(u: THREE.Vector3, v: THREE.Vector3): number {
+  return u.angleTo(v) * 6371
+}
+
+describe('geodeticToVector3 (tiles alignment)', () => {
+  // The battles span ~32°–49°N; every authored coordinate must register with
+  // the streamed tiles, so the placement function must match ECEF, not a sphere.
+  const sites: Array<[string, number, number]> = [
+    ['Fort Donelson', 36.5, -87.86],
+    ['Shiloh', 35.14, -88.34],
+    ['Vicksburg', 32.35, -90.87],
+    ['Chattanooga', 35.05, -85.31],
+    ['Austerlitz', 49.13, 16.76],
+  ]
+
+  it.each(sites)('places %s within 5 m of the real ECEF tile position', (_name, lat, lng) => {
+    const got = geodeticToVector3(lat, lng).normalize()
+    const ref = ecefTileSceneDir(lat, lng)
+    // 5 m at ground scale is ~0.000045° — far tighter than any tile feature.
+    expect(groundGapKm(got, ref) * 1000).toBeLessThan(5)
+  })
+
+  it('agrees with the spherical mapping ONLY at the equator and poles', () => {
+    for (const lng of [-90, 0, 16.76]) {
+      expect(groundGapKm(geodeticToVector3(0, lng).normalize(), latLngToVector3(0, lng).normalize()))
+        .toBeLessThan(0.001)
+    }
+    expect(groundGapKm(geodeticToVector3(90, 0).normalize(), latLngToVector3(90, 0).normalize()))
+      .toBeLessThan(0.001)
+  })
+
+  it('REGRESSION GUARD: spherical placement is ~20 km off at battle latitudes', () => {
+    // If anyone "simplifies" the battle layer back to latLngToVector3, this fails.
+    // This is the exact bug that put gunboats off the river three times.
+    for (const [, lat, lng] of sites) {
+      const gap = groundGapKm(
+        geodeticToVector3(lat, lng).normalize(),
+        latLngToVector3(lat, lng).normalize(),
+      )
+      expect(gap).toBeGreaterThan(18)
+      expect(gap).toBeLessThan(23)
+    }
+  })
+
+  it('round-trips through vector3ToGeodetic to <1e-6°', () => {
+    for (const [, lat, lng] of sites) {
+      const { lat: rlat, lng: rlng } = vector3ToGeodetic(geodeticToVector3(lat, lng))
+      expect(rlat).toBeCloseTo(lat, 6)
+      expect(rlng).toBeCloseTo(lng, 6)
+    }
+  })
+
+  it('respects the radius argument', () => {
+    expect(geodeticToVector3(36.5, -87.86, 1.012).length()).toBeCloseTo(1.012, 9)
+  })
+})
 
 describe('latLngToVector3', () => {
   it('puts the north pole at +Y', () => {

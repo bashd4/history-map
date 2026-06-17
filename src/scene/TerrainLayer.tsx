@@ -4,12 +4,15 @@
  * (scale 0.997) as a placeholder where tiles haven't streamed yet.
  *
  * ECEF alignment: ECEF +Z is the north pole, +X is (lat0, lng0).
- * Our scene has +Y north (latLngToVector3(0,0) = (1,0,0), latLngToVector3(90,0) = (0,1,0)).
- * rotation={[-Math.PI/2, 0, 0]} maps ECEF +Z → scene +Y (north pole correct)
- * and ECEF +X → scene +X (equator/prime-meridian correct).
+ * Our scene has +Y north. rotation={[-Math.PI/2, 0, 0]} + scale 1/a maps ECEF
+ * (X,Y,Z) → scene (X/a, Z/a, -Y/a): north pole and prime meridian correct.
  *
- * Verified: latLngToVector3(0,0) = (+1,0,0) matches ECEF (1,0,0) after rotation.
- * ECEF Austerlitz (49.13N, 16.76E) appears at the correct Czech countryside position.
+ * IMPORTANT: these tiles sit on the WGS84 *ellipsoid*. The spherical
+ * latLngToVector3 only matches them at the equator and poles — it is ~21 km off
+ * at mid-latitudes (the bug that repeatedly put battle arrows on the wrong side
+ * of the river). Battle geometry/camera/raycasts therefore use geodeticToVector3
+ * (geo.ts), which reproduces this exact transform. Regression-guarded in
+ * geo.test.ts across 32°–49°N.
  *
  * Import path for plugins: '3d-tiles-renderer/plugins' re-exports from
  * '3d-tiles-renderer/core/plugins' and '3d-tiles-renderer/three/plugins'.
@@ -44,7 +47,7 @@ import { PerspectiveCamera } from 'three'
 import { useFrame } from '@react-three/fiber'
 import { TilesPlugin, TilesRenderer, TilesRendererContext } from '3d-tiles-renderer/r3f'
 import { GoogleCloudAuthPlugin } from '3d-tiles-renderer/plugins'
-import { latLngToVector3 } from '../lib/geo'
+import { geodeticToVector3 } from '../lib/geo'
 import { setActiveTiles } from './terrainRegistry'
 import { terrainSampler } from './useTerrainHeights'
 
@@ -118,8 +121,10 @@ function PreheatCamera({ lat, lng }: PreheatCoords) {
     // tiles.setResolutionFromRenderer(camera, gl) with cameras in world space —
     // our group's matrixWorld transform is taken into account inside the tiles
     // LOD calculation, so world-space placement here is correct.
-    const surfacePt = latLngToVector3(lat, lng, 1)
-    const camPt = latLngToVector3(lat, lng, 1 + PREHEAT_ALT)
+    // Geodetic so the preheat viewpoint sits over the true battle terrain (same
+    // frame as the battle camera / arrows), not ~20 km off — see geo.ts.
+    const surfacePt = geodeticToVector3(lat, lng, 1)
+    const camPt = geodeticToVector3(lat, lng, 1 + PREHEAT_ALT)
 
     const virtualCam = new PerspectiveCamera(45, 16 / 9, 0.0008, 100)
     virtualCam.position.copy(camPt)
