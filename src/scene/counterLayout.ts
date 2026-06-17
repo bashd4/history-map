@@ -2,10 +2,11 @@
  * counterLayout — screen-space collision avoidance for unit counters.
  *
  * Each visible UnitCounter reports its projected screen position every frame;
- * `resolve()` (run once per frame from BattleUnits) pushes overlapping counters
- * apart and relaxes them back together when there's room. Counters read their
- * offset and apply it as a CSS translate on the counter DOM. This keeps clustered
- * units (and their strength numbers) legible and makes hover targets unambiguous.
+ * `resolve()` (run once per frame from BattleUnits) computes a de-overlap TARGET
+ * offset for each counter and then DAMPS the applied offset toward that target.
+ * Damping (rather than snapping the offset each frame) is essential: counters
+ * move every frame, so a freshly-snapped offset would jitter/flicker. Counters
+ * read their smoothed offset and apply it as a CSS translate.
  *
  * Module-level singleton, mirroring terrainRegistry/terrainSampler.
  */
@@ -13,18 +14,19 @@
 interface Slot {
   x: number // reported base screen-x (px)
   y: number
-  ox: number // resolved offset
+  ox: number // smoothed (applied) offset
   oy: number
+  tx: number // de-overlap target offset (recomputed each resolve)
+  ty: number
   seen: number // frame index of the last report (to drop stale/hidden counters)
 }
 
 // Min centre-to-centre screen distance before two counters are pushed apart (px).
 const SEPARATION = 38
-// Max offset a counter may be nudged from its true position (px) — keep it near
-// the real location so the map stays honest.
+// Max offset a counter may be nudged from its true position (px).
 const MAX_OFFSET = 30
-// Pull settled counters back toward their true position each frame.
-const RELAX = 0.82
+// Per-frame damping toward the target offset (lower = smoother / slower).
+const DAMP = 0.18
 
 class CounterLayout {
   private slots = new Map<string, Slot>()
@@ -38,11 +40,11 @@ class CounterLayout {
       s.y = y
       s.seen = this.frame
     } else {
-      this.slots.set(id, { x, y, ox: 0, oy: 0, seen: this.frame })
+      this.slots.set(id, { x, y, ox: 0, oy: 0, tx: 0, ty: 0, seen: this.frame })
     }
   }
 
-  /** Current resolved offset for a counter (zero if unknown/hidden). */
+  /** Current smoothed offset for a counter (zero if unknown/hidden). */
   offset(id: string): { x: number; y: number } {
     const s = this.slots.get(id)
     return s ? { x: s.ox, y: s.oy } : { x: 0, y: 0 }
@@ -53,48 +55,51 @@ class CounterLayout {
     this.slots.delete(id)
   }
 
-  /** Push apart any overlapping counters; run once per frame after reports. */
+  /** Recompute de-overlap targets and damp toward them; run once per frame. */
   resolve(): void {
     this.frame++
     const live: Slot[] = []
     for (const s of this.slots.values()) {
       if (s.seen >= this.frame - 2) live.push(s)
     }
-    // Relax toward the true position.
+
+    // Recompute a fresh target offset from the base positions (no feedback from
+    // last frame's offsets — that's what caused oscillation).
     for (const s of live) {
-      s.ox *= RELAX
-      s.oy *= RELAX
+      s.tx = 0
+      s.ty = 0
     }
-    // A few relaxation iterations of pairwise separation.
-    for (let iter = 0; iter < 3; iter++) {
+    for (let iter = 0; iter < 4; iter++) {
       for (let i = 0; i < live.length; i++) {
         for (let j = i + 1; j < live.length; j++) {
           const a = live[i]
           const b = live[j]
-          let dx = b.x + b.ox - (a.x + a.ox)
-          let dy = b.y + b.oy - (a.y + a.oy)
+          let dx = b.x + b.tx - (a.x + a.tx)
+          let dy = b.y + b.ty - (a.y + a.ty)
           let d = Math.hypot(dx, dy)
           if (d >= SEPARATION) continue
           if (d < 0.01) {
-            // Exactly coincident — split deterministically along x.
-            dx = 1
+            // Coincident — split deterministically (stable across frames).
+            dx = a.x <= b.x ? -1 : 1
             dy = 0
             d = 1
           }
           const push = (SEPARATION - d) / 2
           dx /= d
           dy /= d
-          a.ox -= dx * push
-          a.oy -= dy * push
-          b.ox += dx * push
-          b.oy += dy * push
+          a.tx -= dx * push
+          a.ty -= dy * push
+          b.tx += dx * push
+          b.ty += dy * push
         }
       }
     }
-    // Clamp so a counter never strays too far from its real location.
+    // Clamp the target, then damp the applied offset toward it (smooth, no jitter).
     for (const s of live) {
-      s.ox = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, s.ox))
-      s.oy = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, s.oy))
+      s.tx = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, s.tx))
+      s.ty = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, s.ty))
+      s.ox += (s.tx - s.ox) * DAMP
+      s.oy += (s.ty - s.oy) * DAMP
     }
   }
 

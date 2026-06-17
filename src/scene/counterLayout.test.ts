@@ -4,10 +4,13 @@ import { counterLayout } from './counterLayout'
 describe('counterLayout', () => {
   beforeEach(() => counterLayout.clear())
 
-  it('pushes overlapping counters apart', () => {
-    counterLayout.report('a', 100, 100)
-    counterLayout.report('b', 100, 100) // coincident
-    counterLayout.resolve()
+  it('pushes overlapping counters apart (damped over frames)', () => {
+    // Damping settles over several frames; re-report each frame to stay live.
+    for (let f = 0; f < 25; f++) {
+      counterLayout.report('a', 100, 100)
+      counterLayout.report('b', 100, 100) // coincident
+      counterLayout.resolve()
+    }
     const a = counterLayout.offset('a')
     const b = counterLayout.offset('b')
     const dist = Math.hypot(100 + b.x - (100 + a.x), 100 + b.y - (100 + a.y))
