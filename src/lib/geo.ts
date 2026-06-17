@@ -54,6 +54,21 @@ export function geodeticToVector3(lat: number, lng: number, radius = GLOBE_RADIU
 }
 
 /**
+ * WGS84 ellipsoid surface radius in scene units (globe radius 1) at a geodetic
+ * latitude — how far the ellipsoid surface sits from the scene centre there.
+ * Use this to place billboarded battle markers on the surface deterministically
+ * instead of per-frame terrain raycasts, whose miss-fallback (1.0, ~11 km above
+ * the ellipsoid at mid-latitudes) flickers as a moving marker's ray hits/misses.
+ */
+export function ellipsoidSceneRadius(latDeg: number): number {
+  const la = latDeg * (Math.PI / 180)
+  const s = Math.sin(la)
+  const c = Math.cos(la)
+  const nOverA = 1 / Math.sqrt(1 - WGS84_E2 * s * s)
+  return Math.hypot(nOverA * c, nOverA * (1 - WGS84_E2) * s)
+}
+
+/**
  * Inverse of `geodeticToVector3` (on unit directions): recover geographic
  * (geodetic) lat/lng from a scene-space vector. Exact bijection — feeding the
  * result back through `geodeticToVector3` reproduces the same direction, so

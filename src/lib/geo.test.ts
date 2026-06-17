@@ -7,6 +7,7 @@ import {
   latLngToVector3,
   offsetLatLng,
   vector3ToGeodetic,
+  ellipsoidSceneRadius,
 } from './geo'
 
 /**
@@ -149,5 +150,15 @@ describe('offsetLatLng', () => {
     const back = offsetLatLng(fwd, (250 + 180) % 360, 0.05)
     expect(back.lat).toBeCloseTo(origin.lat, 0)
     expect(back.lng).toBeCloseTo(origin.lng, 0)
+  })
+})
+
+describe('ellipsoidSceneRadius', () => {
+  it('is 1 at the equator and <1 toward the poles', () => {
+    expect(ellipsoidSceneRadius(0)).toBeCloseTo(1, 6)
+    expect(ellipsoidSceneRadius(49)).toBeLessThan(1)
+    expect(ellipsoidSceneRadius(49)).toBeGreaterThan(0.995)
+    // monotonic decrease 0 -> 90
+    expect(ellipsoidSceneRadius(90)).toBeLessThan(ellipsoidSceneRadius(45))
   })
 })

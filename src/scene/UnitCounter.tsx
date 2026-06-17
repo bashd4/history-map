@@ -3,17 +3,18 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Html } from '@react-three/drei'
 import type { Battle, Journey } from '../data/schema'
-import { geodeticToVector3 } from '../lib/geo'
+import { ellipsoidSceneRadius, geodeticToVector3 } from '../lib/geo'
 import { affiliationOf } from '../lib/affiliation'
 import { echelonTicks } from '../lib/unitSymbol'
 import { type UnitTrack, unitPositionAt } from '../lib/battleUnitTracks'
 import { useAppStore } from '../state/store'
-import { terrainSampler } from './useTerrainHeights'
 import { counterLayout } from './counterLayout'
 
-// Clearance above the sampled terrain surface (~50 m in scene units).
-// depthTest is off so nothing gets buried at this tight clearance.
-const SURFACE_CLEARANCE = 0.000008
+// Lift above the ellipsoid surface (~380 m). Counters are billboarded DOM (no
+// depth test), so they sit on the deterministic ellipsoid surface rather than
+// the sampled terrain — exact draping would flicker as a moving counter's
+// terrain ray hits/misses (see ellipsoidSceneRadius in geo.ts).
+const COUNTER_LIFT = 0.00006
 
 // Scratch vector for projecting the counter to screen space (collision avoidance).
 const _proj = new THREE.Vector3()
@@ -214,8 +215,7 @@ export function UnitCounter({
     }
 
     group.visible = true
-    const r = terrainSampler.sampleRadius(pos.lat, pos.lng) + SURFACE_CLEARANCE
-    group.position.copy(geodeticToVector3(pos.lat, pos.lng, r))
+    group.position.copy(geodeticToVector3(pos.lat, pos.lng, ellipsoidSceneRadius(pos.lat) + COUNTER_LIFT))
 
     // Report our true screen position and apply the resolved de-overlap offset
     // so clustered counters (and their numbers) stay legible and hover targets
