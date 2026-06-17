@@ -114,7 +114,12 @@ function CounterSvg({
       width={SVG_W}
       height={SVG_H}
       viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-      style={{ display: 'block', overflow: 'visible' }}
+      style={{
+        display: 'block',
+        overflow: 'visible',
+        // Drop shadow so the parchment counter separates from busy terrain.
+        filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.85))',
+      }}
     >
       {/* Echelon ticks centered above the frame. */}
       <text
@@ -174,6 +179,7 @@ export function UnitCounter({
   journey: Journey
 }) {
   const groupRef = useRef<THREE.Group>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
   const labelRef = useRef<HTMLDivElement>(null)
   const affiliation = affiliationOf(journey, track.side)
   const sideColor = battle.sides[track.side] ?? '#ffffff'
@@ -186,12 +192,19 @@ export function UnitCounter({
     if (mode !== 'battle') return
 
     const pos = unitPositionAt(track, battle, battleElapsed)
+    // drei <Html> renders a DOM element that does NOT hide when the parent
+    // group's visible=false. Before a unit first appears (pos null) the group
+    // has no valid position, so the counter would sit at the scene origin
+    // (≈ screen centre at battle zoom). Toggle the DOM visibility directly to
+    // truly hide a not-yet-appeared (or finished-and-gone) unit.
     if (pos == null) {
       group.visible = false
+      if (contentRef.current) contentRef.current.style.visibility = 'hidden'
       return
     }
 
     group.visible = true
+    if (contentRef.current) contentRef.current.style.visibility = 'visible'
     const r = terrainSampler.sampleRadius(pos.lat, pos.lng) + SURFACE_CLEARANCE
     group.position.copy(geodeticToVector3(pos.lat, pos.lng, r))
   })
@@ -204,12 +217,14 @@ export function UnitCounter({
         style={{ pointerEvents: 'none' }}
       >
         <div
+          ref={contentRef}
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             userSelect: 'none',
             fontFamily: TEXT_FONT,
+            visibility: 'hidden', // shown by useFrame once the unit has a valid position
           }}
         >
           {/* The compact APP-6 symbol is always visible; hovering it reveals the
