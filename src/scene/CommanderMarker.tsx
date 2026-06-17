@@ -19,7 +19,6 @@ const TRAIL_LIFT = 0.00002
 const TAIL_SECONDS = 2.4
 const TAIL_SAMPLES = 24
 
-const GOLD = '#e8c46a'
 const TEXT_FONT = "Georgia, 'Times New Roman', serif"
 
 // Pulsing halo behind the star — injected once (inline styles can't hold @keyframes).
