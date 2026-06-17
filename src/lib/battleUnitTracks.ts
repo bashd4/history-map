@@ -6,16 +6,80 @@ import { playbackAt } from './battlePlayback'
 // Types
 // ---------------------------------------------------------------------------
 
+export type TrackSegment =
+  | { kind: 'rest'; phaseIndex: number; at: LatLng }
+  | { kind: 'move'; phaseIndex: number; path: LatLng[]; style: Movement['style'] }
+
 export interface UnitTrack {
   unit: string
   side: string
   branch: Movement['branch']
   echelon: Movement['echelon']
   strength?: number
-  segments: Array<
-    | { kind: 'rest'; phaseIndex: number; at: LatLng }
-    | { kind: 'move'; phaseIndex: number; path: LatLng[]; style: Movement['style'] }
-  >
+  segments: TrackSegment[]
+}
+
+/** A positioned track is anything with phase-keyed segments — units and the
+ *  commander both interpolate through `unitPositionAt` off this shape. */
+export interface PositionedTrack {
+  segments: TrackSegment[]
+}
+
+/** The journey protagonist's personal track across a battle. */
+export interface CommanderTrack extends PositionedTrack {
+  name: string
+  side: string
+}
+
+/** One leg of a track before segment expansion. */
+interface SegmentInput {
+  phaseIndex: number
+  path: LatLng[]
+  style: Movement['style']
+  arrives?: boolean
+  departs?: boolean
+}
+
+/**
+ * Expand a unit's (or the commander's) sorted movement legs into a per-phase
+ * segment list spanning its existence window. Phases without a leg become
+ * `rest` at the last known position; consecutive legs are gap-bridged so a unit
+ * never teleports between them.
+ *
+ *  - default: present from phase 0, resting at its start position until it first
+ *    acts — deployed forces don't pop in when they finally move.
+ *  - `arrives`: a reinforcement / late entry that appears only when it first moves.
+ *  - `departs`: hands off / withdraws after its last move (e.g. a corps that
+ *    splits into its divisions) rather than lingering to the end.
+ */
+function buildSegments(entries: SegmentInput[], lastBattlePhase: number): TrackSegment[] {
+  const firstMovePhase = entries[0].phaseIndex
+  const lastMovePhase = entries[entries.length - 1].phaseIndex
+  const arrives = entries.some((e) => e.arrives)
+  const departs = entries.some((e) => e.departs)
+  const existStart = arrives ? firstMovePhase : 0
+  const existEnd = departs ? lastMovePhase : lastBattlePhase
+  const startRestPos = entries[0].path[0]
+
+  const entryByPhase = new Map(entries.map((e) => [e.phaseIndex, e]))
+  const segments: TrackSegment[] = []
+  let lastEndpoint: LatLng | null = null
+
+  for (let pi = existStart; pi <= existEnd; pi++) {
+    const entry = entryByPhase.get(pi)
+    if (entry) {
+      // Move segment — gap-bridge by prepending the current resting position.
+      let path = [...entry.path]
+      const from = lastEndpoint ?? startRestPos
+      if (!latLngEqual(from, path[0])) path = [from, ...path]
+      segments.push({ kind: 'move', phaseIndex: pi, path, style: entry.style })
+      lastEndpoint = path[path.length - 1]
+    } else {
+      // Rest at the last known position (or the start position before first move).
+      segments.push({ kind: 'rest', phaseIndex: pi, at: lastEndpoint ?? startRestPos })
+    }
+  }
+  return segments
 }
 
 // ---------------------------------------------------------------------------
@@ -81,38 +145,16 @@ export function battleUnitTracks(battle: Battle): UnitTrack[] {
       // differ across phases (e.g. losses). The first movement's value is carried.
     }
 
-    // Presence window:
-    //  - default: present from the start (phase 0), resting at its start position
-    //    until it first acts — deployed forces don't pop in when they finally move.
-    //  - `arrives`: a reinforcement / detachment that enters only when it first moves.
-    //  - `departs`: hands off / withdraws after its last move (e.g. a corps that
-    //    splits into its divisions) rather than lingering to the end.
-    const firstMovePhase = entries[0].phaseIndex
-    const lastMovePhase = entries[entries.length - 1].phaseIndex
-    const arrives = entries.some((e) => e.movement.arrives)
-    const departs = entries.some((e) => e.movement.departs)
-    const existStart = arrives ? firstMovePhase : 0
-    const existEnd = departs ? lastMovePhase : lastBattlePhase
-    const startRestPos = first.path[0]
-
-    const entryByPhase = new Map(entries.map((e) => [e.phaseIndex, e]))
-    const segments: UnitTrack['segments'] = []
-    let lastEndpoint: LatLng | null = null
-
-    for (let pi = existStart; pi <= existEnd; pi++) {
-      const entry = entryByPhase.get(pi)
-      if (entry) {
-        // Move segment — gap-bridge by prepending the current resting position.
-        let path = [...entry.movement.path]
-        const from = lastEndpoint ?? startRestPos
-        if (!latLngEqual(from, path[0])) path = [from, ...path]
-        segments.push({ kind: 'move', phaseIndex: pi, path, style: entry.movement.style })
-        lastEndpoint = path[path.length - 1]
-      } else {
-        // Rest at the last known position (or the start position before first move).
-        segments.push({ kind: 'rest', phaseIndex: pi, at: lastEndpoint ?? startRestPos })
-      }
-    }
+    const segments = buildSegments(
+      entries.map((e) => ({
+        phaseIndex: e.phaseIndex,
+        path: e.movement.path,
+        style: e.movement.style,
+        arrives: e.movement.arrives,
+        departs: e.movement.departs,
+      })),
+      lastBattlePhase,
+    )
 
     tracks.push({
       unit: unitName,
@@ -129,10 +171,40 @@ export function battleUnitTracks(battle: Battle): UnitTrack[] {
 }
 
 // ---------------------------------------------------------------------------
+// commanderTrack
+// ---------------------------------------------------------------------------
+
+const commanderCache = new WeakMap<Battle, CommanderTrack | null>()
+
+/**
+ * Build the protagonist commander's personal track (or null if the battle has
+ * no authored commander). Reuses the same segment engine as units, so the
+ * marker glides, holds, and arrives by the identical rules.
+ */
+export function commanderTrack(battle: Battle): CommanderTrack | null {
+  if (commanderCache.has(battle)) return commanderCache.get(battle)!
+  const c = battle.commander
+  if (!c) {
+    commanderCache.set(battle, null)
+    return null
+  }
+  const entries: SegmentInput[] = c.movements
+    .map((m) => ({ phaseIndex: m.phase, path: m.path, style: 'advance' as const, arrives: m.arrives }))
+    .sort((a, b) => a.phaseIndex - b.phaseIndex)
+  const track: CommanderTrack = {
+    name: c.name,
+    side: c.side,
+    segments: buildSegments(entries, battle.phases.length - 1),
+  }
+  commanderCache.set(battle, track)
+  return track
+}
+
+// ---------------------------------------------------------------------------
 // unitPositionAt
 // ---------------------------------------------------------------------------
 
-export function unitPositionAt(track: UnitTrack, battle: Battle, elapsed: number): LatLng | null {
+export function unitPositionAt(track: PositionedTrack, battle: Battle, elapsed: number): LatLng | null {
   const segments = track.segments
   const firstPhase = segments[0].phaseIndex
   const lastPhase = segments[segments.length - 1].phaseIndex

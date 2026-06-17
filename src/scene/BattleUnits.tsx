@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Battle, Journey } from '../data/schema'
-import { battleUnitTracks } from '../lib/battleUnitTracks'
+import { battleUnitTracks, commanderTrack } from '../lib/battleUnitTracks'
 import { UnitCounter } from './UnitCounter'
+import { CommanderMarker } from './CommanderMarker'
 import { counterLayout } from './counterLayout'
 
 /**
@@ -14,6 +15,7 @@ import { counterLayout } from './counterLayout'
  */
 export function BattleUnits({ battle, journey }: { battle: Battle; journey: Journey }) {
   const tracks = useMemo(() => battleUnitTracks(battle), [battle])
+  const commander = useMemo(() => commanderTrack(battle), [battle])
 
   // Resolve counter collisions once per frame (after counters report positions).
   useFrame(() => counterLayout.resolve())
@@ -24,6 +26,7 @@ export function BattleUnits({ battle, journey }: { battle: Battle; journey: Jour
       {tracks.map((track) => (
         <UnitCounter key={track.unit} track={track} battle={battle} journey={journey} />
       ))}
+      {commander && <CommanderMarker track={commander} battle={battle} />}
     </group>
   )
 }

@@ -13,6 +13,48 @@ const fortDonelson: Battle = {
   strengths: { union: '~24,500 men', confederate: '~16,000 men' },
   // Camera stands NW on the river, looking SE across the fort and bluffs.
   fieldAzimuth: 315,
+  // Grant's personal ride during the battle (georeferenced to the ABT Feb-15 map):
+  // present at HQ through the siege, away downriver with Foote at the dawn breakout,
+  // a hard gallop back, then to the left to unleash Smith.
+  commander: {
+    name: 'U. S. Grant',
+    side: 'union',
+    movements: [
+      {
+        // Before dawn on Feb 15 Grant rode ~downriver (NW) to confer with the
+        // wounded Flag-Officer Foote aboard his gunboat — so he was ABSENT from
+        // the field when Pillow's breakout struck the Union right.
+        phase: 3,
+        note: 'Rides downriver to meet Foote — absent at the breakout',
+        path: [
+          { lat: 36.45800, lng: -87.86600 }, // HQ behind the Union centre
+          { lat: 36.47600, lng: -87.87000 }, // riding N toward the river
+          { lat: 36.49800, lng: -87.87200 }, // the landing NW, aboard Foote's boat
+        ],
+      },
+      {
+        // Hearing the firing, Grant galloped back and found his right driven in.
+        phase: 4,
+        note: 'Gallops back to the broken right',
+        path: [
+          { lat: 36.49800, lng: -87.87200 }, // from the landing
+          { lat: 36.47800, lng: -87.86000 }, // galloping SE back to the lines
+          { lat: 36.46200, lng: -87.84800 }, // reaches his shaken right-centre
+        ],
+      },
+      {
+        // Grant rode to the Union LEFT and ordered Smith's assault: "General Smith,
+        // all has failed on our right — you must take Fort Donelson." "I will do it."
+        phase: 5,
+        note: "Rides to the left to launch Smith's assault",
+        path: [
+          { lat: 36.46200, lng: -87.84800 }, // from the centre
+          { lat: 36.47000, lng: -87.86600 }, // riding W along the line
+          { lat: 36.47800, lng: -87.88400 }, // to Smith's sector on the left
+        ],
+      },
+    ],
+  },
   areas: [
     {
       // Fort earthworks: 36.4878, -87.8559 (NPS confirmed centroid).
@@ -370,6 +412,43 @@ const shiloh: Battle = {
   strengths: { union: '~66,800 men', confederate: '~44,700 men' },
   // Camera stands ENE on the river bluff, looking WSW across the ridges toward Shiloh Church.
   fieldAzimuth: 70,
+  // Grant's command: caught at Savannah downriver at dawn, he steamed up to
+  // Pittsburg Landing, rode the line through Apr 6, steadied the last line at the
+  // Landing at dusk, then led the Apr-7 counterattack forward.
+  commander: {
+    name: 'U. S. Grant',
+    side: 'union',
+    movements: [
+      {
+        phase: 1,
+        arrives: true,
+        note: 'Steams up from Savannah; rides to the front',
+        path: [
+          { lat: 35.15100, lng: -88.32400 }, // disembarks at Pittsburg Landing
+          { lat: 35.14600, lng: -88.33300 }, // rides forward (W) into the fight
+          { lat: 35.14000, lng: -88.34000 }, // the centre, by the Hornet's Nest
+        ],
+      },
+      {
+        phase: 2,
+        note: 'Steadies the last line before the Landing',
+        path: [
+          { lat: 35.14000, lng: -88.34000 }, // from the centre
+          { lat: 35.14600, lng: -88.33200 }, // falling back NE
+          { lat: 35.14900, lng: -88.32700 }, // the final line covering the Landing
+        ],
+      },
+      {
+        phase: 3,
+        note: 'Leads the Apr-7 counterattack forward',
+        path: [
+          { lat: 35.14900, lng: -88.32700 }, // from the Landing line
+          { lat: 35.14200, lng: -88.34200 }, // advancing WSW with the army
+          { lat: 35.13700, lng: -88.35200 }, // retaking the ground toward Shiloh Church
+        ],
+      },
+    ],
+  },
   areas: [
     {
       // Hornet's Nest / Sunken Road: corrected to HMDB-anchored position.
@@ -762,6 +841,61 @@ const vicksburg: Battle = {
   strengths: { union: '~77,000 men', confederate: '~33,000 men' },
   // Camera stands WSW on the river, looking ENE so Vicksburg's bluffs rise above the Mississippi.
   fieldAzimuth: 250,
+  // Grant's campaign ride: from the Louisiana bank opposite Vicksburg, across at
+  // Bruinsburg, then a daring inland march — Port Gibson, Raymond, Jackson — before
+  // wheeling west through Champion Hill and the Big Black to close the siege.
+  commander: {
+    name: 'U. S. Grant',
+    side: 'union',
+    movements: [
+      {
+        phase: 1,
+        note: 'Crosses at Bruinsburg, takes Port Gibson',
+        path: [
+          { lat: 32.36000, lng: -90.92000 }, // the Louisiana bank opposite Vicksburg
+          { lat: 32.05000, lng: -91.08000 }, // marching down the west bank to Hard Times
+          { lat: 31.97000, lng: -91.11000 }, // crosses the river at Bruinsburg
+          { lat: 31.96500, lng: -90.99000 }, // inland to Port Gibson
+        ],
+      },
+      {
+        phase: 2,
+        note: 'Drives NE — Raymond and Jackson',
+        path: [
+          { lat: 31.96500, lng: -90.99000 }, // from Port Gibson
+          { lat: 32.20000, lng: -90.55000 }, // through Raymond (May 12)
+          { lat: 32.29880, lng: -90.20000 }, // into Jackson (May 14)
+        ],
+      },
+      {
+        phase: 3,
+        note: 'Wheels west toward Champion Hill',
+        path: [
+          { lat: 32.29880, lng: -90.20000 }, // from Jackson
+          { lat: 32.32000, lng: -90.40000 }, // back west through Bolton
+          { lat: 32.33000, lng: -90.53000 }, // up to the Champion Hill crossroads
+        ],
+      },
+      {
+        phase: 4,
+        note: 'Champion Hill and the Big Black River',
+        path: [
+          { lat: 32.33000, lng: -90.53000 }, // Champion Hill
+          { lat: 32.34500, lng: -90.66000 }, // pursuing to the Big Black River
+          { lat: 32.35000, lng: -90.75000 }, // across the Big Black toward Vicksburg
+        ],
+      },
+      {
+        phase: 5,
+        note: 'Closes the siege lines east of Vicksburg',
+        path: [
+          { lat: 32.35000, lng: -90.75000 }, // from the Big Black
+          { lat: 32.35500, lng: -90.82000 }, // up to the investment lines
+          { lat: 32.36000, lng: -90.86000 }, // HQ behind the siege works east of the city
+        ],
+      },
+    ],
+  },
   areas: [
     {
       // Vicksburg fortress polygon traces the Confederate defensive arc:
@@ -1218,6 +1352,23 @@ const chattanooga: Battle = {
   // Camera stands SE of city looking NW — Lookout Mountain on left,
   // Missionary Ridge spanning the frame, Orchard Knob in centre-left.
   fieldAzimuth: 135,
+  // Grant directed the battle from Orchard Knob: he rode out to the captured knoll
+  // on Nov 23 and watched the storming of Lookout Mountain and Missionary Ridge from it.
+  commander: {
+    name: 'U. S. Grant',
+    side: 'union',
+    movements: [
+      {
+        phase: 0,
+        note: 'Rides out to Orchard Knob and takes post',
+        path: [
+          { lat: 35.04560, lng: -85.30000 }, // from Chattanooga
+          { lat: 35.04000, lng: -85.28500 }, // out past the Union lines
+          { lat: 35.03350, lng: -85.27700 }, // takes post on Orchard Knob
+        ],
+      },
+    ],
+  },
   areas: [
     {
       // Missionary Ridge: true OSM crest (way 1235937432) sampled to ~15 pts,

@@ -23,6 +23,26 @@ const event = z.object({
   label: z.string().min(1).max(60),
 })
 
+/** One leg of the protagonist commander's personal movement during a battle,
+ *  keyed to a phase index. Phases the commander isn't listed in are treated as
+ *  "hold position" (he rests where his last leg ended). */
+const commanderMove = z.object({
+  phase: z.number().int().min(0),
+  path: z.array(latLng).min(2),
+  /** He enters the field only at this leg (e.g. Grant rode up mid-battle) rather
+   *  than being present from the opening phase. */
+  arrives: z.boolean().optional(),
+  note: z.string().max(120).optional(),
+})
+
+/** The journey's protagonist shown as a single special marker that follows his
+ *  own researched path across the battle's phases (distinct from unit counters). */
+const commander = z.object({
+  name: z.string().min(1).max(40),
+  side: z.string(),
+  movements: z.array(commanderMove).min(1),
+})
+
 const phase = z.object({
   caption: z.string().min(1),
   duration: z.number().positive().optional(), // seconds; default applied in battlePlayback
@@ -50,8 +70,28 @@ const battle = z
     areas: z.array(area).optional(),
     /** Compass bearing FROM the site TOWARD the field-view camera position (degrees). */
     fieldAzimuth: z.number().min(0).max(360).optional(),
+    /** The protagonist commander's personal track across the battle (optional). */
+    commander: commander.optional(),
   })
   .superRefine((battle, ctx) => {
+    if (battle.commander) {
+      if (!(battle.commander.side in battle.sides)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `commander side "${battle.commander.side}" is not a key in battle.sides`,
+          path: ['commander', 'side'],
+        })
+      }
+      battle.commander.movements.forEach((m, i) => {
+        if (m.phase >= battle.phases.length) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `commander movement phase ${m.phase} is out of range (battle has ${battle.phases.length} phases)`,
+            path: ['commander', 'movements', i, 'phase'],
+          })
+        }
+      })
+    }
     battle.phases.forEach((phase, phaseIdx) => {
       phase.movements.forEach((movement, movIdx) => {
         if (!(movement.side in battle.sides)) {
@@ -113,4 +153,5 @@ export type Phase = Battle['phases'][number]
 export type Movement = Phase['movements'][number]
 export type BattleArea = NonNullable<Battle['areas']>[number]
 export type BattleEvent = NonNullable<Phase['events']>[number]
+export type Commander = NonNullable<Battle['commander']>
 export type LatLng = z.infer<typeof latLng>

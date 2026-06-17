@@ -35,6 +35,48 @@ export const napoleon: Journey = {
   // Camera stands SW of the field, looking NE across the Pratzen Heights.
   // Žuráň is at ~49.180, 16.738 (WSW of the plateau); Santon is NE at ~49.188, 16.764.
   fieldAzimuth: 250,
+  // Napoleon's command position: the dawn on the Žuráň knoll watching the Allies
+  // pour off the Pratzen, then forward onto the captured Heights once Soult's
+  // stroke split their line.
+  commander: {
+    name: 'Napoleon',
+    side: 'french',
+    movements: [
+      {
+        // ~9 a.m.: with the Allied centre stripped off the Pratzen, Napoleon
+        // releases Soult and rides forward from Žuráň toward the Heights.
+        phase: 1,
+        note: 'Releases Soult — rides forward from Žuráň',
+        path: [
+          { lat: 49.18000, lng: 16.73800 }, // Žuráň knoll — the command post at dawn
+          { lat: 49.16500, lng: 16.75200 }, // forward by the Stará Pošta (post house)
+          { lat: 49.15200, lng: 16.76200 }, // the western foot of the Pratzen
+        ],
+      },
+      {
+        // Onto the captured plateau (Staré Vinohrady) to direct the repulse of
+        // the Russian Imperial Guard's counter-attack.
+        phase: 2,
+        note: 'Onto the captured Pratzen Heights',
+        path: [
+          { lat: 49.15200, lng: 16.76200 }, // from the western foot
+          { lat: 49.14800, lng: 16.76600 }, // climbing the Heights
+          { lat: 49.14700, lng: 16.77000 }, // Staré Vinohrady, the centre of the field
+        ],
+      },
+      {
+        // Holds the Heights, looking south over the Allied left as it routs across
+        // the frozen ponds toward Újezd.
+        phase: 3,
+        note: 'Overlooks the rout across the frozen ponds',
+        path: [
+          { lat: 49.14700, lng: 16.77000 }, // from Staré Vinohrady
+          { lat: 49.14200, lng: 16.76200 }, // to the southern brow of the plateau
+          { lat: 49.13800, lng: 16.75500 }, // overlooking the ponds and the pursuit
+        ],
+      },
+    ],
+  },
   areas: [
     {
       // Pratzen Heights (Pracký kopec / Pratzenberg): the gently-sloping plateau
@@ -276,7 +318,7 @@ export const napoleon: Journey = {
       ],
     },
     {
-      caption: 'The rout (11 a.m.–2 p.m.): French wheel south from the Pratzen heights, encircling Buxhöwden\'s trapped columns between the plateau and the frozen ponds. The Russian Imperial Guard under Grand Duke Constantine counter-attacks from Blažovice toward the N Pratzen, briefly capturing a French standard, before Rapp\'s Guard cavalry repulses it. The Allied left — Dokhturov, Langeron — dissolves southeastward across the frozen Žatčanský and Měnínský ponds under French cannon fire.',
+      caption: 'The rout (11 a.m.–2 p.m.): French wheel south from the Pratzen heights, encircling Buxhöwden\'s trapped columns between the plateau and the frozen ponds. The Russian Imperial Guard under Grand Duke Constantine counter-attacks from the east toward the N Pratzen, briefly capturing a French standard, before Rapp\'s Guard cavalry repulses it. The Allied left — Dokhturov, Langeron — dissolves southeastward across the frozen Žatčanský and Měnínský ponds under French cannon fire.',
       duration: 8,
       events: [
         { coords: { lat: 49.08600, lng: 16.71800 }, label: "Allied troops flee across the frozen Žatčany–Měnín ponds" },
