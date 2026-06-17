@@ -13,32 +13,46 @@ const fortDonelson: Battle = {
   strengths: { union: '~24,500 men', confederate: '~16,000 men' },
   // Camera stands NW on the river, looking SE across the fort and bluffs.
   fieldAzimuth: 315,
-  // Grant's command position: at his HQ behind the Union centre through the siege,
-  // then once the breakout is contained he rides the length of the line — first to
-  // steady his shaken right, then across to the left to unleash Smith's assault.
+  // Grant's ride on Feb 15 — every leg kept inside Union-held ground (WEST and
+  // SOUTH of the Confederate arc, or on the river), never across the enemy works:
+  //  • holds at HQ through the siege/bombardment;
+  //  • before dawn rides UP THE WEST SIDE to the river to confer with the wounded
+  //    Foote aboard his gunboat — so he is off the field when the breakout hits;
+  //  • waits at the boat through Pillow's recall;
+  //  • then the long ride back behind his own lines: down the west, along the rear
+  //    south of the works to rally his broken right, then across to the left to
+  //    unleash Smith ("you must take Fort Donelson" / "I will do it").
   commander: {
     name: 'U. S. Grant',
     side: 'union',
     movements: [
       {
-        // Rides forward to his battered right-centre to rally it.
-        phase: 4,
-        note: 'Rides to steady the broken right',
+        // Off to the river — up the WEST side, behind Smith, to Foote's boat downstream.
+        phase: 3,
+        note: 'Rides up the west bank to confer with Foote',
         path: [
-          { lat: 36.46200, lng: -87.86500 }, // HQ behind the Union centre
-          { lat: 36.46400, lng: -87.85200 }, // forward toward the right
-          { lat: 36.46500, lng: -87.84200 }, // among his shaken right-centre
+          { lat: 36.46000, lng: -87.87500 }, // HQ behind the Union centre/left
+          { lat: 36.47500, lng: -87.88500 }, // N up the west side, behind Smith
+          { lat: 36.49500, lng: -87.88800 }, // toward the river, west of Hickman Creek
+          { lat: 36.50800, lng: -87.88500 }, // the landing downstream (NW) — aboard Foote's gunboat
         ],
       },
+      // phase 4 (Pillow's recall): no leg → he holds at the boat, still off the field.
       {
-        // Then to the Union LEFT to order Smith's assault: "General Smith, all has
-        // failed on our right — you must take Fort Donelson." "I will do it."
+        // The long ride back, entirely behind his own lines: down the west, along the
+        // rear SOUTH of the works to rally the broken right, then across to the left.
         phase: 5,
-        note: "Rides to the left to launch Smith's assault",
+        note: 'Rides back behind the lines — to the right, then left to launch Smith',
         path: [
-          { lat: 36.46500, lng: -87.84200 }, // from the right
-          { lat: 36.47200, lng: -87.86500 }, // riding W along the line
-          { lat: 36.48000, lng: -87.88200 }, // to Smith's sector on the left
+          { lat: 36.50800, lng: -87.88500 }, // from the boat
+          { lat: 36.49000, lng: -87.88800 }, // back down the river / west side
+          { lat: 36.46800, lng: -87.88500 }, // behind the Union left (Smith)
+          { lat: 36.45800, lng: -87.87000 }, // swinging south, below the works
+          { lat: 36.46100, lng: -87.85000 }, // east along the rear, south of the Confederate face
+          { lat: 36.46300, lng: -87.84300 }, // reaches his broken right — rallies McClernand
+          { lat: 36.46000, lng: -87.86500 }, // then back west along the rear
+          { lat: 36.47000, lng: -87.88500 }, // up the west side again
+          { lat: 36.48000, lng: -87.89000 }, // to Smith's sector on the left — orders the assault
         ],
       },
     ],
