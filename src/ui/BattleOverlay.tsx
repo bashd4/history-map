@@ -28,6 +28,16 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
   const total = totalDuration(battle)
   const { phaseIndex, done } = playbackAt(battle, battleElapsed)
 
+  // Interior phase boundaries as fractions of the whole timeline — drawn as soft
+  // tick marks so the phases read as labels on one continuous clock, not cuts.
+  const durs = phaseSeconds(battle)
+  const phaseTicks: number[] = []
+  let acc = 0
+  for (let i = 0; i < durs.length - 1; i++) {
+    acc += durs[i]
+    phaseTicks.push(acc / total)
+  }
+
   // rAF playback clock
   useEffect(() => {
     if (!battlePlaying) return
@@ -64,7 +74,7 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
       <header className="battle-header">
         <div>
           <h3>{battle.name}</h3>
-          <div className="card-date">{battle.date} · Phase {phaseIndex + 1} of {battle.phases.length}</div>
+          <div className="card-date">{battle.date}</div>
           {battle.strengths && (
             <div className="battle-strengths">
               {Object.entries(battle.strengths).map(([side, text]) => (
@@ -111,10 +121,18 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
           done ? replayBattle() : setBattlePlaying(!battlePlaying)}>
           {done ? '↻' : battlePlaying ? '❚❚' : '▶'}
         </button>
-        <input type="range" min={0} max={total} step={0.05} value={battleElapsed}
-          aria-label="Battle timeline"
-          onChange={(e) => { setBattlePlaying(false); setBattleElapsed(Number(e.target.value)) }} />
-        <p className="battle-caption">{battle.phases[phaseIndex].caption}</p>
+        <div className="battle-timeline">
+          <input type="range" min={0} max={total} step={0.05} value={battleElapsed}
+            aria-label="Battle timeline"
+            onChange={(e) => { setBattlePlaying(false); setBattleElapsed(Number(e.target.value)) }} />
+          <div className="battle-phase-ticks" aria-hidden="true">
+            {phaseTicks.map((frac, i) => (
+              <span key={i} className="battle-phase-tick" style={{ left: `${frac * 100}%` }} />
+            ))}
+          </div>
+        </div>
+        {/* keyed by phase so the narration cross-fades as the battle flows */}
+        <p className="battle-caption" key={phaseIndex}>{battle.phases[phaseIndex].caption}</p>
       </footer>
     </div>
   )

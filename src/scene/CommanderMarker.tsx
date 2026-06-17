@@ -1,21 +1,23 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Html, Line } from '@react-three/drei'
 import type { Line2 } from 'three-stdlib'
-import type { Battle, LatLng } from '../data/schema'
-import { ellipsoidSceneRadius, geodeticToVector3, slerpUnit, vector3ToGeodetic } from '../lib/geo'
+import type { Battle } from '../data/schema'
+import { ellipsoidSceneRadius, geodeticToVector3 } from '../lib/geo'
 import { type CommanderTrack, unitPositionAt } from '../lib/battleUnitTracks'
-import { playbackAt } from '../lib/battlePlayback'
 import { useAppStore } from '../state/store'
 
 // Lift above the ellipsoid surface: the star sits a touch higher than its trail
-// so the dashed line reads as running underneath the marker. Deterministic
+// so the comet tail reads as running underneath the marker. Deterministic
 // (ellipsoid, no terrain raycast) to stay flicker-free as the marker moves.
 const MARKER_LIFT = 0.00008
 const TRAIL_LIFT = 0.00002
-// Slerp subdivisions per trail leg, so the route follows globe curvature.
-const TRAIL_SUB = 6
+
+// Comet tail: a short window of the commander's RECENT path, fading out behind
+// him — so it follows the marker instead of accumulating a permanent zigzag.
+const TAIL_SECONDS = 2.4
+const TAIL_SAMPLES = 24
 
 const GOLD = '#e8c46a'
 const TEXT_FONT = "Georgia, 'Times New Roman', serif"
@@ -34,46 +36,11 @@ function ensureHaloStyle() {
 }
 
 /**
- * Flatten a commander track into an ordered scene-space polyline, each point
- * tagged with the global phase-time (phaseIndex + fraction) at which the
- * commander reaches it. The trail is revealed up to the current time by limiting
- * the line geometry's drawn segment count — so it "draws as it plays" and scrubs
- * cleanly in both directions.
- */
-function buildTrail(track: CommanderTrack): { points: THREE.Vector3[]; times: number[] } {
-  const points: THREE.Vector3[] = []
-  const times: number[] = []
-  const drape = (p: LatLng) =>
-    geodeticToVector3(p.lat, p.lng, ellipsoidSceneRadius(p.lat) + TRAIL_LIFT)
-
-  for (const seg of track.segments) {
-    if (seg.kind === 'rest') {
-      points.push(drape(seg.at))
-      times.push(seg.phaseIndex)
-      continue
-    }
-    const path = seg.path
-    const legs = path.length - 1
-    for (let j = 0; j < legs; j++) {
-      const a = geodeticToVector3(path[j].lat, path[j].lng).normalize()
-      const b = geodeticToVector3(path[j + 1].lat, path[j + 1].lng).normalize()
-      for (let s = 0; s < TRAIL_SUB; s++) {
-        const v = slerpUnit(a, b, s / TRAIL_SUB)
-        const { lat } = vector3ToGeodetic(v)
-        points.push(v.clone().multiplyScalar(ellipsoidSceneRadius(lat) + TRAIL_LIFT))
-        times.push(seg.phaseIndex + (j + s / TRAIL_SUB) / legs)
-      }
-    }
-    points.push(drape(path[legs]))
-    times.push(seg.phaseIndex + 1)
-  }
-  return { points, times }
-}
-
-/**
  * The journey protagonist (Grant / Napoleon) as a single gold command star with
  * an always-on name and a pulsing halo, gliding along his personal researched
- * path with a dashed gold trail that unspools behind him as the battle plays.
+ * path. A short comet tail traces where he's just been (sampled from his actual
+ * arc-length-paced position, so it always matches his motion) and fades out
+ * behind him rather than persisting across the whole battle.
  */
 export function CommanderMarker({ track, battle }: { track: CommanderTrack; battle: Battle }) {
   const groupRef = useRef<THREE.Group>(null)
@@ -82,8 +49,6 @@ export function CommanderMarker({ track, battle }: { track: CommanderTrack; batt
   const lineRef = useRef<Line2>(null)
 
   useEffect(ensureHaloStyle, [])
-
-  const trail = useMemo(() => buildTrail(track), [track])
 
   useFrame(() => {
     const group = groupRef.current
@@ -111,13 +76,31 @@ export function CommanderMarker({ track, battle }: { track: CommanderTrack; batt
     )
     if (content) content.style.visibility = 'visible'
 
-    // Reveal the trail up to the current phase-time.
-    const { phaseIndex, phaseProgress } = playbackAt(battle, battleElapsed)
-    const now = phaseIndex + phaseProgress
-    let revealed = 0
-    while (revealed < trail.times.length && trail.times[revealed] <= now) revealed++
-    if (trailGroup) trailGroup.visible = revealed >= 2
-    if (line) line.geometry.instanceCount = Math.max(0, revealed - 1)
+    // Comet tail: sample his recent path (oldest → newest), fading dark→gold.
+    if (line && trailGroup) {
+      const positions: number[] = []
+      const colors: number[] = []
+      let count = 0
+      for (let s = 0; s <= TAIL_SAMPLES; s++) {
+        const f = s / TAIL_SAMPLES // 0 = tail (oldest), 1 = head (newest)
+        const t = battleElapsed - TAIL_SECONDS * (1 - f)
+        if (t < 0) continue
+        const p = unitPositionAt(track, battle, t)
+        if (!p) continue
+        const v = geodeticToVector3(p.lat, p.lng, ellipsoidSceneRadius(p.lat) + TRAIL_LIFT)
+        positions.push(v.x, v.y, v.z)
+        // fade from dark (tail, sinks into the terrain) to bright gold (head)
+        colors.push(0.16 + 0.79 * f, 0.12 + 0.68 * f, 0.05 + 0.40 * f)
+        count++
+      }
+      if (count >= 2) {
+        line.geometry.setPositions(positions)
+        line.geometry.setColors(colors)
+        trailGroup.visible = true
+      } else {
+        trailGroup.visible = false
+      }
+    }
   })
 
   return (
@@ -186,18 +169,22 @@ export function CommanderMarker({ track, battle }: { track: CommanderTrack; batt
         </Html>
       </group>
 
-      {/* Dashed gold trail, hidden until revealed in useFrame (no first-frame flash). */}
+      {/* Comet tail — positions/colors written each frame; hidden until it has
+          length (no trail while he's standing still). */}
       <group ref={trailGroupRef} visible={false}>
         <Line
           ref={lineRef}
-          points={trail.points}
-          color={GOLD}
-          lineWidth={2}
-          dashed
-          dashSize={0.0011}
-          gapSize={0.0007}
-          opacity={0.8}
+          points={[
+            [0, 0, 0],
+            [0, 0, 0],
+          ]}
+          vertexColors={[
+            [0.16, 0.12, 0.05],
+            [0.95, 0.8, 0.45],
+          ]}
+          lineWidth={2.5}
           transparent
+          opacity={0.95}
           toneMapped={false}
           depthTest={false}
           renderOrder={10}

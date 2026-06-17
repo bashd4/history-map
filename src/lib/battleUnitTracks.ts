@@ -1,6 +1,7 @@
+import * as THREE from 'three'
 import type { Battle, LatLng, Movement } from '../data/schema'
 import { geodeticToVector3, slerpUnit, vector3ToGeodetic } from './geo'
-import { playbackAt } from './battlePlayback'
+import { phaseSeconds } from './battlePlayback'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -201,32 +202,142 @@ export function commanderTrack(battle: Battle): CommanderTrack | null {
 }
 
 // ---------------------------------------------------------------------------
+// Continuous timeline (arc-length pacing)
+// ---------------------------------------------------------------------------
+
+/**
+ * A maximal run of consecutive moving phases, flattened into one polyline with
+ * cumulative great-circle length. The unit traverses it at constant ground speed
+ * (arc-length paced) over [tStart, tEnd] with a smooth ease in/out — so it
+ * accelerates from rest, glides across phase seams without a velocity jump, and
+ * decelerates back to rest. This is what makes the battle read as one continuous
+ * motion rather than per-phase bursts.
+ */
+interface MotionRun {
+  tStart: number
+  tEnd: number
+  pts: THREE.Vector3[] // unit vectors
+  cum: number[] // cumulative angular length; cum[last] = total
+  total: number
+  endLatLng: LatLng // raw final point — returned exactly while holding (no vector round-trip)
+}
+
+interface Timeline {
+  tAppear: number // hidden before this (arrival)
+  tVanish: number // hidden at/after this (departure); Infinity if it stays to the end
+  startPos: LatLng // held position before the first motion run
+  runs: MotionRun[]
+}
+
+const timelineCache = new WeakMap<PositionedTrack, Timeline>()
+
+/** Cumulative [start, end] wall-clock seconds for each phase. */
+function phaseWindows(battle: Battle): { start: number[]; end: number[] } {
+  const durs = phaseSeconds(battle)
+  const start: number[] = []
+  const end: number[] = []
+  let acc = 0
+  for (let i = 0; i < durs.length; i++) {
+    start[i] = acc
+    acc += durs[i]
+    end[i] = acc
+  }
+  return { start, end }
+}
+
+function smoothstep(t: number): number {
+  const x = t <= 0 ? 0 : t >= 1 ? 1 : t
+  return x * x * (3 - 2 * x)
+}
+
+function buildTimeline(track: PositionedTrack, battle: Battle): Timeline {
+  const cached = timelineCache.get(track)
+  if (cached) return cached
+
+  const { start, end } = phaseWindows(battle)
+  const segs = track.segments
+  const firstPhase = segs[0].phaseIndex
+  const lastPhase = segs[segs.length - 1].phaseIndex
+  const seg0 = segs[0]
+  const startPos = seg0.kind === 'rest' ? seg0.at : seg0.path[0]
+
+  // Group consecutive 'move' segments into runs (a unit moving in phases 3-4-5
+  // becomes ONE run, so it glides through without stopping at each seam).
+  const runs: MotionRun[] = []
+  let i = 0
+  while (i < segs.length) {
+    if (segs[i].kind !== 'move') {
+      i++
+      continue
+    }
+    const runStartPhase = segs[i].phaseIndex
+    const rawPts: LatLng[] = []
+    let j = i
+    while (j < segs.length && segs[j].kind === 'move') {
+      const mseg = segs[j] as Extract<TrackSegment, { kind: 'move' }>
+      for (const p of mseg.path) {
+        const last = rawPts[rawPts.length - 1]
+        if (!last || !latLngEqual(last, p)) rawPts.push(p)
+      }
+      j++
+    }
+    const pts = rawPts.map((p) => geodeticToVector3(p.lat, p.lng).normalize())
+    const cum = [0]
+    for (let k = 1; k < pts.length; k++) cum[k] = cum[k - 1] + pts[k - 1].angleTo(pts[k])
+    runs.push({
+      tStart: start[runStartPhase],
+      tEnd: end[segs[j - 1].phaseIndex],
+      pts,
+      cum,
+      total: cum[cum.length - 1],
+      endLatLng: rawPts[rawPts.length - 1],
+    })
+    i = j
+  }
+
+  // A unit whose track ends before the last battle phase has `departs` — it
+  // vanishes after its window; otherwise it holds its final position to the end.
+  const departed = lastPhase < battle.phases.length - 1
+  const timeline: Timeline = {
+    tAppear: start[firstPhase],
+    tVanish: departed ? end[lastPhase] : Infinity,
+    startPos,
+    runs,
+  }
+  timelineCache.set(track, timeline)
+  return timeline
+}
+
+// ---------------------------------------------------------------------------
 // unitPositionAt
 // ---------------------------------------------------------------------------
 
+/**
+ * Position of a unit (or the commander) on a single continuous battle clock.
+ * Motion is arc-length paced with an ease in/out per motion run, so speed is
+ * smooth across phase boundaries; the unit holds position while resting and is
+ * null while off-field (before arrival / after departure).
+ */
 export function unitPositionAt(track: PositionedTrack, battle: Battle, elapsed: number): LatLng | null {
-  const segments = track.segments
-  const firstPhase = segments[0].phaseIndex
-  const lastPhase = segments[segments.length - 1].phaseIndex
+  const tl = buildTimeline(track, battle)
+  if (elapsed < tl.tAppear || elapsed >= tl.tVanish) return null
 
-  const { phaseIndex, phaseProgress } = playbackAt(battle, elapsed)
-
-  // Outside the unit's existence window (before arrival / after departure) → hidden.
-  if (phaseIndex < firstPhase || phaseIndex > lastPhase) return null
-
-  const seg = segments.find((s) => s.phaseIndex === phaseIndex)
-  if (!seg) return null
-  if (seg.kind === 'rest') return seg.at
-
-  // Move segment: interpolate along path by phaseProgress using slerp (great-circle).
-  const path = seg.path
-  const L = path.length - 1
-  if (phaseProgress <= 0) return path[0]
-  if (phaseProgress >= 1) return path[L]
-  const f = phaseProgress * L
-  const leg = Math.min(Math.floor(f), L - 1)
-  const localT = f - leg
-  const a = geodeticToVector3(path[leg].lat, path[leg].lng).normalize()
-  const b = geodeticToVector3(path[leg + 1].lat, path[leg + 1].lng).normalize()
-  return vector3ToGeodetic(slerpUnit(a, b, localT))
+  // `held` is the exact resting position (no vector round-trip) used whenever the
+  // unit is stationary — before a run, between runs, or after the last one.
+  let held: LatLng = tl.startPos
+  for (const run of tl.runs) {
+    if (elapsed < run.tStart) return held // holding before this run starts
+    if (elapsed <= run.tEnd) {
+      if (run.total < 1e-9) return run.endLatLng
+      const u = smoothstep((elapsed - run.tStart) / (run.tEnd - run.tStart))
+      const target = u * run.total
+      let k = 1
+      while (k < run.cum.length && run.cum[k] < target) k++
+      const segLen = run.cum[k] - run.cum[k - 1]
+      const localT = segLen > 1e-12 ? (target - run.cum[k - 1]) / segLen : 0
+      return vector3ToGeodetic(slerpUnit(run.pts[k - 1], run.pts[k], localT))
+    }
+    held = run.endLatLng // past this run → hold its end until the next
+  }
+  return held // after the last run → hold the final position
 }

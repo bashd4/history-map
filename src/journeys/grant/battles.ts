@@ -13,44 +13,32 @@ const fortDonelson: Battle = {
   strengths: { union: '~24,500 men', confederate: '~16,000 men' },
   // Camera stands NW on the river, looking SE across the fort and bluffs.
   fieldAzimuth: 315,
-  // Grant's personal ride during the battle (georeferenced to the ABT Feb-15 map):
-  // present at HQ through the siege, away downriver with Foote at the dawn breakout,
-  // a hard gallop back, then to the left to unleash Smith.
+  // Grant's command position: at his HQ behind the Union centre through the siege,
+  // then once the breakout is contained he rides the length of the line — first to
+  // steady his shaken right, then across to the left to unleash Smith's assault.
   commander: {
     name: 'U. S. Grant',
     side: 'union',
     movements: [
       {
-        // Before dawn on Feb 15 Grant rode ~downriver (NW) to confer with the
-        // wounded Flag-Officer Foote aboard his gunboat — so he was ABSENT from
-        // the field when Pillow's breakout struck the Union right.
-        phase: 3,
-        note: 'Rides downriver to meet Foote — absent at the breakout',
-        path: [
-          { lat: 36.45800, lng: -87.86600 }, // HQ behind the Union centre
-          { lat: 36.47600, lng: -87.87000 }, // riding N toward the river
-          { lat: 36.49800, lng: -87.87200 }, // the landing NW, aboard Foote's boat
-        ],
-      },
-      {
-        // Hearing the firing, Grant galloped back and found his right driven in.
+        // Rides forward to his battered right-centre to rally it.
         phase: 4,
-        note: 'Gallops back to the broken right',
+        note: 'Rides to steady the broken right',
         path: [
-          { lat: 36.49800, lng: -87.87200 }, // from the landing
-          { lat: 36.47800, lng: -87.86000 }, // galloping SE back to the lines
-          { lat: 36.46200, lng: -87.84800 }, // reaches his shaken right-centre
+          { lat: 36.46200, lng: -87.86500 }, // HQ behind the Union centre
+          { lat: 36.46400, lng: -87.85200 }, // forward toward the right
+          { lat: 36.46500, lng: -87.84200 }, // among his shaken right-centre
         ],
       },
       {
-        // Grant rode to the Union LEFT and ordered Smith's assault: "General Smith,
-        // all has failed on our right — you must take Fort Donelson." "I will do it."
+        // Then to the Union LEFT to order Smith's assault: "General Smith, all has
+        // failed on our right — you must take Fort Donelson." "I will do it."
         phase: 5,
         note: "Rides to the left to launch Smith's assault",
         path: [
-          { lat: 36.46200, lng: -87.84800 }, // from the centre
-          { lat: 36.47000, lng: -87.86600 }, // riding W along the line
-          { lat: 36.47800, lng: -87.88400 }, // to Smith's sector on the left
+          { lat: 36.46500, lng: -87.84200 }, // from the right
+          { lat: 36.47200, lng: -87.86500 }, // riding W along the line
+          { lat: 36.48000, lng: -87.88200 }, // to Smith's sector on the left
         ],
       },
     ],
