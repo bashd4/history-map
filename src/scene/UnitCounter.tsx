@@ -174,6 +174,7 @@ export function UnitCounter({
   journey: Journey
 }) {
   const groupRef = useRef<THREE.Group>(null)
+  const labelRef = useRef<HTMLDivElement>(null)
   const affiliation = affiliationOf(journey, track.side)
   const sideColor = battle.sides[track.side] ?? '#ffffff'
 
@@ -211,38 +212,60 @@ export function UnitCounter({
             fontFamily: TEXT_FONT,
           }}
         >
-          <CounterSvg
-            affiliation={affiliation}
-            branch={track.branch}
-            echelon={track.echelon}
-            sideColor={sideColor}
-          />
+          {/* The compact APP-6 symbol is always visible; hovering it reveals the
+              unit name + strength. Names are hover-only so converging units don't
+              bury each other in text (matches the battle map's clean-by-default
+              treatment). */}
           <div
+            style={{ pointerEvents: 'auto', cursor: 'default' }}
+            onPointerEnter={() => { if (labelRef.current) labelRef.current.style.opacity = '1' }}
+            onPointerLeave={() => { if (labelRef.current) labelRef.current.style.opacity = '0' }}
+          >
+            <CounterSvg
+              affiliation={affiliation}
+              branch={track.branch}
+              echelon={track.echelon}
+              sideColor={sideColor}
+            />
+          </div>
+          <div
+            ref={labelRef}
             style={{
-              marginTop: '1px',
-              fontSize: '11px',
-              fontWeight: 600,
-              color: '#f0e8d6',
-              textShadow: TEXT_SHADOW,
-              whiteSpace: 'nowrap',
-              lineHeight: 1.15,
+              opacity: 0,
+              transition: 'opacity 0.12s ease',
+              pointerEvents: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
             }}
           >
-            {track.unit}
-          </div>
-          {track.strength != null && (
             <div
               style={{
-                fontSize: '9px',
-                color: '#e8dcc4',
+                marginTop: '1px',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#f0e8d6',
                 textShadow: TEXT_SHADOW,
                 whiteSpace: 'nowrap',
                 lineHeight: 1.15,
               }}
             >
-              {track.strength.toLocaleString()}
+              {track.unit}
             </div>
-          )}
+            {track.strength != null && (
+              <div
+                style={{
+                  fontSize: '9px',
+                  color: '#e8dcc4',
+                  textShadow: TEXT_SHADOW,
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1.15,
+                }}
+              >
+                {track.strength.toLocaleString()}
+              </div>
+            )}
+          </div>
         </div>
       </Html>
     </group>
