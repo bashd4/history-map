@@ -28,12 +28,6 @@ const cache = new WeakMap<Battle, UnitTrack[]>()
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Last coordinate of a segment's path/at position. */
-function segmentEndpoint(seg: UnitTrack['segments'][number]): LatLng {
-  if (seg.kind === 'rest') return seg.at
-  return seg.path[seg.path.length - 1]
-}
-
 /**
  * True when two LatLng values are equal to 5 decimal places (~1 m precision).
  * Used to avoid prepending a duplicate point when bridging a gap.
@@ -54,14 +48,9 @@ export function battleUnitTracks(battle: Battle): UnitTrack[] {
   if (cached) return cached
 
   // 1. Gather per-unit movements, tagged with their phase index.
-  const byUnit = new Map<
-    string,
-    Array<{ phaseIndex: number; movement: Movement }>
-  >()
-
+  const byUnit = new Map<string, Array<{ phaseIndex: number; movement: Movement }>>()
   for (let phaseIndex = 0; phaseIndex < battle.phases.length; phaseIndex++) {
-    const phase = battle.phases[phaseIndex]
-    for (const movement of phase.movements) {
+    for (const movement of battle.phases[phaseIndex].movements) {
       if (!movement.unit) continue
       const key = movement.unit
       if (!byUnit.has(key)) byUnit.set(key, [])
@@ -69,64 +58,59 @@ export function battleUnitTracks(battle: Battle): UnitTrack[] {
     }
   }
 
-  // 2. Build a UnitTrack for each unit.
+  const lastBattlePhase = battle.phases.length - 1
   const tracks: UnitTrack[] = []
 
   for (const [unitName, entries] of byUnit) {
-    // Sort by phaseIndex (should already be ordered, but sort defensively).
     entries.sort((a, b) => a.phaseIndex - b.phaseIndex)
-
     const first = entries[0].movement
 
-    // Validate consistency of immutable fields across all movements for this unit.
+    // Immutable fields must agree across a unit's movements (type system can't catch
+    // a hand-edit that gives one unit two branches/echelons/sides).
     for (const { movement } of entries.slice(1)) {
       if (movement.branch !== first.branch) {
-        throw new Error(
-          `Unit "${unitName}" has conflicting branch: "${first.branch}" vs "${movement.branch}"`,
-        )
+        throw new Error(`Unit "${unitName}" has conflicting branch: "${first.branch}" vs "${movement.branch}"`)
       }
       if (movement.echelon !== first.echelon) {
-        throw new Error(
-          `Unit "${unitName}" has conflicting echelon: "${first.echelon}" vs "${movement.echelon}"`,
-        )
+        throw new Error(`Unit "${unitName}" has conflicting echelon: "${first.echelon}" vs "${movement.echelon}"`)
       }
       if (movement.side !== first.side) {
-        throw new Error(
-          `Unit "${unitName}" has conflicting side: "${first.side}" vs "${movement.side}"`,
-        )
+        throw new Error(`Unit "${unitName}" has conflicting side: "${first.side}" vs "${movement.side}"`)
       }
       // strength is intentionally NOT validated — it is optional and may legitimately
       // differ across phases (e.g. losses). The first movement's value is carried.
     }
 
-    const firstPhase = entries[0].phaseIndex
-    const lastPhase = battle.phases.length - 1
+    // Presence window:
+    //  - default: present from the start (phase 0), resting at its start position
+    //    until it first acts — deployed forces don't pop in when they finally move.
+    //  - `arrives`: a reinforcement / detachment that enters only when it first moves.
+    //  - `departs`: hands off / withdraws after its last move (e.g. a corps that
+    //    splits into its divisions) rather than lingering to the end.
+    const firstMovePhase = entries[0].phaseIndex
+    const lastMovePhase = entries[entries.length - 1].phaseIndex
+    const arrives = entries.some((e) => e.movement.arrives)
+    const departs = entries.some((e) => e.movement.departs)
+    const existStart = arrives ? firstMovePhase : 0
+    const existEnd = departs ? lastMovePhase : lastBattlePhase
+    const startRestPos = first.path[0]
 
-    // Index of entries by phaseIndex for O(1) lookup.
     const entryByPhase = new Map(entries.map((e) => [e.phaseIndex, e]))
-
     const segments: UnitTrack['segments'] = []
-    // Track the running endpoint as we build segments.
     let lastEndpoint: LatLng | null = null
 
-    for (let pi = firstPhase; pi <= lastPhase; pi++) {
+    for (let pi = existStart; pi <= existEnd; pi++) {
       const entry = entryByPhase.get(pi)
-
       if (entry) {
-        // Move segment — possibly gap-bridge by prepending last endpoint.
+        // Move segment — gap-bridge by prepending the current resting position.
         let path = [...entry.movement.path]
-        if (lastEndpoint !== null && !latLngEqual(lastEndpoint, path[0])) {
-          path = [lastEndpoint, ...path]
-        }
+        const from = lastEndpoint ?? startRestPos
+        if (!latLngEqual(from, path[0])) path = [from, ...path]
         segments.push({ kind: 'move', phaseIndex: pi, path, style: entry.movement.style })
         lastEndpoint = path[path.length - 1]
       } else {
-        // Rest segment at the last known position.
-        // lastEndpoint is guaranteed non-null because pi >= firstPhase and
-        // firstPhase's move sets it; subsequent phases inherit it.
-        const at = lastEndpoint!
-        segments.push({ kind: 'rest', phaseIndex: pi, at })
-        // lastEndpoint stays the same.
+        // Rest at the last known position (or the start position before first move).
+        segments.push({ kind: 'rest', phaseIndex: pi, at: lastEndpoint ?? startRestPos })
       }
     }
 
@@ -148,47 +132,28 @@ export function battleUnitTracks(battle: Battle): UnitTrack[] {
 // unitPositionAt
 // ---------------------------------------------------------------------------
 
-export function unitPositionAt(
-  track: UnitTrack,
-  battle: Battle,
-  elapsed: number,
-): LatLng | null {
-  const { phaseIndex, phaseProgress, done } = playbackAt(battle, elapsed)
-
+export function unitPositionAt(track: UnitTrack, battle: Battle, elapsed: number): LatLng | null {
   const segments = track.segments
+  const firstPhase = segments[0].phaseIndex
+  const lastPhase = segments[segments.length - 1].phaseIndex
 
-  // done / guard cases return the track's final endpoint. (Inlined rather than a
-  // per-call closure — unitPositionAt runs every frame, once per unit.)
-  if (done) {
-    return segmentEndpoint(segments[segments.length - 1])
-  }
+  const { phaseIndex, phaseProgress } = playbackAt(battle, elapsed)
 
-  // Find the segment for this phase.
+  // Outside the unit's existence window (before arrival / after departure) → hidden.
+  if (phaseIndex < firstPhase || phaseIndex > lastPhase) return null
+
   const seg = segments.find((s) => s.phaseIndex === phaseIndex)
+  if (!seg) return null
+  if (seg.kind === 'rest') return seg.at
 
-  if (!seg) {
-    // phaseIndex is before the unit's first segment → unit hasn't appeared.
-    if (phaseIndex < segments[0].phaseIndex) return null
-    // phaseIndex is beyond the last segment (guard — shouldn't happen).
-    return segmentEndpoint(segments[segments.length - 1])
-  }
-
-  if (seg.kind === 'rest') {
-    return seg.at
-  }
-
-  // Move segment: interpolate along path by phaseProgress using slerp.
+  // Move segment: interpolate along path by phaseProgress using slerp (great-circle).
   const path = seg.path
   const L = path.length - 1
-
-  // Edge cases for exact endpoints.
   if (phaseProgress <= 0) return path[0]
   if (phaseProgress >= 1) return path[L]
-
   const f = phaseProgress * L
   const leg = Math.min(Math.floor(f), L - 1)
   const localT = f - leg
-
   const a = geodeticToVector3(path[leg].lat, path[leg].lng).normalize()
   const b = geodeticToVector3(path[leg + 1].lat, path[leg + 1].lng).normalize()
   return vector3ToGeodetic(slerpUnit(a, b, localT))

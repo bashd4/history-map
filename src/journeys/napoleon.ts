@@ -115,6 +115,7 @@ export const napoleon: Journey = {
           unit: "Soult — IV Corps",
           branch: 'infantry', echelon: 'corps',
           strength: 23600,
+          departs: true, // hands off to its divisions — vanishes into the Goldbach fog, re-emerges as St. Hilaire + Vandamme on the Pratzen
           path: [
             { lat: 49.12800, lng: 16.76200 }, // Pratzen plateau center
             { lat: 49.13200, lng: 16.75000 }, // W slope
@@ -186,6 +187,7 @@ export const napoleon: Journey = {
           unit: "Davout — III Corps",
           branch: 'infantry', echelon: 'corps',
           strength: 6300,
+          arrives: true, // genuinely marched in (110 km in 48 h from Rajhrad) — not present at the start
           path: [
             { lat: 49.09028, lng: 16.60389 }, // Rajhrad (Gross-Raigern)
             { lat: 49.09800, lng: 16.64000 }, // March N along road
@@ -221,6 +223,8 @@ export const napoleon: Journey = {
           side: 'french', style: 'advance',
           unit: "St. Hilaire — division",
           branch: 'infantry', echelon: 'division',
+          strength: 8000, // est. ~half of the documented 16,000-man two-division Pratzen assault
+          arrives: true, // detaches from Soult's IV Corps for the masterstroke
           path: [
             { lat: 49.13000, lng: 16.73000 }, // Assembly E of Kobylnice (Goldbach)
             { lat: 49.12800, lng: 16.74500 }, // Climbing W slope of heights
@@ -234,6 +238,8 @@ export const napoleon: Journey = {
           side: 'french', style: 'advance',
           unit: "Vandamme — division",
           branch: 'infantry', echelon: 'division',
+          strength: 8000, // est. ~half of the documented 16,000-man two-division Pratzen assault
+          arrives: true, // detaches from Soult's IV Corps for the masterstroke
           path: [
             { lat: 49.14500, lng: 16.73500 }, // Kobylnice / N Goldbach
             { lat: 49.14300, lng: 16.75000 }, // W slope
@@ -278,16 +284,30 @@ export const napoleon: Journey = {
       ],
       movements: [
         {
-          // St. Hilaire + Vandamme wheel S from the plateau, driving the trapped Allied left
-          // toward Újezd and the ponds. Direction: from plateau, S/SW toward Sokolnice–Újezd.
+          // St. Hilaire's division wheels S off the plateau toward Újezd and the
+          // frozen ponds, closing the trap on the Allied left. (Continues as the
+          // same counter that took the S Pratzen in the previous phase.)
           side: 'french', style: 'advance',
-          unit: "St. Hilaire & Vandamme — wheel south",
-          branch: 'infantry', echelon: 'division', // two infantry divisions wheeling together
+          unit: "St. Hilaire — division",
+          branch: 'infantry', echelon: 'division',
+          strength: 8000,
           path: [
-            { lat: 49.12800, lng: 16.76200 }, // Plateau centre
-            { lat: 49.11500, lng: 16.76000 }, // S along E face of heights
-            { lat: 49.10800, lng: 16.76800 }, // Above Újezd — closing the trap
-            { lat: 49.10444, lng: 16.75750 }, // Újezd
+            { lat: 49.11800, lng: 16.77500 }, // S heights — continues from the Pratzen assault
+            { lat: 49.11200, lng: 16.76600 }, // driving SW above Újezd
+            { lat: 49.10444, lng: 16.75750 }, // Újezd — closing the trap at the ponds
+          ],
+        },
+        {
+          // Vandamme's division wheels S through the plateau centre, pressing the
+          // trapped columns toward the Žatčanský pond.
+          side: 'french', style: 'advance',
+          unit: "Vandamme — division",
+          branch: 'infantry', echelon: 'division',
+          strength: 8000,
+          path: [
+            { lat: 49.14000, lng: 16.78000 }, // E plateau edge — continues from the assault
+            { lat: 49.12500, lng: 16.76800 }, // wheeling S across the plateau
+            { lat: 49.11500, lng: 16.76200 }, // pressing toward the ponds
           ],
         },
         {

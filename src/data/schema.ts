@@ -10,6 +10,12 @@ const movement = z.object({
   branch: z.enum(['infantry', 'cavalry', 'artillery', 'naval', 'command']),
   echelon: z.enum(['corps', 'division', 'brigade', 'regiment', 'flotilla']),
   strength: z.number().int().positive().optional(),
+  /** Unit enters at its first movement (reinforcement / detachment) rather than
+   *  being present from the start of the battle. */
+  arrives: z.boolean().optional(),
+  /** Unit leaves after its last movement (hands off / withdraws — e.g. a corps
+   *  that splits into its divisions) rather than persisting to the end. */
+  departs: z.boolean().optional(),
 })
 
 const event = z.object({

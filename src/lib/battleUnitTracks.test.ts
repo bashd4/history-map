@@ -55,10 +55,33 @@ describe('battleUnitTracks', () => {
     expect(alpha.echelon).toBe('division')
   })
 
-  it('a unit first appearing in phase 1 has no phase-0 segment', () => {
+  it('present from start by default: a unit that first acts in phase 1 rests at its start position from phase 0', () => {
     const bravo = battleUnitTracks(makeBattle()).find((t) => t.unit === 'Bravo')!
-    expect(bravo.segments[0].phaseIndex).toBe(1)
+    expect(bravo.segments.map((s) => `${s.phaseIndex}:${s.kind}`)).toEqual(['0:rest', '1:move', '2:rest'])
+    const rest0 = bravo.segments[0]
+    expect(rest0.kind === 'rest' && rest0.at).toMatchObject({ lat: 1, lng: 0 }) // its phase-1 start
     expect(bravo.side).toBe('b')
+  })
+
+  it('arrives:true — unit appears only at its first movement, no earlier segment', () => {
+    const b = makeBattle()
+    ;(b.phases[1].movements[0] as { arrives?: boolean }).arrives = true
+    const bravo = battleUnitTracks(b).find((t) => t.unit === 'Bravo')!
+    expect(bravo.segments.map((s) => s.phaseIndex)).toEqual([1, 2]) // move(1), rest(2) — nothing at phase 0
+  })
+
+  it('departs:true — unit leaves after its last move and is hidden afterwards', () => {
+    const b = {
+      name: 'D', date: '1', sides: { a: '#000000' },
+      phases: [
+        { caption: 'p0', duration: 10, movements: [mv({ unit: 'Gone', departs: true, path: [{ lat: 0, lng: 0 }, { lat: 0, lng: 1 }] })] },
+        { caption: 'p1', duration: 10, movements: [mv({ unit: 'Stay', path: [{ lat: 2, lng: 0 }, { lat: 2, lng: 1 }] })] },
+      ],
+    } as Battle
+    const gone = battleUnitTracks(b).find((t) => t.unit === 'Gone')!
+    expect(gone.segments.map((s) => s.phaseIndex)).toEqual([0]) // exists phase 0 only
+    expect(unitPositionAt(gone, b, 5)).not.toBeNull()   // visible during phase 0
+    expect(unitPositionAt(gone, b, 15)).toBeNull()       // departed by phase 1
   })
 
   it.each([
@@ -99,9 +122,9 @@ describe('unitPositionAt', () => {
     expect(p.lng).toBeCloseTo(0.5, 3)
   })
 
-  it('returns null before the unit first appears', () => {
-    // elapsed 5 → phase 0; Bravo first appears in phase 1
-    expect(unitPositionAt(bravo, battle, 5)).toBeNull()
+  it('present-from-start unit rests at its start position before it acts', () => {
+    // elapsed 5 → phase 0; Bravo (present from start) rests at its phase-1 start (1,0)
+    expect(unitPositionAt(bravo, battle, 5)).toMatchObject({ lat: 1, lng: 0 })
   })
 
   it('returns the final position when playback is done', () => {
