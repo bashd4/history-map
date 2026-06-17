@@ -1,7 +1,7 @@
 /**
  * terrainRegistry — module-level singleton that bridges the TilesRenderer
  * instance (available only inside TilesRendererContext) to consumers mounted
- * outside that context (BattleArrows, BattleAnnotations).
+ * outside that context (BattleUnits, BattleAnnotations).
  *
  * TerrainLayer calls setActiveTiles on mount/unmount.
  * TerrainHeightSampler calls getActiveTiles to raycast against tile meshes.

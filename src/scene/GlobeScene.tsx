@@ -10,7 +10,7 @@ import { Effects } from './Effects'
 import { journeys, journeyById } from '../journeys'
 import { useAppStore } from '../state/store'
 import { TerrainErrorBoundary } from './TerrainErrorBoundary'
-import { BattleArrows } from './BattleArrows'
+import { BattleUnits } from './BattleUnits'
 import { BattleAnnotations } from './BattleAnnotations'
 import { BattleGroundTruth } from './BattleGroundTruth'
 import { BattleBasemap, prefetchBasemap } from './BattleBasemap'
@@ -175,9 +175,9 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
               site={journey!.stops[battleStopIndex!].coords}
             />
           )}
-          {/* Battle movement arrows — outside terrain error boundary so they
-              work even when terrain degrades. Mounted only in battle mode. */}
-          {activeBattle && <BattleArrows battle={activeBattle} />}
+          {/* Battle unit counters (NATO APP-6) — outside terrain error boundary
+              so they work even when terrain degrades. Mounted only in battle mode. */}
+          {activeBattle && <BattleUnits battle={activeBattle} journey={journey!} />}
           {/* Landmark/event labels — also outside the terrain boundary. */}
           {activeBattle && <BattleAnnotations battle={activeBattle} />}
           {/* Ground-truth verification overlay — press "g" to drop pins at every

@@ -11,7 +11,13 @@ function makeBattle(paths: Array<Array<{ lat: number; lng: number }>>): Battle {
     sides: { a: '#ffffff' },
     phases: [{
       caption: 'c',
-      movements: paths.map((path) => ({ side: 'a', style: 'advance' as const, path })),
+      movements: paths.map((path) => ({
+        side: 'a',
+        style: 'advance' as const,
+        path,
+        branch: 'infantry' as const,
+        echelon: 'corps' as const,
+      })),
     }],
   }
 }

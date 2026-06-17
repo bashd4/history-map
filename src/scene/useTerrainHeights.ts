@@ -235,7 +235,7 @@ let _flatMode = false
 export function setFlatMode(flat: boolean): void {
   if (_flatMode === flat) return
   _flatMode = flat
-  // Bump the version so consumers (BattleArrows, BattleAnnotations) rebuild.
+  // Bump the version so consumers (BattleUnits, BattleAnnotations) rebuild.
   terrainSampler.version += 1
   useTerrainHeightsStore.setState({ version: terrainSampler.version })
 }

@@ -72,7 +72,7 @@ const AUTH_PLUGIN_ARGS = [
 
 /**
  * Runs inside TilesRenderer context — registers the tiles instance into the
- * module-level terrainRegistry so that BattleArrows / BattleAnnotations
+ * module-level terrainRegistry so that BattleUnits / BattleAnnotations
  * (mounted outside this context) can raycast against the tile meshes.
  * Also attaches the terrain sampler to get 'tiles-load-end' notifications.
  */
