@@ -200,7 +200,7 @@ const fortDonelson: Battle = {
     },
     {
       caption:
-        "At dawn Pillow's division bursts out of the southern works while Buckner swings down from the right, driving McClernand's division back toward Dover and forcing open the Wynn's Ferry and Forge Roads south toward Nashville.",
+        "At dawn Pillow's division bursts out of the southern works while Buckner swings down from the right, driving McClernand's division back toward the Union centre and forcing open the Wynn's Ferry and Forge Roads south toward Nashville.",
       duration: 6,
       movements: [
         {
@@ -240,8 +240,9 @@ const fortDonelson: Battle = {
         },
         {
           // McClernand's right (astride the Forge & Wynn's Ferry roads SW of Dover, its
-          // southern flank unanchored) was rolled back to the SE/ESE toward Dover, nearly
-          // a mile, before Thayer's brigade stabilised a ridge across Wynn's Ferry Road.
+          // southern flank unanchored) was rolled up to the N/NW toward the Union centre
+          // (Lew Wallace) — away from the escape roads — nearly a mile, before Thayer's
+          // brigade stabilised a new line. (Wallace shifted south to reinforce him.)
           side: 'union',
           style: 'retreat',
           unit: 'McClernand — 1st Division',
@@ -249,9 +250,9 @@ const fortDonelson: Battle = {
           echelon: 'division',
           path: [
             { lat: 36.47600, lng: -87.86200 }, // continuity: from his investment position SW of Dover
-            { lat: 36.47500, lng: -87.85600 }, // pressed back ESE
-            { lat: 36.47700, lng: -87.85000 }, // driven toward Dover
-            { lat: 36.47900, lng: -87.84700 }, // rallied at Thayer's ridge near the Dover edge
+            { lat: 36.48000, lng: -87.86600 }, // rolled back N/NW
+            { lat: 36.48300, lng: -87.87200 }, // pushed up toward the Union centre (~1 mi)
+            { lat: 36.48500, lng: -87.87700 }, // rallied with Wallace/Thayer, off the roads
           ],
         },
       ],
@@ -292,15 +293,15 @@ const fortDonelson: Battle = {
       movements: [
         {
           // McClernand counterattack: with Wallace, recovers the ground lost in the
-          // breakout, pushing back W/SW to the road junctions SW of Dover.
+          // breakout, pushing back SE to the road junctions SW of Dover.
           side: 'union',
           style: 'advance',
           unit: 'McClernand — 1st Division',
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.47900, lng: -87.84700 }, // continuity: from the rally near Dover
-            { lat: 36.47700, lng: -87.85400 }, // recovering the lost ground
+            { lat: 36.48500, lng: -87.87700 }, // continuity: from the rally by the Union centre
+            { lat: 36.48000, lng: -87.86800 }, // recovering the lost ground SE
             { lat: 36.47600, lng: -87.86200 }, // back astride the Forge & Wynn's Ferry roads
           ],
         },
