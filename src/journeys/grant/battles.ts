@@ -318,12 +318,14 @@ const fortDonelson: Battle = {
         {
           // Wallace advances in center to fill the gap and restore the Union line.
           // His division moved NE from the reserve position into the center of the arc.
+          // NOT `arrives`: Lew Wallace's division reached Donelson on Feb 14 and sat
+          // in reserve until this Feb-16 counterattack — present on the field, not a
+          // late entry, so it rests at the reserve position rather than popping in.
           side: 'union',
           style: 'advance',
           unit: "Lew Wallace — 3rd Division",
           branch: 'infantry',
           echelon: 'division',
-          arrives: true,
           path: [
             { lat: 36.46500, lng: -87.87000 }, // reserve/center position
             { lat: 36.47200, lng: -87.86200 }, // advancing toward the S arc
