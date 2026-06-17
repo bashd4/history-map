@@ -86,10 +86,10 @@ const fortDonelson: Battle = {
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.49500, lng: -87.93500 }, // approaching from W (Fort Henry direction)
-            { lat: 36.48000, lng: -87.90000 }, // swings around the S of the Confederate arc
-            { lat: 36.47800, lng: -87.87000 }, // into the SW/S sector
-            { lat: 36.47600, lng: -87.86200 }, // right flank astride the Forge & Wynn's Ferry roads, SW of Dover
+            { lat: 36.49500, lng: -87.93500 }, // approaching from the W (Fort Henry direction)
+            { lat: 36.47800, lng: -87.89000 }, // swings around the S of the Confederate arc
+            { lat: 36.46900, lng: -87.85500 }, // into the S/SE sector
+            { lat: 36.46500, lng: -87.83800 }, // Union right, astride the Forge Road S of Dover
           ],
         },
         {
@@ -200,25 +200,25 @@ const fortDonelson: Battle = {
     },
     {
       caption:
-        "At dawn Pillow's division bursts out of the southern works while Buckner swings down from the right, driving McClernand's division back toward the Union centre and forcing open the Wynn's Ferry and Forge Roads south toward Nashville.",
+        "At dawn Pillow's division bursts out of the works south of Dover while Buckner swings down from the right, driving McClernand's division back to the southeast and forcing open the Forge and Wynn's Ferry Roads toward Nashville.",
       duration: 6,
       movements: [
         {
-          // Pillow's division: Confederate LEFT, the SOUTHERN sector just SW of Dover
-          // (flank toward Lick Creek / the river). At dawn it attacked WEST/SW into
-          // McClernand's exposed Union right, wheeling around his unanchored flank to
-          // open the Forge & Wynn's Ferry roads running south toward Charlotte/Nashville.
-          // (Corrected per NPS/ABT + the Confederate Breakout marker, 36.4801,-87.8440.)
+          // Pillow's division: Confederate LEFT, the sector just S of Dover (flank toward
+          // Lick Creek). At dawn it burst out at the Confederate Breakout point (~36.4801,
+          // -87.8440) and drove SOUTHEAST into McClernand's exposed Union right along the
+          // Forge Road, rolling it back ~1 mile toward Lick Creek and opening the escape
+          // roads. (Georeferenced to the ABT "Fort Donelson, Feb 15 1862" map.)
           side: 'confederate',
           style: 'advance',
           unit: "Pillow's division",
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.48300, lng: -87.84700 }, // start: left works SW of Dover
-            { lat: 36.48050, lng: -87.84750 }, // attack W/SW into McClernand by the roads (breakout marker)
-            { lat: 36.47700, lng: -87.85400 }, // wheel out along the Forge Road
-            { lat: 36.47600, lng: -87.86000 }, // high-water mark on the roads toward Nashville (~1 mi)
+            { lat: 36.48000, lng: -87.84400 }, // start: the Confederate Breakout point SW of Dover
+            { lat: 36.47200, lng: -87.84000 }, // attack SSE into McClernand's right along the Forge Road
+            { lat: 36.46600, lng: -87.83400 }, // driving the Union right back, opening the roads
+            { lat: 36.46100, lng: -87.82800 }, // high-water mark to the SE (~1 mi)
           ],
         },
         {
@@ -239,20 +239,20 @@ const fortDonelson: Battle = {
           ],
         },
         {
-          // McClernand's right (astride the Forge & Wynn's Ferry roads SW of Dover, its
-          // southern flank unanchored) was rolled up to the N/NW toward the Union centre
-          // (Lew Wallace) — away from the escape roads — nearly a mile, before Thayer's
-          // brigade stabilised a new line. (Wallace shifted south to reinforce him.)
+          // McClernand's division held the Union right on the S/SE, astride the Forge Road.
+          // Pillow struck it at dawn "along the Forge Road" and the attacks "drove his forces
+          // to the southeast" (ABT) — back ~1 mile toward Lick Creek — before Thayer's brigade
+          // and Wallace steadied a new line.
           side: 'union',
           style: 'retreat',
           unit: 'McClernand — 1st Division',
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.47600, lng: -87.86200 }, // continuity: from his investment position SW of Dover
-            { lat: 36.48000, lng: -87.86600 }, // rolled back N/NW
-            { lat: 36.48300, lng: -87.87200 }, // pushed up toward the Union centre (~1 mi)
-            { lat: 36.48500, lng: -87.87700 }, // rallied with Wallace/Thayer, off the roads
+            { lat: 36.46500, lng: -87.83800 }, // continuity: from his position S of Dover (Forge Road)
+            { lat: 36.46100, lng: -87.83000 }, // struck along the Forge Road, pressed back SE
+            { lat: 36.45600, lng: -87.82200 }, // driven to the SE, ~1 mile
+            { lat: 36.45300, lng: -87.81600 }, // rallied — Thayer's line steadies the right
           ],
         },
       ],
@@ -271,9 +271,9 @@ const fortDonelson: Battle = {
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.47600, lng: -87.86000 }, // continuity: from the high-water mark on the roads
-            { lat: 36.48050, lng: -87.84750 }, // marching back NE
-            { lat: 36.48300, lng: -87.84700 }, // back into the Confederate left works SW of Dover
+            { lat: 36.46100, lng: -87.82800 }, // continuity: from the high-water mark SE
+            { lat: 36.47200, lng: -87.84000 }, // marching back NW
+            { lat: 36.48000, lng: -87.84400 }, // back into the works at the breakout point SW of Dover
           ],
         },
       ],
@@ -293,16 +293,16 @@ const fortDonelson: Battle = {
       movements: [
         {
           // McClernand counterattack: with Wallace, recovers the ground lost in the
-          // breakout, pushing back SE to the road junctions SW of Dover.
+          // breakout, pushing back NW to his original position on the Forge Road S of Dover.
           side: 'union',
           style: 'advance',
           unit: 'McClernand — 1st Division',
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.48500, lng: -87.87700 }, // continuity: from the rally by the Union centre
-            { lat: 36.48000, lng: -87.86800 }, // recovering the lost ground SE
-            { lat: 36.47600, lng: -87.86200 }, // back astride the Forge & Wynn's Ferry roads
+            { lat: 36.45300, lng: -87.81600 }, // continuity: from the rally SE
+            { lat: 36.45900, lng: -87.82700 }, // recovering the lost ground NW
+            { lat: 36.46500, lng: -87.83800 }, // back astride the Forge Road S of Dover
           ],
         },
         {
@@ -334,8 +334,8 @@ const fortDonelson: Battle = {
           branch: 'infantry',
           echelon: 'division',
           path: [
-            { lat: 36.47200, lng: -87.87000 }, // reserve/centre position (between Smith NW and McClernand SW)
-            { lat: 36.47500, lng: -87.86200 }, // advancing into the centre arc
+            { lat: 36.46600, lng: -87.85800 }, // reserve/centre position (between Smith NW and McClernand SE)
+            { lat: 36.46200, lng: -87.84600 }, // advancing SE to plug the gap beside McClernand
           ],
         },
         {
