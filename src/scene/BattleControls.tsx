@@ -6,6 +6,7 @@ import type { Battle, LatLng } from '../data/schema'
 import { geodeticToVector3, offsetLatLng } from '../lib/geo'
 import { battleFrameAltitude } from '../lib/battleExtent'
 import { useAppStore } from '../state/store'
+import { reliefSharpFloor } from './BattleBasemap'
 
 const WORLD_UP = new THREE.Vector3(0, 1, 0)
 
@@ -44,7 +45,9 @@ function framingFor(site: LatLng, frameAlt: number, view: 'map' | 'field', battl
 export function BattleControls({ site, battle }: { site: LatLng; battle: Battle }) {
   const camera = useThree((s) => s.camera)
   const battleView = useAppStore((s) => s.battleView)
+  const battleBasemap = useAppStore((s) => s.battleBasemap)
   const frameAlt = battleFrameAltitude(battle, site)
+  const sharpFloor = battleBasemap === 'relief' ? reliefSharpFloor(battle, site) : 0
   const framing = useRef<Framing>(framingFor(site, frameAlt, battleView, battle))
   const [framed, setFramed] = useState(false)
 
@@ -86,7 +89,7 @@ export function BattleControls({ site, battle }: { site: LatLng; battle: Battle 
       rotateSpeed={0.5}
       zoomSpeed={0.8}
       panSpeed={0.7}
-      minDistance={Math.max(0.001, frameAlt * 0.12)}
+      minDistance={Math.max(0.001, frameAlt * 0.12, Math.min(sharpFloor, frameAlt * 0.6))}
       maxDistance={frameAlt * 4}
       target={[t.look.x, t.look.y, t.look.z]}
       // Map (top-down): left-drag PANS like a map. Field (oblique): left-drag

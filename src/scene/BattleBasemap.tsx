@@ -305,7 +305,7 @@ const UPDATE_INTERVAL_MS = 250 // ≤4 updates/sec
 
 /**
  * Exported prefetch function. Call on battle entry to warm the tile cache
- * before the user toggles topo. Safe to call multiple times (cache check first,
+ * before the user toggles relief. Safe to call multiple times (cache check first,
  * in-flight dedup via Set). Runs entirely in the background.
  */
 export function prefetchBasemap(battle: Battle, site: LatLng): void {
@@ -349,7 +349,7 @@ export function reliefSharpFloor(battle: Battle, site: LatLng): number {
   const metresPerTexel = groundWidthM / canvasPxW
   // invert metersPerPixel(dist,fov,h)= (2 dist tan(fov/2) R)/h  → solve for dist
   const fov = 45 * (Math.PI / 180)
-  const nominalH = 900
+  const nominalH = 900 // nominal viewport height (px) — sets the texel↔screen-pixel reference
   return (metresPerTexel * nominalH) / (2 * Math.tan(fov / 2) * R_EARTH)
 }
 
