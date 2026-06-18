@@ -32,7 +32,7 @@ import { geodeticToVector3 } from '../lib/geo'
 import { battleExtent } from '../lib/battleExtent'
 import {
   TILE_SIZE,
-  Z_TERRAIN_MAX,
+  Z_TERRAIN_SAFE,
   mercY,
   lngToTileX,
   latToTileY,
@@ -105,7 +105,7 @@ const PLACEHOLDER_COLOR = `#${PARCHMENT_RGB.map((c) => c.toString(16).padStart(2
 
 // Tile URL builders. Hillshade is the PRIMARY relief overlay; Terrain Base the underlay.
 const ESRI_HILLSHADE = (z: number, y: number, x: number) =>
-  `https://server.arcgisonline.com/ArcGIS/rest/services/World_Hillshade/MapServer/tile/${z}/${y}/${x}`
+  `https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/${z}/${y}/${x}`
 
 const ESRI_TERRAIN_BASE = (z: number, y: number, x: number) =>
   `https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/${z}/${y}/${x}`
@@ -254,8 +254,8 @@ async function fetchAndStitchProgressive(
 
   const all: Promise<void>[] = []
 
-  // ── Underlay pass: Terrain Base, stretched from zLo (≤ Z_TERRAIN_MAX) ──
-  const zLo = Math.min(cov.z, Z_TERRAIN_MAX)
+  // ── Underlay pass: Terrain Base, stretched from zLo (≤ Z_TERRAIN_SAFE) ──
+  const zLo = Math.min(cov.z, Z_TERRAIN_SAFE)
   const txLoMin = lngToTileX(cov.lngMin, zLo)
   const txLoMax = lngToTileX(cov.lngMax, zLo)
   const tyLoMin = latToTileY(cov.latMax, zLo) // tile y increases southward

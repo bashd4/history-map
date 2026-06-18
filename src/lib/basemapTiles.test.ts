@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  pickHillshadeZoom, duotone, DARK, LIGHT, terrainDestRect, TILE_SIZE, Z_TERRAIN_MAX,
+  pickHillshadeZoom, duotone, DARK, LIGHT, terrainDestRect, TILE_SIZE, Z_TERRAIN_SAFE,
 } from './basemapTiles'
 
 describe('pickHillshadeZoom', () => {
@@ -32,7 +32,7 @@ describe('duotone', () => {
 describe('terrainDestRect', () => {
   it('a terrain tile one zoom coarser covers a 2× region of the hillshade canvas', () => {
     const zHi = 14
-    const zLo = 13 // = min(zHi, Z_TERRAIN_MAX)
+    const zLo = 13 // coarser-than-hillshade underlay zoom
     const cov = { z: zHi, xMin: 8000, yMin: 6000 }
     const r = terrainDestRect(4000, 3000, zLo, cov)
     const scale = Math.pow(2, zHi - zLo) // 2
@@ -49,4 +49,4 @@ describe('terrainDestRect', () => {
   })
 })
 
-it('Z_TERRAIN_MAX is 13', () => expect(Z_TERRAIN_MAX).toBe(13))
+it('Z_TERRAIN_SAFE is 9', () => expect(Z_TERRAIN_SAFE).toBe(9))

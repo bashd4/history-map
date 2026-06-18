@@ -1,8 +1,11 @@
 /** Pure web-mercator tile math + relief compositing helpers. No three.js / DOM. */
 
 export const TILE_SIZE = 256
-/** Esri World Terrain Base has no tiles past ~z13; we stretch it as an underlay. */
-export const Z_TERRAIN_MAX = 13
+/** Esri World Terrain Base coverage thins regionally: US battles reach z13 but
+ *  Europe (Austerlitz) tops out at z9, returning a "map data not yet available"
+ *  placeholder past that. z9 is the highest level with real tiles at ALL our
+ *  battle sites, so we cap the stretched underlay here. */
+export const Z_TERRAIN_SAFE = 9
 
 export const DARK: [number, number, number] = [0x3a, 0x2c, 0x1a]
 export const LIGHT: [number, number, number] = [0xe8, 0xdc, 0xc0]
