@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { phaseSeconds, playbackAt, totalDuration } from '../lib/battlePlayback'
 import type { Battle } from '../data/schema'
 import { useAppStore, type BattleView, type BattleBasemap } from '../state/store'
+import { BattleCompass } from './BattleCompass'
 
 const VIEWS: Array<{ id: BattleView; label: string }> = [
   { id: 'map', label: 'Map' },
@@ -70,6 +71,7 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
 
   return (
     <div className="battle-overlay">
+      <BattleCompass />
       <header className="battle-header">
         <div>
           <h3>{battle.name}</h3>

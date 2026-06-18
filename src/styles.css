@@ -66,6 +66,9 @@ button { font: inherit; cursor: pointer; }
 .battle-caption { grid-column: 1 / -1; font-style: italic; font-size: .9rem; line-height: 1.5; color: #cfc4ab; animation: battleCaptionFade .5s ease; }
 @keyframes battleCaptionFade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
+.battle-compass { position: fixed; top: 5.5rem; left: 1.5rem; width: 56px; height: 56px; pointer-events: none; z-index: 21; filter: drop-shadow(0 1px 4px rgba(0,0,0,.6)); }
+.battle-compass svg { width: 100%; height: 100%; transition: transform .15s linear; transform-origin: 50% 50%; }
+
 .no-webgl { position: fixed; inset: 0; background: #0a0805; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem; padding: 2rem; text-align: center; }
 .no-webgl h1 { font-size: 2.4rem; color: #e8b54a; letter-spacing: 0.06em; font-family: Georgia, 'Times New Roman', serif; }
 .no-webgl p { font-size: 1rem; color: #cfc4ab; max-width: 36rem; line-height: 1.6; }
