@@ -210,4 +210,32 @@ describe('app store', () => {
     useAppStore.getState().reset()
     expect(useAppStore.getState().flight).toBeNull()
   })
+
+  // Map metrics (north angle + metres per pixel)
+  it('northAngle and metersPerPixel start at 0', () => {
+    const s = useAppStore.getState()
+    expect(s.northAngle).toBe(0)
+    expect(s.metersPerPixel).toBe(0)
+  })
+  it('setMapMetrics updates both fields', () => {
+    useAppStore.getState().setMapMetrics({ northAngle: 1.23, metersPerPixel: 42.5 })
+    const s = useAppStore.getState()
+    expect(s.northAngle).toBe(1.23)
+    expect(s.metersPerPixel).toBe(42.5)
+  })
+  it('enterBattle resets northAngle and metersPerPixel to 0', () => {
+    useAppStore.getState().setMapMetrics({ northAngle: 1.23, metersPerPixel: 42.5 })
+    useAppStore.getState().enterBattle(3)
+    const s = useAppStore.getState()
+    expect(s.northAngle).toBe(0)
+    expect(s.metersPerPixel).toBe(0)
+  })
+  it('exitBattle resets northAngle and metersPerPixel to 0', () => {
+    useAppStore.getState().enterBattle(3)
+    useAppStore.getState().setMapMetrics({ northAngle: 0.5, metersPerPixel: 10 })
+    useAppStore.getState().exitBattle()
+    const s = useAppStore.getState()
+    expect(s.northAngle).toBe(0)
+    expect(s.metersPerPixel).toBe(0)
+  })
 })

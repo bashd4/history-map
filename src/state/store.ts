@@ -78,6 +78,11 @@ interface AppState {
   setFlight: (f: FlightState) => void
   setFlightT: (t: number) => void
   clearFlight: () => void
+  /** Screen angle of true north in radians (0 = north-up). 0 = unknown/default. */
+  northAngle: number
+  /** Ground metres covered by one screen pixel. 0 = unknown/unset. */
+  metersPerPixel: number
+  setMapMetrics: (m: { northAngle: number; metersPerPixel: number }) => void
   reset: () => void
 }
 
@@ -91,6 +96,8 @@ const initial = {
   battleBasemap: 'satellite' as BattleBasemap,
   flight: null as FlightState | null,
   flightT: 0,
+  northAngle: 0,
+  metersPerPixel: 0,
   // NOTE: lowPerf is intentionally NOT in initial — it's preserved across resets.
 }
 
@@ -102,9 +109,9 @@ export const useAppStore = create<AppState>((set) => ({
   setJourneyT: (journeyT) => set({ journeyT }),
   setNavigating: (navigating) => set({ navigating }),
   enterBattle: (battleStopIndex) =>
-    set({ mode: 'battle', battleStopIndex, battleElapsed: 0, battlePlaying: true, zoom: 1, battleView: 'map', battleBasemap: 'satellite', flight: null }),
+    set({ mode: 'battle', battleStopIndex, battleElapsed: 0, battlePlaying: true, zoom: 1, battleView: 'map', battleBasemap: 'satellite', flight: null, northAngle: 0, metersPerPixel: 0 }),
   exitBattle: () =>
-    set({ mode: 'journey', battleStopIndex: null, battlePlaying: false, zoom: 1, battleView: 'map', battleBasemap: 'satellite' }),
+    set({ mode: 'journey', battleStopIndex: null, battlePlaying: false, zoom: 1, battleView: 'map', battleBasemap: 'satellite', northAngle: 0, metersPerPixel: 0 }),
   replayBattle: () => set({ battleElapsed: 0, battlePlaying: true }),
   setBattleElapsed: (battleElapsed) => set({ battleElapsed }),
   setBattlePlaying: (battlePlaying) => set({ battlePlaying }),
@@ -119,5 +126,6 @@ export const useAppStore = create<AppState>((set) => ({
   setFlight: (flight) => set({ flight }),
   setFlightT: (flightT) => set({ flightT }),
   clearFlight: () => set({ flight: null }),
+  setMapMetrics: (m) => set(m),
   reset: () => set((s) => ({ ...initial, lowPerf: s.lowPerf })),
 }))

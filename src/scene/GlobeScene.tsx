@@ -7,6 +7,7 @@ import { Starfield } from './Starfield'
 import { RouteArcs, RouteArcsProgress } from './RouteArcs'
 import { CameraRig } from './CameraRig'
 import { BattleControls } from './BattleControls'
+import { CameraHeadingBridge } from './CameraHeadingBridge'
 import { Effects } from './Effects'
 import { journeys, journeyById } from '../journeys'
 import { useAppStore } from '../state/store'
@@ -190,10 +191,13 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
         <CameraRig />
         {/* Battle: OrbitControls (free pan/zoom) after easing to the framing. */}
         {activeBattle && journey && battleStopIndex != null && (
-          <BattleControls
-            site={journey.stops[battleStopIndex].coords}
-            battle={activeBattle}
-          />
+          <>
+            <BattleControls
+              site={journey.stops[battleStopIndex].coords}
+              battle={activeBattle}
+            />
+            <CameraHeadingBridge site={journey.stops[battleStopIndex].coords} />
+          </>
         )}
         {mode === 'hub' && (
           <OrbitControls
