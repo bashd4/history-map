@@ -135,13 +135,13 @@ describe('app store', () => {
     expect(useAppStore.getState().battleView).toBe('field')
   })
   it('battleView resets to map on enterBattle', () => {
-    useAppStore.getState().setBattleView('orbit')
+    useAppStore.getState().setBattleView('field')
     useAppStore.getState().enterBattle(8)
     expect(useAppStore.getState().battleView).toBe('map')
   })
   it('battleView resets to map on exitBattle', () => {
     useAppStore.getState().enterBattle(8)
-    useAppStore.getState().setBattleView('orbit')
+    useAppStore.getState().setBattleView('field')
     useAppStore.getState().exitBattle()
     expect(useAppStore.getState().battleView).toBe('map')
   })
