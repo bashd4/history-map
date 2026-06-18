@@ -5,18 +5,19 @@ const ZOOM_MIN = 0.12
 const ZOOM_MAX = 6
 
 /**
- * Wheel / trackpad-pinch zoom while focused on a stop or battle.
+ * Wheel / trackpad-pinch zoom while focused on a journey stop.
  * Multiplies store.zoom (camera altitude multiplier in CameraRig).
- * Inactive in hub mode. Wheel events over the timeline panel, story card,
- * or battle footer keep their native behavior (list scrolling etc.).
+ * Inactive in hub mode and in battle mode (where OrbitControls owns the wheel for
+ * free zoom). Wheel events over the timeline panel, story card, or battle footer
+ * keep their native behavior (list scrolling etc.).
  */
 export function useWheelZoom() {
   useEffect(() => {
     const handler = (e: WheelEvent) => {
       const { mode, zoom, setZoom, navigating } = useAppStore.getState()
-      // Hub: no zoom. Mid-flight: zoom would scale the CRUISE altitude and
-      // could push the camera through/far from the globe — flights own framing.
-      if (mode === 'hub' || navigating) return
+      // Only journey mode uses the altitude-multiplier zoom. Hub: no zoom.
+      // Battle: OrbitControls owns pan/zoom. Mid-flight: flights own framing.
+      if (mode !== 'journey' || navigating) return
       const target = e.target as Element | null
       if (target?.closest('.timeline-panel, .battle-footer, .story-card')) return
       e.preventDefault()

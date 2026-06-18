@@ -6,7 +6,6 @@ import { useAppStore, type BattleView, type BattleBasemap } from '../state/store
 const VIEWS: Array<{ id: BattleView; label: string }> = [
   { id: 'map', label: 'Map' },
   { id: 'field', label: 'Field' },
-  { id: 'orbit', label: 'Orbit' },
 ]
 
 const BASEMAPS: Array<{ id: BattleBasemap; label: string }> = [

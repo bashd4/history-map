@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 export type Mode = 'hub' | 'journey' | 'battle'
-export type BattleView = 'map' | 'field' | 'orbit'
+export type BattleView = 'map' | 'field'
 export type BattleBasemap = 'satellite' | 'topo'
 
 export interface FlightEndpoint {
@@ -41,8 +41,9 @@ interface AppState {
    *  or battle. 1 = curated framing; <1 closer, >1 further out. Reset to 1 on
    *  enterBattle/exitBattle and when a stop flight starts (goToStop). */
   zoom: number
-  /** Battle camera mode: map = straight down (default), field = oblique from
-   *  fieldAzimuth, orbit = slow rotation around the site. Reset to 'map' on
+  /** Battle camera framing: map = straight down (default), field = oblique from
+   *  fieldAzimuth. Both are freely pannable/zoomable (OrbitControls owns the
+   *  battle camera); the view just sets the initial framing. Reset to 'map' on
    *  enterBattle/exitBattle. */
   battleView: BattleView
   /** Basemap shown during battle. 'satellite' = Google Photorealistic 3D Tiles
