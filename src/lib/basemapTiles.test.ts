@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  pickHillshadeZoom, duotone, DARK, LIGHT, terrainDestRect, TILE_SIZE, Z_TERRAIN_MAX,
-  WATER_DARK, WATER_LIGHT, luminance, contrastStretch, toneRamp, isWaterPixel,
+  pickHillshadeZoom, duotone, DARK, LIGHT, terrainDestRect, TILE_SIZE,
+  luminance, contrastStretch, toneRamp, isHydroWater, WATER_SLATE, Z_HYDRO_MAX,
 } from './basemapTiles'
 
 describe('pickHillshadeZoom', () => {
@@ -50,7 +50,9 @@ describe('terrainDestRect', () => {
   })
 })
 
-it('Z_TERRAIN_MAX is 13', () => expect(Z_TERRAIN_MAX).toBe(13))
+it('Z_HYDRO_MAX is 12', () => expect(Z_HYDRO_MAX).toBe(12))
+
+it('WATER_SLATE is exported', () => expect(WATER_SLATE).toEqual([0x35, 0x5a, 0x74]))
 
 describe('luminance', () => {
   it('maps black → 0 and white → 1', () => {
@@ -75,9 +77,10 @@ describe('contrastStretch', () => {
       expect(v).toBeLessThanOrEqual(1)
     }
   })
-  it('pushes below-mid down and above-mid up (default mid=0.6)', () => {
-    expect(contrastStretch(0.4)).toBeLessThan(0.4) // below mid → darker
-    expect(contrastStretch(0.7)).toBeGreaterThan(0.7) // above mid → lighter
+  it('defaults (k=12, mid=0.93) pivot on mid and expand the high band', () => {
+    expect(contrastStretch(0.93)).toBeCloseTo(0.93, 5) // mid maps to itself
+    expect(contrastStretch(1.0)).toBe(1) // (0.07)*12+0.93 = 1.77 → clamp 1
+    expect(contrastStretch(0.85)).toBe(0) // (−0.08)*12+0.93 = −0.03 → clamp 0
   })
 })
 
@@ -85,19 +88,17 @@ describe('toneRamp', () => {
   it('maps l=0 → dark and l=1 → light', () => {
     expect(toneRamp(0, DARK, LIGHT)).toEqual(DARK)
     expect(toneRamp(1, DARK, LIGHT)).toEqual(LIGHT)
-    expect(toneRamp(0, WATER_DARK, WATER_LIGHT)).toEqual(WATER_DARK)
-    expect(toneRamp(1, WATER_DARK, WATER_LIGHT)).toEqual(WATER_LIGHT)
   })
 })
 
-describe('isWaterPixel', () => {
-  it('is true for a bluish pixel', () => {
-    expect(isWaterPixel(60, 120, 180)).toBe(true)
+describe('isHydroWater', () => {
+  it('is true for water-blue semi-opaque pixel', () => {
+    expect(isHydroWater(40, 80, 160, 255)).toBe(true)
   })
-  it('is false for tan land', () => {
-    expect(isWaterPixel(180, 160, 120)).toBe(false)
+  it('is false for a transparent pixel (land, no overlay)', () => {
+    expect(isHydroWater(0, 0, 255, 0)).toBe(false)
   })
-  it('is false for neutral gray placeholder', () => {
-    expect(isWaterPixel(200, 200, 200)).toBe(false)
+  it('is false for a neutral gray pixel', () => {
+    expect(isHydroWater(200, 200, 200, 255)).toBe(false)
   })
 })

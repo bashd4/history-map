@@ -8,12 +8,12 @@
  * On unmount: disables flat mode so terrain draping resumes.
  *
  * Tile sources (kept in SEPARATE canvases, never multiplied together):
- * - Esri World Hillshade   — grayscale relief, drawn 1:1 into the `hill` canvas.
- * - Esri World Terrain Base — natural color, drawn stretched into the `terra`
- *   canvas; used ONLY to classify water per-pixel (never shown directly), so the
- *   regional "map data not available" placeholder simply classifies as land.
- * `regrade()` then composites both into the parchment "display" canvas with a
- * TWO-TONE grade: contrast-stretched sepia for land, slate-blue for water.
+ * - Esri World Hillshade — grayscale relief, drawn 1:1 into the `hill` canvas.
+ * - USGS Hydro — a transparent river overlay, drawn stretched into the `hydro`
+ *   canvas; semi-opaque blue where there is water, transparent elsewhere. US
+ *   coverage only; outside the US tiles 404 and are ignored (relief-only).
+ * `regrade()` composites both into the parchment "display" canvas: contrast-
+ * stretched sepia relief, with hydro-classified pixels tinted slate-blue.
  * Attribution is shown in BattleOverlay.
  *
  * Mercator UV mapping: the patch geometry maps V using web-mercator Y so that
@@ -35,7 +35,7 @@ import { geodeticToVector3 } from '../lib/geo'
 import { battleExtent } from '../lib/battleExtent'
 import {
   TILE_SIZE,
-  Z_TERRAIN_MAX,
+  Z_HYDRO_MAX,
   mercY,
   lngToTileX,
   latToTileY,
@@ -46,11 +46,11 @@ import {
   luminance,
   contrastStretch,
   toneRamp,
-  isWaterPixel,
+  isHydroWater,
   DARK,
   LIGHT,
-  WATER_DARK,
-  WATER_LIGHT,
+  WATER_SLATE,
+  WATER_ALPHA,
 } from '../lib/basemapTiles'
 import { setFlatMode } from './useTerrainHeights'
 
@@ -113,12 +113,13 @@ function buildPatchGeometry(
 const PARCHMENT_RGB = [0xd9, 0xc9, 0xa8] as const
 const PLACEHOLDER_COLOR = `#${PARCHMENT_RGB.map((c) => c.toString(16).padStart(2, '0')).join('')}`
 
-// Tile URL builders. Hillshade is the PRIMARY relief overlay; Terrain Base the underlay.
+// Tile URL builders. Hillshade is the relief; USGS Hydro is the sparse, transparent
+// river overlay (US coverage only — outside the US it 404s and is ignored).
 const ESRI_HILLSHADE = (z: number, y: number, x: number) =>
   `https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/${z}/${y}/${x}`
 
-const ESRI_TERRAIN_BASE = (z: number, y: number, x: number) =>
-  `https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/${z}/${y}/${x}`
+const USGS_HYDRO = (z: number, y: number, x: number) =>
+  `https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/${z}/${y}/${x}`
 
 interface TileCoverage {
   z: number
@@ -167,9 +168,10 @@ function computeCoverage(center: LatLng, angularRadius: number): TileCoverage {
 interface CacheEntry {
   /** Hillshade tiles only (grayscale relief), drawn 1:1 at cov.z. */
   hill: HTMLCanvasElement
-  /** Terrain Base tiles only (natural color), stretched — water classification only. */
-  terra: HTMLCanvasElement
-  /** Two-tone-graded parchment canvas that backs the CanvasTexture. */
+  /** USGS Hydro tiles (transparent river overlay), stretched. NOT parchment-filled —
+   *  it's a sparse alpha overlay used to classify water per-pixel. */
+  hydro: HTMLCanvasElement
+  /** Graded parchment canvas that backs the CanvasTexture. */
   display: HTMLCanvasElement
   texture: THREE.CanvasTexture | null
   complete: boolean
@@ -206,10 +208,11 @@ function getOrCreateCacheEntry(key: string, cols: number, rows: number): CacheEn
   hill.width = w
   hill.height = h
 
-  // Terrain canvas: natural-color tiles for water classification; left transparent.
-  const terra = document.createElement('canvas')
-  terra.width = w
-  terra.height = h
+  // Hydro canvas: transparent river overlay; left transparent (NOT parchment-filled)
+  // so land pixels keep alpha 0 and never classify as water.
+  const hydro = document.createElement('canvas')
+  hydro.width = w
+  hydro.height = h
 
   // Display canvas backs the texture; parchment-filled so pre-load looks parchment.
   const display = document.createElement('canvas')
@@ -219,29 +222,29 @@ function getOrCreateCacheEntry(key: string, cols: number, rows: number): CacheEn
   dctx.fillStyle = PLACEHOLDER_COLOR
   dctx.fillRect(0, 0, w, h)
 
-  const entry: CacheEntry = { hill, terra, display, texture: null, complete: false }
+  const entry: CacheEntry = { hill, hydro, display, texture: null, complete: false }
   tileCache.set(key, entry)
   cacheKeys.push(key)
   return entry
 }
 
 /**
- * Two-tone grade: composite the `hill` (relief) and `terra` (water-classification)
+ * Grade: composite the `hill` (relief) and `hydro` (transparent river overlay)
  * canvases into the parchment `display` canvas.
  *  - hill alpha 0 → opaque parchment placeholder (preserves the under-load look).
- *  - else: contrast-stretch the hillshade luminance, classify water from terra,
- *    and tone on the sepia (land) or slate-blue (water) ramp.
+ *  - else: contrast-stretch the hillshade luminance onto the sepia ramp; where the
+ *    hydro overlay classifies as water, alpha-blend WATER_SLATE over the sepia.
  */
-function regrade(hill: HTMLCanvasElement, terra: HTMLCanvasElement, display: HTMLCanvasElement) {
+function regrade(hill: HTMLCanvasElement, hydro: HTMLCanvasElement, display: HTMLCanvasElement) {
   const hctx = hill.getContext('2d')!
-  const tctx = terra.getContext('2d')!
+  const uctx = hydro.getContext('2d')!
   const dctx = display.getContext('2d')!
   const w = hill.width, h = hill.height
 
   const himg = hctx.getImageData(0, 0, w, h)
-  const timg = tctx.getImageData(0, 0, w, h)
+  const uimg = uctx.getImageData(0, 0, w, h)
   const hd = himg.data
-  const td = timg.data
+  const ud = uimg.data
 
   for (let i = 0; i < hd.length; i += 4) {
     if (hd[i + 3] === 0) {
@@ -250,9 +253,15 @@ function regrade(hill: HTMLCanvasElement, terra: HTMLCanvasElement, display: HTM
       continue
     }
     const L = contrastStretch(luminance(hd[i], hd[i + 1], hd[i + 2]))
-    const water = td[i + 3] > 0 && isWaterPixel(td[i], td[i + 1], td[i + 2])
-    const [r, g, b] = toneRamp(L, water ? WATER_DARK : DARK, water ? WATER_LIGHT : LIGHT)
-    hd[i] = r; hd[i + 1] = g; hd[i + 2] = b; hd[i + 3] = 255
+    const [sr, sg, sb] = toneRamp(L, DARK, LIGHT)
+    if (isHydroWater(ud[i], ud[i + 1], ud[i + 2], ud[i + 3])) {
+      hd[i] = Math.round(sr * (1 - WATER_ALPHA) + WATER_SLATE[0] * WATER_ALPHA)
+      hd[i + 1] = Math.round(sg * (1 - WATER_ALPHA) + WATER_SLATE[1] * WATER_ALPHA)
+      hd[i + 2] = Math.round(sb * (1 - WATER_ALPHA) + WATER_SLATE[2] * WATER_ALPHA)
+    } else {
+      hd[i] = sr; hd[i + 1] = sg; hd[i + 2] = sb
+    }
+    hd[i + 3] = 255
   }
   dctx.putImageData(himg, 0, 0)
 }
@@ -261,21 +270,22 @@ function regrade(hill: HTMLCanvasElement, terra: HTMLCanvasElement, display: HTM
 const inFlight = new Set<string>()
 
 /**
- * Fetch both Esri sources into their own canvases (source-over, never multiplied):
- * Hillshade into `hill` 1:1 at cov.z; Terrain Base into `terra` stretched from
- * zLo (≤ Z_TERRAIN_MAX). Both passes run in parallel. Hillshade failures leave
- * that cell transparent (regrade fills parchment); terra failures/placeholders
- * are harmless since terra is classification-only.
+ * Fetch both sources into their own canvases (source-over, never multiplied):
+ * Hillshade into `hill` 1:1 at cov.z; USGS Hydro into `hydro` stretched from
+ * zHydro (≤ Z_HYDRO_MAX), preserving its transparency. Both passes run in
+ * parallel. Hillshade failures leave that cell transparent (regrade fills
+ * parchment); hydro failures (404 outside the US, transient 4xx) are ignored
+ * per-tile — just less/no water.
  * Calls onTileDrawn after each tile paint (throttled by caller).
  */
 async function fetchAndStitchProgressive(
   cov: TileCoverage,
   hillCanvas: HTMLCanvasElement,
-  terraCanvas: HTMLCanvasElement,
+  hydroCanvas: HTMLCanvasElement,
   onTileDrawn: () => void,
 ): Promise<void> {
   const hctx = hillCanvas.getContext('2d')!
-  const tctx = terraCanvas.getContext('2d')!
+  const uctx = hydroCanvas.getContext('2d')!
 
   const loadImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
@@ -288,25 +298,27 @@ async function fetchAndStitchProgressive(
 
   const all: Promise<void>[] = []
 
-  // ── Terrain Base pass: drawn into `terra`, stretched from zLo (≤ Z_TERRAIN_MAX) ──
-  const zLo = Math.min(cov.z, Z_TERRAIN_MAX)
-  const txLoMin = lngToTileX(cov.lngMin, zLo)
-  const txLoMax = lngToTileX(cov.lngMax, zLo)
-  const tyLoMin = latToTileY(cov.latMax, zLo) // tile y increases southward
-  const tyLoMax = latToTileY(cov.latMin, zLo)
+  // ── USGS Hydro pass: drawn into `hydro` (source-over, preserves alpha),
+  //    stretched from zHydro (≤ Z_HYDRO_MAX) ──
+  const zHydro = Math.min(cov.z, Z_HYDRO_MAX)
+  const txLoMin = lngToTileX(cov.lngMin, zHydro)
+  const txLoMax = lngToTileX(cov.lngMax, zHydro)
+  const tyLoMin = latToTileY(cov.latMax, zHydro) // tile y increases southward
+  const tyLoMax = latToTileY(cov.latMin, zHydro)
 
   for (let ty = tyLoMin; ty <= tyLoMax; ty++) {
     for (let tx = txLoMin; tx <= txLoMax; tx++) {
       const txc = tx, tyc = ty
       all.push(
-        loadImage(ESRI_TERRAIN_BASE(zLo, tyc, txc))
+        loadImage(USGS_HYDRO(zHydro, tyc, txc))
           .then((img) => {
-            const { dx, dy, dw, dh } = terrainDestRect(txc, tyc, zLo, cov)
-            tctx.drawImage(img, dx, dy, dw, dh)
+            const { dx, dy, dw, dh } = terrainDestRect(txc, tyc, zHydro, cov)
+            uctx.drawImage(img, dx, dy, dw, dh)
             onTileDrawn()
           })
           .catch(() => {
-            // Terrain Base classifies water only — ignore failures/placeholders.
+            // No USGS coverage (404 outside US) or transient error — ignore this
+            // tile; the patch simply shows less/no water there.
           }),
       )
     }
@@ -353,11 +365,11 @@ export function prefetchBasemap(battle: Battle, site: LatLng): void {
   const rows = cov.yMax - cov.yMin + 1
   const entry = getOrCreateCacheEntry(key, cols, rows)
 
-  fetchAndStitchProgressive(cov, entry.hill, entry.terra, () => {
+  fetchAndStitchProgressive(cov, entry.hill, entry.hydro, () => {
     // Prefetch: no texture ref yet, just warm the source canvases.
   }).then(() => {
     // Grade once so the cached display is ready when the component mounts.
-    regrade(entry.hill, entry.terra, entry.display)
+    regrade(entry.hill, entry.hydro, entry.display)
     entry.complete = true
   }).catch((err) => {
     console.warn('[BattleBasemap] prefetch failed:', err)
@@ -461,14 +473,14 @@ export function BattleBasemap({ battle, site }: BattleBasemapProps) {
       const now = performance.now()
       if (now - lastUpdateRef.current < UPDATE_INTERVAL_MS) return
       lastUpdateRef.current = now
-      regrade(entry.hill, entry.terra, entry.display)
+      regrade(entry.hill, entry.hydro, entry.display)
       if (entry.texture) entry.texture.needsUpdate = true
     }
 
-    fetchAndStitchProgressive(coverage, entry.hill, entry.terra, throttledUpdate)
+    fetchAndStitchProgressive(coverage, entry.hill, entry.hydro, throttledUpdate)
       .then(() => {
         entry.complete = true
-        regrade(entry.hill, entry.terra, entry.display)
+        regrade(entry.hill, entry.hydro, entry.display)
         if (entry.texture) entry.texture.needsUpdate = true
       })
       .catch((err) => {

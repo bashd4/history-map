@@ -1,19 +1,23 @@
 /** Pure web-mercator tile math + relief compositing helpers. No three.js / DOM. */
 
 export const TILE_SIZE = 256
-/** Max zoom for the Terrain Base underlay. It is now used ONLY to classify water
- *  per-pixel (never drawn directly), so regional placeholders past this level are
- *  harmless: the "map data not yet available" placeholder is neutral gray and
- *  classifies as land. z13 gives crisp rivers at the US battle sites (Donelson/
- *  Shiloh/Vicksburg/Chattanooga) where Esri has real tiles. */
-export const Z_TERRAIN_MAX = 13
 
 export const DARK: [number, number, number] = [0x3a, 0x2c, 0x1a]
 export const LIGHT: [number, number, number] = [0xe8, 0xdc, 0xc0]
 
-/** Muted slate-blue ramp for water (antique-map blue, not modern cyan). */
-export const WATER_DARK: [number, number, number] = [0x2c, 0x3f, 0x4f]
-export const WATER_LIGHT: [number, number, number] = [0x8f, 0xb0, 0xc4]
+/** Slate-blue for rivers (antique-map water, not modern cyan). */
+export const WATER_SLATE: [number, number, number] = [0x35, 0x5a, 0x74]
+/** Opacity of the water tint over the relief (0..1). */
+export const WATER_ALPHA = 0.85
+/** USGS Hydro is fetched at a capped, lower zoom and stretched — far fewer
+ *  requests than the hillshade grid (USGS rate-limits bursts), and rivers
+ *  read fine at this resolution. */
+export const Z_HYDRO_MAX = 12
+/** True if a USGS Hydro overlay pixel is water (semi-opaque and blue-dominant;
+ *  transparent elsewhere, so land never classifies). */
+export function isHydroWater(r: number, g: number, b: number, a: number): boolean {
+  return a > 40 && b > r + 2
+}
 
 // ── web-mercator tile helpers (copied from BattleBasemap.tsx; exported here) ──
 export function mercY(latDeg: number): number {
@@ -57,9 +61,10 @@ export function luminance(r: number, g: number, b: number): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255
 }
 
-/** Contrast stretch around a mid point; k>1 increases contrast. Clamped 0..1.
- *  Esri hillshade is soft and mid-heavy, so this makes slopes read. */
-export function contrastStretch(l: number, k = 2.0, mid = 0.6): number {
+/** Contrast expansion pivoting on `mid` (mid maps to itself). Esri hillshade
+ *  data clusters near 0.85–1.0, so pivoting on mid=0.93 keeps highlands bright
+ *  parchment while spreading the shadow detail. */
+export function contrastStretch(l: number, k = 12, mid = 0.93): number {
   return Math.min(1, Math.max(0, (l - mid) * k + mid))
 }
 
@@ -72,13 +77,7 @@ export function toneRamp(l: number, dark: readonly [number, number, number], lig
   ]
 }
 
-/** True if a Terrain Base pixel is water (its water is rendered bluish; land is
- *  tan/green; the 'no data' placeholder is neutral gray → not water). */
-export function isWaterPixel(r: number, g: number, b: number): boolean {
-  return b > r + 6 && b > g + 2 && b > 60
-}
-
-/** Destination rect (in the hillshade-addressed canvas) for a Terrain Base tile
+/** Destination rect (in the hillshade-addressed canvas) for an overlay tile
  *  at the coarser zoom zLo. Both sources are web-mercator, so a zLo tile covers
  *  exactly 2^(zHi−zLo) hillshade tiles — integer-aligned, no resampling drift. */
 export function terrainDestRect(
