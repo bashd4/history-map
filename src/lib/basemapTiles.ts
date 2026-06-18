@@ -15,7 +15,7 @@ export const WATER_ALPHA = 0.85
 export const Z_HYDRO_MAX = 12
 /** True if a USGS Hydro overlay pixel is water (semi-opaque and blue-dominant;
  *  transparent elsewhere, so land never classifies). */
-export function isHydroWater(r: number, g: number, b: number, a: number): boolean {
+export function isHydroWater(r: number, _g: number, b: number, a: number): boolean {
   return a > 40 && b > r + 2
 }
 
