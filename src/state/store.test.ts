@@ -155,22 +155,22 @@ describe('app store', () => {
     expect(useAppStore.getState().battleBasemap).toBe('satellite')
   })
   it('setBattleBasemap updates battleBasemap', () => {
-    useAppStore.getState().setBattleBasemap('topo')
-    expect(useAppStore.getState().battleBasemap).toBe('topo')
+    useAppStore.getState().setBattleBasemap('relief')
+    expect(useAppStore.getState().battleBasemap).toBe('relief')
   })
   it('battleBasemap resets to satellite on enterBattle', () => {
-    useAppStore.getState().setBattleBasemap('topo')
+    useAppStore.getState().setBattleBasemap('relief')
     useAppStore.getState().enterBattle(3)
     expect(useAppStore.getState().battleBasemap).toBe('satellite')
   })
   it('battleBasemap resets to satellite on exitBattle', () => {
     useAppStore.getState().enterBattle(3)
-    useAppStore.getState().setBattleBasemap('topo')
+    useAppStore.getState().setBattleBasemap('relief')
     useAppStore.getState().exitBattle()
     expect(useAppStore.getState().battleBasemap).toBe('satellite')
   })
   it('battleBasemap resets to satellite on reset()', () => {
-    useAppStore.getState().setBattleBasemap('topo')
+    useAppStore.getState().setBattleBasemap('relief')
     useAppStore.getState().reset()
     expect(useAppStore.getState().battleBasemap).toBe('satellite')
   })

@@ -10,7 +10,7 @@ const VIEWS: Array<{ id: BattleView; label: string }> = [
 
 const BASEMAPS: Array<{ id: BattleBasemap; label: string }> = [
   { id: 'satellite', label: 'Imagery' },
-  { id: 'topo', label: 'Topo' }, // not "Map" — that label belongs to the view control
+  { id: 'relief', label: 'Relief' }, // not "Map" — that label belongs to the view control
 ]
 
 export function BattleOverlay({ battle }: { battle: Battle }) {
@@ -109,8 +109,8 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
           </div>
           <button className="battle-close" onClick={exitBattle} aria-label="Exit battle">✕</button>
         </div>
-        {battleBasemap === 'topo' && (
-          <div className="topo-attribution">
+        {battleBasemap === 'relief' && (
+          <div className="relief-attribution">
             Basemap &copy; Esri — World Terrain Base
           </div>
         )}

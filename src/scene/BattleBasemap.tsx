@@ -3,13 +3,13 @@
  * and drapes them onto a lat/lng grid patch on the globe, providing a clean
  * cartographic alternative to the Google Photorealistic 3D Tiles.
  *
- * Mounted from GlobeScene only when mode === 'battle' && battleBasemap === 'topo'.
+ * Mounted from GlobeScene only when mode === 'battle' && battleBasemap === 'relief'.
  * On mount: enables flat mode so arrows/annotations sit on the ellipsoid surface.
  * On unmount: disables flat mode so terrain draping resumes.
  *
  * Tile source: Esri World Terrain Base (shaded relief + water, no labels).
  * Fallback: Esri World Hillshade (pure relief, no water) if Terrain Base fails.
- * Attribution is shown in BattleOverlay when topo is active.
+ * Attribution is shown in BattleOverlay when relief is active.
  *
  * Mercator UV mapping: the patch geometry maps V using web-mercator Y so that
  * tiles (which are mercator-projected) align without visible distortion.

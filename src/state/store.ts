@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 export type Mode = 'hub' | 'journey' | 'battle'
 export type BattleView = 'map' | 'field'
-export type BattleBasemap = 'satellite' | 'topo'
+export type BattleBasemap = 'satellite' | 'relief'
 
 export interface FlightEndpoint {
   lat: number
@@ -47,7 +47,7 @@ interface AppState {
    *  enterBattle/exitBattle. */
   battleView: BattleView
   /** Basemap shown during battle. 'satellite' = Google Photorealistic 3D Tiles
-   *  (default). 'topo' = Esri World Topo XYZ tiles stitched onto a globe patch.
+   *  (default). 'relief' = Esri Hillshade + Terrain Base, sepia-graded.
    *  Reset to 'satellite' on enterBattle/exitBattle. */
   battleBasemap: BattleBasemap
   /** Active direct-flight override. When set, CameraRig uses a 2-stop cameraAt

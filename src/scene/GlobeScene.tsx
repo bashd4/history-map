@@ -85,7 +85,7 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
   const battleStopIndex = useAppStore((s) => s.battleStopIndex)
   const nearBattleStopIndex = useAppStore((s) => s.nearBattleStopIndex)
   const battleBasemap = useAppStore((s) => s.battleBasemap)
-  const topoActive = mode === 'battle' && battleBasemap === 'topo'
+  const reliefActive = mode === 'battle' && battleBasemap === 'relief'
 
   // Mode-aware LOD budget: hub auto-rotation churns fine LODs needlessly;
   // journey dwell benefits from medium detail; battle needs maximum detail.
@@ -109,7 +109,7 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
       ? (journey.stops[nearBattleStopIndex]?.coords ?? null)
       : null
 
-  // Prefetch topo tiles when entering battle mode so toggle is instant
+  // Prefetch relief tiles when entering battle mode so toggle is instant
   useEffect(() => {
     if (activeBattle && journey && battleStopIndex != null) {
       prefetchBasemap(activeBattle, journey.stops[battleStopIndex].coords)
@@ -162,15 +162,15 @@ export function GlobeScene({ tabVisible, onContextLost }: GlobeSceneProps) {
                 <TerrainLayer
                   errorTarget={errorTarget}
                   preheat={battleStopCoords ?? undefined}
-                  tilesHidden={topoActive}
+                  tilesHidden={reliefActive}
                 />
               </Suspense>
             </TerrainErrorBoundary>
           )}
-          {/* Topo basemap patch — mounted only in battle mode with topo basemap.
+          {/* Relief basemap patch — mounted only in battle mode with relief basemap.
               Sits above the sepia sphere (radius 1.0001); 3D tiles are hidden.
               Sets flat mode so arrows/annotations sit on the ellipsoid surface. */}
-          {activeBattle && topoActive && (
+          {activeBattle && reliefActive && (
             <BattleBasemap
               battle={activeBattle}
               site={journey!.stops[battleStopIndex!].coords}
