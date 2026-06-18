@@ -3,6 +3,7 @@ import { phaseSeconds, playbackAt, totalDuration } from '../lib/battlePlayback'
 import type { Battle } from '../data/schema'
 import { useAppStore, type BattleView, type BattleBasemap } from '../state/store'
 import { BattleCompass } from './BattleCompass'
+import { BattleScaleBar } from './BattleScaleBar'
 
 const VIEWS: Array<{ id: BattleView; label: string }> = [
   { id: 'map', label: 'Map' },
@@ -72,6 +73,7 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
   return (
     <div className="battle-overlay">
       <BattleCompass />
+      <BattleScaleBar />
       <header className="battle-header">
         <div>
           <h3>{battle.name}</h3>

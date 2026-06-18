@@ -69,6 +69,13 @@ button { font: inherit; cursor: pointer; }
 .battle-compass { position: fixed; top: 5.5rem; left: 1.5rem; width: 56px; height: 56px; pointer-events: none; z-index: 21; filter: drop-shadow(0 1px 4px rgba(0,0,0,.6)); }
 .battle-compass svg { width: 100%; height: 100%; transition: transform .15s linear; transform-origin: 50% 50%; }
 
+.battle-scalebar { position: fixed; bottom: 9rem; left: 1.5rem; pointer-events: none; z-index: 21; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-shadow: 0 1px 3px rgba(0,0,0,.85); }
+.battle-scalebar-label { font-size: 11px; color: #e8dcc3; font-family: Georgia, serif; letter-spacing: .02em; }
+/* "⊔" staple: left/right/bottom edges form the end ticks + baseline. content-box
+ * so the inline `width` is the to-scale tick-to-tick span (borders sit outside it).
+ * min-width floors a near-zero bar at extreme zoom; floored bars aren't to-scale. */
+.battle-scalebar-bar { height: 5px; border: 2px solid #e8dcc3; border-top: none; box-sizing: content-box; min-width: 12px; }
+
 .no-webgl { position: fixed; inset: 0; background: #0a0805; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2rem; padding: 2rem; text-align: center; }
 .no-webgl h1 { font-size: 2.4rem; color: #e8b54a; letter-spacing: 0.06em; font-family: Georgia, 'Times New Roman', serif; }
 .no-webgl p { font-size: 1rem; color: #cfc4ab; max-width: 36rem; line-height: 1.6; }
