@@ -843,7 +843,7 @@ const shiloh: Battle = {
 
 // ─── Vicksburg Campaign ─────────────────────────────────────────────────────
 // Apr-Jul 1863 · Vicksburg 32.3526, -90.8779 · Bruinsburg 31.9665, -91.1262
-// Jackson 32.2988, -90.1848 · Champion Hill 32.3263, -90.5743
+// Jackson 32.2988, -90.1848 · Champion Hill 32.3296, -90.5303
 // Big Black River ~32.345, -90.730
 // NOTE: paths here span up to ~200 km; this is a campaign-scale animation.
 // Union ~77,000 / Confederate ~33,000
