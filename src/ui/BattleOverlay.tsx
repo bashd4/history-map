@@ -115,7 +115,7 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
         </div>
         {battleBasemap === 'relief' && (
           <div className="relief-attribution">
-            Basemap &copy; Esri — World Terrain Base
+            Relief &copy; Esri — World Hillshade, World Terrain Base
           </div>
         )}
       </header>
