@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  pickHillshadeZoom, duotone, DARK, LIGHT, terrainDestRect, TILE_SIZE, Z_TERRAIN_SAFE,
+  pickHillshadeZoom, duotone, DARK, LIGHT, terrainDestRect, TILE_SIZE, Z_TERRAIN_MAX,
+  WATER_DARK, WATER_LIGHT, luminance, contrastStretch, toneRamp, isWaterPixel,
 } from './basemapTiles'
 
 describe('pickHillshadeZoom', () => {
@@ -49,4 +50,54 @@ describe('terrainDestRect', () => {
   })
 })
 
-it('Z_TERRAIN_SAFE is 9', () => expect(Z_TERRAIN_SAFE).toBe(9))
+it('Z_TERRAIN_MAX is 13', () => expect(Z_TERRAIN_MAX).toBe(13))
+
+describe('luminance', () => {
+  it('maps black → 0 and white → 1', () => {
+    expect(luminance(0, 0, 0)).toBe(0)
+    expect(luminance(255, 255, 255)).toBeCloseTo(1, 10)
+  })
+})
+
+describe('contrastStretch', () => {
+  it('is monotonic non-decreasing in l', () => {
+    let prev = -1
+    for (let l = 0; l <= 1.0001; l += 0.05) {
+      const v = contrastStretch(l)
+      expect(v).toBeGreaterThanOrEqual(prev)
+      prev = v
+    }
+  })
+  it('stays within [0, 1]', () => {
+    for (let l = 0; l <= 1.0001; l += 0.1) {
+      const v = contrastStretch(l)
+      expect(v).toBeGreaterThanOrEqual(0)
+      expect(v).toBeLessThanOrEqual(1)
+    }
+  })
+  it('pushes below-mid down and above-mid up (default mid=0.6)', () => {
+    expect(contrastStretch(0.4)).toBeLessThan(0.4) // below mid → darker
+    expect(contrastStretch(0.7)).toBeGreaterThan(0.7) // above mid → lighter
+  })
+})
+
+describe('toneRamp', () => {
+  it('maps l=0 → dark and l=1 → light', () => {
+    expect(toneRamp(0, DARK, LIGHT)).toEqual(DARK)
+    expect(toneRamp(1, DARK, LIGHT)).toEqual(LIGHT)
+    expect(toneRamp(0, WATER_DARK, WATER_LIGHT)).toEqual(WATER_DARK)
+    expect(toneRamp(1, WATER_DARK, WATER_LIGHT)).toEqual(WATER_LIGHT)
+  })
+})
+
+describe('isWaterPixel', () => {
+  it('is true for a bluish pixel', () => {
+    expect(isWaterPixel(60, 120, 180)).toBe(true)
+  })
+  it('is false for tan land', () => {
+    expect(isWaterPixel(180, 160, 120)).toBe(false)
+  })
+  it('is false for neutral gray placeholder', () => {
+    expect(isWaterPixel(200, 200, 200)).toBe(false)
+  })
+})

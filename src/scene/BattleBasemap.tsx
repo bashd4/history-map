@@ -7,11 +7,14 @@
  * On mount: enables flat mode so arrows/annotations sit on the ellipsoid surface.
  * On unmount: disables flat mode so terrain draping resumes.
  *
- * Tile sources (composited):
- * - Esri World Terrain Base — coarse underlay (drawn source-over, stretched).
- * - Esri World Hillshade   — primary relief overlay (drawn multiply).
- * The composited raw canvas is then duotone-graded into a parchment "display"
- * canvas that backs the texture. Attribution is shown in BattleOverlay.
+ * Tile sources (kept in SEPARATE canvases, never multiplied together):
+ * - Esri World Hillshade   — grayscale relief, drawn 1:1 into the `hill` canvas.
+ * - Esri World Terrain Base — natural color, drawn stretched into the `terra`
+ *   canvas; used ONLY to classify water per-pixel (never shown directly), so the
+ *   regional "map data not available" placeholder simply classifies as land.
+ * `regrade()` then composites both into the parchment "display" canvas with a
+ * TWO-TONE grade: contrast-stretched sepia for land, slate-blue for water.
+ * Attribution is shown in BattleOverlay.
  *
  * Mercator UV mapping: the patch geometry maps V using web-mercator Y so that
  * tiles (which are mercator-projected) align without visible distortion.
@@ -32,15 +35,22 @@ import { geodeticToVector3 } from '../lib/geo'
 import { battleExtent } from '../lib/battleExtent'
 import {
   TILE_SIZE,
-  Z_TERRAIN_SAFE,
+  Z_TERRAIN_MAX,
   mercY,
   lngToTileX,
   latToTileY,
   tileXToLng,
   tileYToLat,
   pickHillshadeZoom,
-  duotone,
   terrainDestRect,
+  luminance,
+  contrastStretch,
+  toneRamp,
+  isWaterPixel,
+  DARK,
+  LIGHT,
+  WATER_DARK,
+  WATER_LIGHT,
 } from '../lib/basemapTiles'
 import { setFlatMode } from './useTerrainHeights'
 
@@ -128,15 +138,15 @@ function computeCoverage(center: LatLng, angularRadius: number): TileCoverage {
   const lngMin = center.lng - lngDelta
   const lngMax = center.lng + lngDelta
 
-  let z = pickHillshadeZoom(lngDelta * 2)
+  let z = pickHillshadeZoom(lngDelta * 2, 10)
 
   let xMin = lngToTileX(lngMin, z)
   let xMax = lngToTileX(lngMax, z)
   let yMin = latToTileY(latMax, z) // note: tile y increases southward
   let yMax = latToTileY(latMin, z)
 
-  // Cap the tile budget: drop a zoom until the patch fits in ≤64 tiles.
-  while ((xMax - xMin + 1) * (yMax - yMin + 1) > 64 && z > 7) {
+  // Cap the tile budget: drop a zoom until the patch fits in ≤100 tiles.
+  while ((xMax - xMin + 1) * (yMax - yMin + 1) > 100 && z > 7) {
     z--
     xMin = lngToTileX(lngMin, z)
     xMax = lngToTileX(lngMax, z)
@@ -155,9 +165,11 @@ function computeCoverage(center: LatLng, angularRadius: number): TileCoverage {
 // ─── Module-level tile cache ──────────────────────────────────────────────────
 
 interface CacheEntry {
-  /** Composited source tiles (terrain underlay + hillshade multiply), ungraded. */
-  raw: HTMLCanvasElement
-  /** Duotone-graded parchment canvas that backs the CanvasTexture. */
+  /** Hillshade tiles only (grayscale relief), drawn 1:1 at cov.z. */
+  hill: HTMLCanvasElement
+  /** Terrain Base tiles only (natural color), stretched — water classification only. */
+  terra: HTMLCanvasElement
+  /** Two-tone-graded parchment canvas that backs the CanvasTexture. */
   display: HTMLCanvasElement
   texture: THREE.CanvasTexture | null
   complete: boolean
@@ -189,10 +201,15 @@ function getOrCreateCacheEntry(key: string, cols: number, rows: number): CacheEn
   const w = cols * TILE_SIZE
   const h = rows * TILE_SIZE
 
-  // Raw canvas holds the composited tiles; left transparent (placeholder is on display).
-  const raw = document.createElement('canvas')
-  raw.width = w
-  raw.height = h
+  // Hillshade canvas: grayscale relief tiles; left transparent until tiles arrive.
+  const hill = document.createElement('canvas')
+  hill.width = w
+  hill.height = h
+
+  // Terrain canvas: natural-color tiles for water classification; left transparent.
+  const terra = document.createElement('canvas')
+  terra.width = w
+  terra.height = h
 
   // Display canvas backs the texture; parchment-filled so pre-load looks parchment.
   const display = document.createElement('canvas')
@@ -202,46 +219,63 @@ function getOrCreateCacheEntry(key: string, cols: number, rows: number): CacheEn
   dctx.fillStyle = PLACEHOLDER_COLOR
   dctx.fillRect(0, 0, w, h)
 
-  const entry: CacheEntry = { raw, display, texture: null, complete: false }
+  const entry: CacheEntry = { hill, terra, display, texture: null, complete: false }
   tileCache.set(key, entry)
   cacheKeys.push(key)
   return entry
 }
 
-/** Duotone-grade the composited raw canvas into the parchment display canvas. */
-function regrade(raw: HTMLCanvasElement, display: HTMLCanvasElement) {
-  const rctx = raw.getContext('2d')!, dctx = display.getContext('2d')!
-  const img = rctx.getImageData(0, 0, raw.width, raw.height)
-  const d = img.data
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3] === 0) {
-      // Raw not drawn yet (or both sources failed) → opaque parchment placeholder.
-      d[i] = PARCHMENT_RGB[0]; d[i + 1] = PARCHMENT_RGB[1]; d[i + 2] = PARCHMENT_RGB[2]; d[i + 3] = 255
-    } else {
-      const [r, g, b] = duotone(d[i], d[i + 1], d[i + 2])
-      d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = 255
+/**
+ * Two-tone grade: composite the `hill` (relief) and `terra` (water-classification)
+ * canvases into the parchment `display` canvas.
+ *  - hill alpha 0 → opaque parchment placeholder (preserves the under-load look).
+ *  - else: contrast-stretch the hillshade luminance, classify water from terra,
+ *    and tone on the sepia (land) or slate-blue (water) ramp.
+ */
+function regrade(hill: HTMLCanvasElement, terra: HTMLCanvasElement, display: HTMLCanvasElement) {
+  const hctx = hill.getContext('2d')!
+  const tctx = terra.getContext('2d')!
+  const dctx = display.getContext('2d')!
+  const w = hill.width, h = hill.height
+
+  const himg = hctx.getImageData(0, 0, w, h)
+  const timg = tctx.getImageData(0, 0, w, h)
+  const hd = himg.data
+  const td = timg.data
+
+  for (let i = 0; i < hd.length; i += 4) {
+    if (hd[i + 3] === 0) {
+      // Hillshade not drawn yet (or failed) → opaque parchment placeholder.
+      hd[i] = PARCHMENT_RGB[0]; hd[i + 1] = PARCHMENT_RGB[1]; hd[i + 2] = PARCHMENT_RGB[2]; hd[i + 3] = 255
+      continue
     }
+    const L = contrastStretch(luminance(hd[i], hd[i + 1], hd[i + 2]))
+    const water = td[i + 3] > 0 && isWaterPixel(td[i], td[i + 1], td[i + 2])
+    const [r, g, b] = toneRamp(L, water ? WATER_DARK : DARK, water ? WATER_LIGHT : LIGHT)
+    hd[i] = r; hd[i + 1] = g; hd[i + 2] = b; hd[i + 3] = 255
   }
-  dctx.putImageData(img, 0, 0)
+  dctx.putImageData(himg, 0, 0)
 }
 
 // Track in-flight fetches so StrictMode double-invocation doesn't double-fetch
 const inFlight = new Set<string>()
 
 /**
- * Composite both Esri sources into the raw canvas, drawing each tile as it arrives.
- * Terrain Base is the source-over underlay (stretched from a coarser zoom);
- * Hillshade is the multiply overlay at the chosen zoom. Both passes run in
- * parallel — z-order is correct regardless of arrival order because terrain is
- * source-over and hillshade is multiply.
+ * Fetch both Esri sources into their own canvases (source-over, never multiplied):
+ * Hillshade into `hill` 1:1 at cov.z; Terrain Base into `terra` stretched from
+ * zLo (≤ Z_TERRAIN_MAX). Both passes run in parallel. Hillshade failures leave
+ * that cell transparent (regrade fills parchment); terra failures/placeholders
+ * are harmless since terra is classification-only.
  * Calls onTileDrawn after each tile paint (throttled by caller).
  */
 async function fetchAndStitchProgressive(
   cov: TileCoverage,
-  rawCanvas: HTMLCanvasElement,
+  hillCanvas: HTMLCanvasElement,
+  terraCanvas: HTMLCanvasElement,
   onTileDrawn: () => void,
 ): Promise<void> {
-  const ctx = rawCanvas.getContext('2d')!
+  const hctx = hillCanvas.getContext('2d')!
+  const tctx = terraCanvas.getContext('2d')!
 
   const loadImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
@@ -254,8 +288,8 @@ async function fetchAndStitchProgressive(
 
   const all: Promise<void>[] = []
 
-  // ── Underlay pass: Terrain Base, stretched from zLo (≤ Z_TERRAIN_SAFE) ──
-  const zLo = Math.min(cov.z, Z_TERRAIN_SAFE)
+  // ── Terrain Base pass: drawn into `terra`, stretched from zLo (≤ Z_TERRAIN_MAX) ──
+  const zLo = Math.min(cov.z, Z_TERRAIN_MAX)
   const txLoMin = lngToTileX(cov.lngMin, zLo)
   const txLoMax = lngToTileX(cov.lngMax, zLo)
   const tyLoMin = latToTileY(cov.latMax, zLo) // tile y increases southward
@@ -268,30 +302,28 @@ async function fetchAndStitchProgressive(
         loadImage(ESRI_TERRAIN_BASE(zLo, tyc, txc))
           .then((img) => {
             const { dx, dy, dw, dh } = terrainDestRect(txc, tyc, zLo, cov)
-            ctx.drawImage(img, dx, dy, dw, dh)
+            tctx.drawImage(img, dx, dy, dw, dh)
             onTileDrawn()
           })
           .catch(() => {
-            // Terrain Base is an optional underlay — ignore failures.
+            // Terrain Base classifies water only — ignore failures/placeholders.
           }),
       )
     }
   }
 
-  // ── Relief pass: Hillshade (multiply) at cov.z ──
+  // ── Hillshade pass: drawn into `hill` 1:1 at cov.z ──
   for (let ty = cov.yMin; ty <= cov.yMax; ty++) {
     for (let tx = cov.xMin; tx <= cov.xMax; tx++) {
       const txc = tx, tyc = ty
       all.push(
         loadImage(ESRI_HILLSHADE(cov.z, tyc, txc))
           .then((img) => {
-            ctx.globalCompositeOperation = 'multiply'
-            ctx.drawImage(img, (txc - cov.xMin) * TILE_SIZE, (tyc - cov.yMin) * TILE_SIZE)
-            ctx.globalCompositeOperation = 'source-over'
+            hctx.drawImage(img, (txc - cov.xMin) * TILE_SIZE, (tyc - cov.yMin) * TILE_SIZE)
             onTileDrawn()
           })
           .catch(() => {
-            // Hillshade is the critical relief layer; cell stays placeholder.
+            // Hillshade is the critical relief layer; cell stays transparent.
             console.warn(`[BattleBasemap] hillshade tile ${cov.z}/${tyc}/${txc} failed`)
           }),
       )
@@ -310,7 +342,7 @@ const UPDATE_INTERVAL_MS = 250 // ≤4 updates/sec
  */
 export function prefetchBasemap(battle: Battle, site: LatLng): void {
   const rawExtent = battleExtent(battle, site)
-  const angularRadius = Math.max(0.0015, Math.min(0.08, rawExtent * 2.5))
+  const angularRadius = Math.max(0.0015, Math.min(0.08, rawExtent * 2.0))
   const cov = computeCoverage(site, angularRadius)
   const key = cacheKey(battle.name, cov.z)
 
@@ -321,11 +353,11 @@ export function prefetchBasemap(battle: Battle, site: LatLng): void {
   const rows = cov.yMax - cov.yMin + 1
   const entry = getOrCreateCacheEntry(key, cols, rows)
 
-  fetchAndStitchProgressive(cov, entry.raw, () => {
-    // Prefetch: no texture ref yet, just warm the raw canvas.
+  fetchAndStitchProgressive(cov, entry.hill, entry.terra, () => {
+    // Prefetch: no texture ref yet, just warm the source canvases.
   }).then(() => {
     // Grade once so the cached display is ready when the component mounts.
-    regrade(entry.raw, entry.display)
+    regrade(entry.hill, entry.terra, entry.display)
     entry.complete = true
   }).catch((err) => {
     console.warn('[BattleBasemap] prefetch failed:', err)
@@ -338,7 +370,7 @@ export function prefetchBasemap(battle: Battle, site: LatLng): void {
  *  meets ~1 texel/screen-pixel, so OrbitControls can clamp zoom-in to avoid blur. */
 export function reliefSharpFloor(battle: Battle, site: LatLng): number {
   const rawExtent = battleExtent(battle, site)
-  const angularRadius = Math.max(0.0015, Math.min(0.08, rawExtent * 2.5))
+  const angularRadius = Math.max(0.0015, Math.min(0.08, rawExtent * 2.0))
   const cov = computeCoverage(site, angularRadius)
   // ground width of the patch (metres) / canvas px width = metres per texel
   const R_EARTH = 6_371_000
@@ -369,7 +401,7 @@ export function BattleBasemap({ battle, site }: BattleBasemapProps) {
   // Compute coverage once (battle/site never change during a battle session)
   const coverage = useMemo(() => {
     const rawExtent = battleExtent(battle, site)
-    const angularRadius = Math.max(0.0015, Math.min(0.08, rawExtent * 2.5))
+    const angularRadius = Math.max(0.0015, Math.min(0.08, rawExtent * 2.0))
     return computeCoverage(site, angularRadius)
   }, [battle, site])
 
@@ -429,14 +461,14 @@ export function BattleBasemap({ battle, site }: BattleBasemapProps) {
       const now = performance.now()
       if (now - lastUpdateRef.current < UPDATE_INTERVAL_MS) return
       lastUpdateRef.current = now
-      regrade(entry.raw, entry.display)
+      regrade(entry.hill, entry.terra, entry.display)
       if (entry.texture) entry.texture.needsUpdate = true
     }
 
-    fetchAndStitchProgressive(coverage, entry.raw, throttledUpdate)
+    fetchAndStitchProgressive(coverage, entry.hill, entry.terra, throttledUpdate)
       .then(() => {
         entry.complete = true
-        regrade(entry.raw, entry.display)
+        regrade(entry.hill, entry.terra, entry.display)
         if (entry.texture) entry.texture.needsUpdate = true
       })
       .catch((err) => {

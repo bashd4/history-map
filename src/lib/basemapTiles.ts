@@ -1,14 +1,19 @@
 /** Pure web-mercator tile math + relief compositing helpers. No three.js / DOM. */
 
 export const TILE_SIZE = 256
-/** Esri World Terrain Base coverage thins regionally: US battles reach z13 but
- *  Europe (Austerlitz) tops out at z9, returning a "map data not yet available"
- *  placeholder past that. z9 is the highest level with real tiles at ALL our
- *  battle sites, so we cap the stretched underlay here. */
-export const Z_TERRAIN_SAFE = 9
+/** Max zoom for the Terrain Base underlay. It is now used ONLY to classify water
+ *  per-pixel (never drawn directly), so regional placeholders past this level are
+ *  harmless: the "map data not yet available" placeholder is neutral gray and
+ *  classifies as land. z13 gives crisp rivers at the US battle sites (Donelson/
+ *  Shiloh/Vicksburg/Chattanooga) where Esri has real tiles. */
+export const Z_TERRAIN_MAX = 13
 
 export const DARK: [number, number, number] = [0x3a, 0x2c, 0x1a]
 export const LIGHT: [number, number, number] = [0xe8, 0xdc, 0xc0]
+
+/** Muted slate-blue ramp for water (antique-map blue, not modern cyan). */
+export const WATER_DARK: [number, number, number] = [0x2c, 0x3f, 0x4f]
+export const WATER_LIGHT: [number, number, number] = [0x8f, 0xb0, 0xc4]
 
 // ── web-mercator tile helpers (copied from BattleBasemap.tsx; exported here) ──
 export function mercY(latDeg: number): number {
@@ -45,6 +50,32 @@ export function duotone(r: number, g: number, b: number): [number, number, numbe
     Math.round(DARK[1] + (LIGHT[1] - DARK[1]) * l),
     Math.round(DARK[2] + (LIGHT[2] - DARK[2]) * l),
   ]
+}
+
+/** Perceptual luminance 0..1. */
+export function luminance(r: number, g: number, b: number): number {
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255
+}
+
+/** Contrast stretch around a mid point; k>1 increases contrast. Clamped 0..1.
+ *  Esri hillshade is soft and mid-heavy, so this makes slopes read. */
+export function contrastStretch(l: number, k = 2.0, mid = 0.6): number {
+  return Math.min(1, Math.max(0, (l - mid) * k + mid))
+}
+
+/** Linear tone ramp dark→light at luminance l. */
+export function toneRamp(l: number, dark: readonly [number, number, number], light: readonly [number, number, number]): [number, number, number] {
+  return [
+    Math.round(dark[0] + (light[0] - dark[0]) * l),
+    Math.round(dark[1] + (light[1] - dark[1]) * l),
+    Math.round(dark[2] + (light[2] - dark[2]) * l),
+  ]
+}
+
+/** True if a Terrain Base pixel is water (its water is rendered bluish; land is
+ *  tan/green; the 'no data' placeholder is neutral gray → not water). */
+export function isWaterPixel(r: number, g: number, b: number): boolean {
+  return b > r + 6 && b > g + 2 && b > 60
 }
 
 /** Destination rect (in the hillshade-addressed canvas) for a Terrain Base tile
