@@ -42,7 +42,7 @@ import {
   tileXToLng,
   tileYToLat,
   pickHillshadeZoom,
-  terrainDestRect,
+  overlayDestRect,
   luminance,
   contrastStretch,
   toneRamp,
@@ -241,6 +241,7 @@ function regrade(hill: HTMLCanvasElement, hydro: HTMLCanvasElement, display: HTM
   const dctx = display.getContext('2d')!
   const w = hill.width, h = hill.height
 
+  // Two full-canvas readbacks per call — load-time only (throttled ≤4/sec, stops at complete).
   const himg = hctx.getImageData(0, 0, w, h)
   const uimg = uctx.getImageData(0, 0, w, h)
   const hd = himg.data
@@ -312,7 +313,7 @@ async function fetchAndStitchProgressive(
       all.push(
         loadImage(USGS_HYDRO(zHydro, tyc, txc))
           .then((img) => {
-            const { dx, dy, dw, dh } = terrainDestRect(txc, tyc, zHydro, cov)
+            const { dx, dy, dw, dh } = overlayDestRect(txc, tyc, zHydro, cov)
             uctx.drawImage(img, dx, dy, dw, dh)
             onTileDrawn()
           })

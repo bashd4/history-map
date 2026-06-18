@@ -46,16 +46,6 @@ export function pickHillshadeZoom(coverageLngDeg: number, tilesAcross = 8, maxZo
   return Math.max(7, Math.min(maxZoom, z))
 }
 
-/** Luminance → parchment duotone. Pure; always reads raw RGB (never re-grades). */
-export function duotone(r: number, g: number, b: number): [number, number, number] {
-  const l = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-  return [
-    Math.round(DARK[0] + (LIGHT[0] - DARK[0]) * l),
-    Math.round(DARK[1] + (LIGHT[1] - DARK[1]) * l),
-    Math.round(DARK[2] + (LIGHT[2] - DARK[2]) * l),
-  ]
-}
-
 /** Perceptual luminance 0..1. */
 export function luminance(r: number, g: number, b: number): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255
@@ -77,10 +67,10 @@ export function toneRamp(l: number, dark: readonly [number, number, number], lig
   ]
 }
 
-/** Destination rect (in the hillshade-addressed canvas) for an overlay tile
- *  at the coarser zoom zLo. Both sources are web-mercator, so a zLo tile covers
+/** Destination rect (in the hillshade-addressed canvas) for a coarser-zoom overlay tile
+ *  at zoom zLo. Both sources are web-mercator, so a zLo tile covers
  *  exactly 2^(zHi−zLo) hillshade tiles — integer-aligned, no resampling drift. */
-export function terrainDestRect(
+export function overlayDestRect(
   txLo: number, tyLo: number, zLo: number,
   cov: { z: number; xMin: number; yMin: number },
 ): { dx: number; dy: number; dw: number; dh: number } {
