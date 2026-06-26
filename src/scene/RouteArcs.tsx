@@ -28,11 +28,12 @@ function useMarkerPositions(journey: Journey): THREE.Vector3[] {
 /** Marker radius as a fraction of frustum half-height — constant screen size at any zoom. */
 const MARKER_FRAC = 0.0135
 
-/** Faint full-route dash sizing IN SCREEN PIXELS — kept constant at any zoom/leg
- *  length by scaling the world dash with camera distance (see RouteArcs useFrame),
- *  so short clustered legs show even dots instead of collapsing to a solid line. */
-const ROUTE_DASH_PX = 2.5
-const ROUTE_GAP_PX = 5.5
+/** Faint full-route dash sizing IN SCREEN PIXELS — scaled with camera distance so
+ *  short clustered legs show even dots instead of a solid line. The world size is
+ *  QUANTIZED to power-of-2 steps (see RouteArcs useFrame) so it holds constant
+ *  through a zoom (no crawling dots), re-normalizing only at 2x thresholds. */
+const ROUTE_DASH_PX = 3.5
+const ROUTE_GAP_PX = 6.5
 
 /** Marker scale via the shared screen-size helper (see src/lib/screenScale.ts). */
 function markerScale(camera: THREE.Camera, markerPos: THREE.Vector3): number {
@@ -69,9 +70,12 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
       const dist = camera.position.length() // ≈ distance to the globe the route wraps
       const fov = ((camera as THREE.PerspectiveCamera).fov ?? 45) * (Math.PI / 180)
       const worldPerPx = (2 * dist * Math.tan(fov / 2)) / size.height
+      // Snap to the nearest power-of-2 world scale: constant within a zoom level so
+      // the dashes don't crawl while zooming; jumps once per 2x zoom, barely seen.
+      const q = Math.pow(2, Math.round(Math.log2(worldPerPx)))
       const mat = line.material as unknown as { dashSize: number; gapSize: number }
-      mat.dashSize = ROUTE_DASH_PX * worldPerPx
-      mat.gapSize = ROUTE_GAP_PX * worldPerPx
+      mat.dashSize = ROUTE_DASH_PX * q
+      mat.gapSize = ROUTE_GAP_PX * q
     }
     // Battle mode dives the camera to the surface — even clamped markers
     // dominate the frame there, so hide them outright.
