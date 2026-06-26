@@ -81,22 +81,23 @@ export const napoleon: Journey = {
     {
       // Pratzen Heights (Pracký kopec / Pratzenberg): the gently-sloping plateau
       // between the Goldbach (Říčka) valley to the west and the Litava to the east.
-      // Highest point ~324 m near Prácě village (49.141, 16.765).
-      // The plateau runs roughly NW–SE from Blasovice road down toward Újezd.
-      // Polygon verified against: Prácě ~49.141,16.765; Kobylnice W edge ~49.138,16.732;
-      // Sokolnice NE rim ~49.114,16.735; Újezd NW ~49.104,16.757; Slavkov road E ~49.128,16.800.
+      // Re-centred (June 2026) onto the actual plateau, verified against relief +
+      // landmark anchors: Cairn of Peace / Mohyla míru ~49.1228,16.7758 (the high
+      // point); Prace village ~49.1235,16.7685 (W foot); Staré Vinohrady ~49.1295,
+      // 16.779 (N height where the Russian Guard counter-attacked). The earlier
+      // outline used a Prácě coord of 49.141 (~2 km too far N) and was skewed NW
+      // off the plateau into flatter ground.
       name: 'Pratzen Heights',
       kind: 'terrain',
       outline: [
-        { lat: 49.14500, lng: 16.74500 }, // NW corner, above Kobylnice
-        { lat: 49.14800, lng: 16.76500 }, // N edge near Prácě–Blažovice road
-        { lat: 49.14200, lng: 16.78200 }, // NE corner toward Blažovice
-        { lat: 49.13000, lng: 16.79000 }, // E edge above Újezd
-        { lat: 49.11800, lng: 16.78500 }, // SE edge
-        { lat: 49.10800, lng: 16.76800 }, // S point above Újezd
-        { lat: 49.11000, lng: 16.75000 }, // SW foot of heights
-        { lat: 49.12000, lng: 16.73800 }, // W foot, above Sokolnice
-        { lat: 49.13500, lng: 16.73500 }, // W slope toward Kobylnice
+        { lat: 49.13300, lng: 16.77300 }, // N, Staré Vinohrady height
+        { lat: 49.13000, lng: 16.78500 }, // NE
+        { lat: 49.12300, lng: 16.79000 }, // E edge, above the Litava/Rausnitz fall
+        { lat: 49.11600, lng: 16.78500 }, // SE
+        { lat: 49.11400, lng: 16.77400 }, // S, toward the Pratzen–Sokolnice rim
+        { lat: 49.11700, lng: 16.76200 }, // SW foot
+        { lat: 49.12400, lng: 16.75800 }, // W foot, above Prace toward the Goldbach
+        { lat: 49.13000, lng: 16.76300 }, // NW slope
       ],
     },
     {
@@ -256,7 +257,7 @@ export const napoleon: Journey = {
       duration: 7,
       events: [
         { coords: { lat: 49.17977, lng: 16.73840 }, label: "Napoleon orders Soult\'s assault from Žuráň hill — \"One" },
-        { coords: { lat: 49.14111, lng: 16.76528 }, label: 'Prácě village — epicentre of the Pratzen Heights assault' },
+        { coords: { lat: 49.12350, lng: 16.76850 }, label: 'Prácě village — epicentre of the Pratzen Heights assault' },
       ],
       movements: [
         {
