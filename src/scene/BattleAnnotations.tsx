@@ -1,6 +1,8 @@
 import { useMemo, useRef, type CSSProperties } from 'react'
 import { Html, Line } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import type { Line2 } from 'three-stdlib'
 import type { Battle } from '../data/schema'
 import { geodeticToVector3, slerpUnit, vector3ToGeodetic } from '../lib/geo'
 import { playbackAt } from '../lib/battlePlayback'
@@ -14,6 +16,11 @@ const LABEL_CLEARANCE = 0.00002
 
 /** Number of slerp subdivisions per outline edge to follow globe curvature */
 const SEGS_PER_EDGE = 8
+
+/** Dashed-outline dot/gap target size IN SCREEN PIXELS (kept constant at any zoom
+ *  by scaling the world dash with camera distance — see AreaAnnotation). */
+const DASH_PX = 7
+const GAP_PX = 5
 
 const KIND_COLOR: Record<string, string> = {
   terrain: '#cfc4ab',
@@ -130,9 +137,26 @@ function AreaAnnotation({
   color: string
 }) {
   const nameRef = useRef<HTMLSpanElement>(null)
+  const lineRef = useRef<Line2>(null)
+
+  // Screen-space dashes: scale the world dash/gap by camera distance so the dots
+  // stay a constant size on screen at any zoom. Without this the fixed world dash
+  // dwarfs a small area's perimeter when zoomed out, collapsing it to a solid line.
+  useFrame(({ camera, size }) => {
+    const line = lineRef.current
+    if (!line) return
+    const dist = camera.position.distanceTo(centroid)
+    const fov = ((camera as THREE.PerspectiveCamera).fov ?? 45) * (Math.PI / 180)
+    const worldPerPx = (2 * dist * Math.tan(fov / 2)) / size.height
+    const mat = line.material as unknown as { dashSize: number; gapSize: number }
+    mat.dashSize = DASH_PX * worldPerPx
+    mat.gapSize = GAP_PX * worldPerPx
+  })
+
   return (
     <group>
       <Line
+        ref={lineRef}
         points={loop}
         color={color}
         lineWidth={1.5}
