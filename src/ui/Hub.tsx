@@ -12,8 +12,8 @@ export function Hub() {
 
   return (
     <div className="overlay hub">
-      <h1>Paths of History</h1>
-      <p className="tagline">Journeys of historical figures, told on the globe.</p>
+      <h1>Ulysses S. Grant's Personal Memoirs</h1>
+      <p className="tagline">His life, told on the globe — seventy chapters in his own words.</p>
       <nav>
         {journeys.map((j) => (
           <Link key={j.id} to={`/${j.id}`} className="journey-link"

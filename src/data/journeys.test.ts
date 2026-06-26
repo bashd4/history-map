@@ -7,7 +7,8 @@ describe('journey data files', () => {
   for (const j of journeys) {
     it(`${j.id ?? '?'} passes schema validation`, () => { journeySchema.parse(j) })
   }
-  it('napoleon has exactly one battle (Austerlitz)', () => {
+  // Napoleon journey temporarily disabled in the registry — un-skip to restore.
+  it.skip('napoleon has exactly one battle (Austerlitz)', () => {
     const napoleon = journeys.find((j) => j.id === 'napoleon')!
     const battles = napoleon.stops.filter((s) => s.battle)
     expect(battles).toHaveLength(1)

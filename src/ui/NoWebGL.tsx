@@ -10,7 +10,7 @@ export function NoWebGL({ reason = 'unsupported' }: NoWebGLProps) {
 
   return (
     <div className="no-webgl">
-      <h1>Paths of History</h1>
+      <h1>Ulysses S. Grant's Personal Memoirs</h1>
       <p>{message}</p>
     </div>
   )
