@@ -121,7 +121,7 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
           <meshBasicMaterial
             color={journey.color}
             transparent
-            opacity={dim ? 0.4 : 1}
+            opacity={dim ? 0.7 : 1}
           />
         </mesh>
       ))}
