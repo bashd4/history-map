@@ -5,14 +5,14 @@ import { useAppStore, type BattleView, type BattleBasemap } from '../state/store
 import { BattleCompass } from './BattleCompass'
 import { BattleScaleBar } from './BattleScaleBar'
 
+// 'field' view and 'relief' basemap are temporarily disabled (kept in the store +
+// scene code; just not offered in the UI). Re-add the entries to bring them back.
 const VIEWS: Array<{ id: BattleView; label: string }> = [
   { id: 'map', label: 'Map' },
-  { id: 'field', label: 'Field' },
 ]
 
 const BASEMAPS: Array<{ id: BattleBasemap; label: string }> = [
   { id: 'satellite', label: 'Imagery' },
-  { id: 'relief', label: 'Relief' }, // not "Map" — that label belongs to the view control
 ]
 
 export function BattleOverlay({ battle }: { battle: Battle }) {
@@ -91,26 +91,30 @@ export function BattleOverlay({ battle }: { battle: Battle }) {
           )}
         </div>
         <div className="battle-header-right">
-          <div className="battle-basemap-switcher" role="group" aria-label="Basemap">
-            {BASEMAPS.map((b) => (
-              <button key={b.id}
-                className={`battle-view-btn${battleBasemap === b.id ? ' battle-view-btn--active' : ''}`}
-                aria-pressed={battleBasemap === b.id}
-                onClick={() => setBattleBasemap(b.id)}>
-                {b.label}
-              </button>
-            ))}
-          </div>
-          <div className="battle-view-switcher" role="group" aria-label="Camera view">
-            {VIEWS.map((v) => (
-              <button key={v.id}
-                className={`battle-view-btn${battleView === v.id ? ' battle-view-btn--active' : ''}`}
-                aria-pressed={battleView === v.id}
-                onClick={() => setBattleView(v.id)}>
-                {v.label}
-              </button>
-            ))}
-          </div>
+          {BASEMAPS.length > 1 && (
+            <div className="battle-basemap-switcher" role="group" aria-label="Basemap">
+              {BASEMAPS.map((b) => (
+                <button key={b.id}
+                  className={`battle-view-btn${battleBasemap === b.id ? ' battle-view-btn--active' : ''}`}
+                  aria-pressed={battleBasemap === b.id}
+                  onClick={() => setBattleBasemap(b.id)}>
+                  {b.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {VIEWS.length > 1 && (
+            <div className="battle-view-switcher" role="group" aria-label="Camera view">
+              {VIEWS.map((v) => (
+                <button key={v.id}
+                  className={`battle-view-btn${battleView === v.id ? ' battle-view-btn--active' : ''}`}
+                  aria-pressed={battleView === v.id}
+                  onClick={() => setBattleView(v.id)}>
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          )}
           <button className="battle-close" onClick={exitBattle} aria-label="Exit battle">✕</button>
         </div>
         {battleBasemap === 'relief' && (
