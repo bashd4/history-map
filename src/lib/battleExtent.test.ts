@@ -53,7 +53,14 @@ describe('battleExtent', () => {
 describe('battleFrameAltitude', () => {
   it('clamps tiny battles to the close floor', () => {
     const b = makeBattle([[{ lat: 0, lng: 0.001 }, { lat: 0, lng: 0.002 }]])
-    expect(battleFrameAltitude(b, site)).toBe(0.0015)
+    expect(battleFrameAltitude(b, site)).toBe(0.0009)
+  })
+
+  it('applies frameScale to pull the framing in', () => {
+    // mid-size battle; frameScale 0.5 halves the altitude (still above the floor)
+    const b = makeBattle([[{ lat: 0, lng: 0.5 }, { lat: 0, lng: 1 }]])
+    b.frameScale = 0.5
+    expect(battleFrameAltitude(b, site)).toBeCloseTo(0.01745 * 3.3 * 0.5, 3)
   })
 
   it('scales mid-size battles with extent', () => {

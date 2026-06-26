@@ -36,9 +36,12 @@ export function battleExtent(battle: Battle, site: LatLng): number {
  * is altitude·tan(22.5°) ≈ altitude·0.414. The ×3.3 factor sets the battle's
  * 90th-percentile radius to fill the frame's shorter (vertical) axis with a
  * little margin, accounting for the playback footer that covers the lower band.
- * Clamped to [~10 km, ~380 km] — only a safety floor/ceiling, so each battle is
+ * `battle.frameScale` (default 1) lets a battle frame tighter on its core fight
+ * when long approach marches would otherwise inflate the extent (e.g. Shiloh).
+ * Clamped to [~6 km, ~380 km] — only a safety floor/ceiling, so each battle is
  * sized to its own footprint (Shiloh ~2 km dives close; Vicksburg ~40 km wide).
  */
 export function battleFrameAltitude(battle: Battle, site: LatLng): number {
-  return Math.min(0.06, Math.max(0.0015, battleExtent(battle, site) * 3.3))
+  const scale = battle.frameScale ?? 1
+  return Math.min(0.06, Math.max(0.0009, battleExtent(battle, site) * 3.3 * scale))
 }

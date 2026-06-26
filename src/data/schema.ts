@@ -70,6 +70,12 @@ const battle = z
     areas: z.array(area).optional(),
     /** Compass bearing FROM the site TOWARD the field-view camera position (degrees). */
     fieldAzimuth: z.number().min(0).max(360).optional(),
+    /** Multiplier on the auto-computed framing altitude (default 1). Use <1 to
+     *  frame tighter on the core fight when long approach marches would otherwise
+     *  pull the camera too far back (e.g. Shiloh, whose 9 km countermarches dwarf
+     *  a ~2 km battle). The distant legs then run off-frame — the classic
+     *  battle-map look. */
+    frameScale: z.number().positive().optional(),
     /** The protagonist commander's personal track across the battle (optional). */
     commander: commander.optional(),
   })

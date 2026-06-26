@@ -22,9 +22,12 @@ interface Slot {
 }
 
 // Min centre-to-centre screen distance before two counters are pushed apart (px).
-const SEPARATION = 38
-// Max offset a counter may be nudged from its true position (px).
-const MAX_OFFSET = 30
+const SEPARATION = 26
+// Max offset a counter may be nudged from its true position (px). Kept small:
+// a counter's position IS the information on a battle map, so de-overlap must
+// never shove it far from the real ground (a big nudge at a wide frame =
+// hundreds of metres of apparent misplacement). Gentle separation only.
+const MAX_OFFSET = 12
 // Per-frame damping toward the target offset (lower = smoother / slower).
 const DAMP = 0.18
 
