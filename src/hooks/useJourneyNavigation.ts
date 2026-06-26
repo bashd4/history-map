@@ -25,6 +25,11 @@ export function useJourneyNavigation(journey: Journey) {
   const proxy = useRef({ t: 0 })
   const tweenRef = useRef<gsap.core.Tween | null>(null)
 
+  // The stop we're navigating TOWARD. next()/prev() step off this rather than the
+  // live, mid-flight journeyT, so rapid or held arrow presses ACCUMULATE — mashing
+  // Right flies several stops ahead instead of re-targeting the same neighbour.
+  const targetIndexRef = useRef<number | null>(null)
+
   const setJourneyT = useAppStore((s) => s.setJourneyT)
   const setNavigating = useAppStore((s) => s.setNavigating)
   const setNearBattleStopIndex = useAppStore((s) => s.setNearBattleStopIndex)
@@ -53,6 +58,7 @@ export function useJourneyNavigation(journey: Journey) {
 
   const goToStop = (index: number) => {
     const clamped = Math.max(0, Math.min(n - 1, index))
+    targetIndexRef.current = clamped
     const targetT = dwellCenterT(clamped, n)
 
     // Kill any running tween and clear any active flight.
@@ -91,13 +97,13 @@ export function useJourneyNavigation(journey: Journey) {
       // --- Adjacent move: scenic segment flight via journeyT tween (existing) ---
       proxy.current.t = currentT
       const diff = Math.abs(targetT - currentT)
-      const duration = Math.min(4.5, 1.2 + 1.1 * diff * n)
+      const duration = Math.min(3.4, 0.85 + 0.9 * diff * n)
 
       setNavigating(true)
       tweenRef.current = gsap.to(proxy.current, {
         t: targetT,
         duration,
-        ease: 'power2.inOut',
+        ease: 'power2.out', // launch immediately (no slow ease-in) — feels responsive to a keypress
         onUpdate: () => {
           const t = proxy.current.t
           setJourneyT(t)
@@ -144,8 +150,8 @@ export function useJourneyNavigation(journey: Journey) {
       setNavigating(true)
       tweenRef.current = gsap.to(proxy.current, {
         t: tEnd,
-        duration: 2.6,
-        ease: 'power2.inOut',
+        duration: 2.1,
+        ease: 'power2.out', // launch immediately (no slow ease-in) — feels responsive to a keypress
         onUpdate: () => {
           setFlightT(proxy.current.t)
         },
@@ -157,34 +163,42 @@ export function useJourneyNavigation(journey: Journey) {
     }
   }
 
-  const next = () => {
-    const current = cameraAt(useAppStore.getState().journeyT, stops).activeStop
-    const base = current ?? 0
-    goToStop(base + 1)
+  // Step `dir` stops from the current TARGET (not the live journeyT), so repeated
+  // calls accumulate. Falls back to the live active stop when nothing's in flight.
+  const step = (dir: number) => {
+    const base =
+      targetIndexRef.current ??
+      cameraAt(useAppStore.getState().journeyT, stops).activeStop ??
+      0
+    goToStop(base + dir)
   }
+  const next = () => step(1)
+  const prev = () => step(-1)
 
-  const prev = () => {
-    const current = cameraAt(useAppStore.getState().journeyT, stops).activeStop
-    const base = current ?? 0
-    goToStop(base - 1)
-  }
-
-  // Keyboard navigation.
+  // Keyboard navigation. Each press steps off the running target (via `step`), so
+  // distinct taps accumulate — mash Right and you skip several stops ahead in one
+  // flight. A HELD arrow auto-repeats; we throttle those to a brisk, controllable
+  // cadence (~9 stops/sec) so holding glides forward instead of rocketing to the end.
   useEffect(() => {
+    let lastRepeat = 0
     const handler = (e: KeyboardEvent) => {
       if (useAppStore.getState().mode === 'battle') return
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
-        e.preventDefault()
-        next()
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault()
-        prev()
+      let dir = 0
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') dir = 1
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') dir = -1
+      else return
+      e.preventDefault()
+      if (e.repeat) {
+        const now = performance.now()
+        if (now - lastRepeat < 110) return // throttle held-key auto-repeat
+        lastRepeat = now
       }
+      step(dir)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [n, journey]) // n and journey are stable refs; next/prev are closures over goToStop
+  }, [n, journey]) // n and journey are stable refs; step is a closure over goToStop
 
   // Subscribe to requestedStopIndex from the store (set by globe marker clicks).
   useEffect(() => {
