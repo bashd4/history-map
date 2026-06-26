@@ -26,10 +26,12 @@ describe('journey data files', () => {
       expect(grant.stops).toHaveLength(70)
     })
 
-    it('has exactly 4 battles', () => {
+    // Vicksburg + Chattanooga battles temporarily disabled (see grantBattles).
+    // Restore these assertions to 4 / all-four-names when re-enabling.
+    it('has exactly 2 active battles (Vicksburg + Chattanooga disabled)', () => {
       const grant = journeys.find((j) => j.id === 'grant')!
       const battles = grant.stops.filter((s) => s.battle)
-      expect(battles).toHaveLength(4)
+      expect(battles).toHaveLength(2)
     })
 
     it('battle names match expected engagements', () => {
@@ -37,8 +39,6 @@ describe('journey data files', () => {
       const battleNames = grant.stops.filter((s) => s.battle).map((s) => s.battle!.name)
       expect(battleNames.some((n) => /Donelson/.test(n))).toBe(true)
       expect(battleNames.some((n) => /Shiloh/.test(n))).toBe(true)
-      expect(battleNames.some((n) => /Vicksburg/.test(n))).toBe(true)
-      expect(battleNames.some((n) => /Chattanooga|Missionary/.test(n))).toBe(true)
     })
 
     it('every stop name matches /^Ch\\. \\d+ — /', () => {

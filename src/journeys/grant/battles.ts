@@ -1553,6 +1553,11 @@ const chattanooga: Battle = {
 export const grantBattles: Record<number, Battle> = {
   22: fortDonelson,
   24: shiloh,
-  38: vicksburg,
-  43: chattanooga,
+  // Temporarily disabled — re-add these keys to restore the battle overlays
+  // (and remove the _disabledBattles line below + restore the journeys tests):
+  // 38: vicksburg,
+  // 43: chattanooga,
 }
+// Kept here only so the disabled battles' data stays compiled/referenced
+// (satisfies the build's noUnusedLocals); not attached to any stop while listed.
+export const _disabledBattles: Battle[] = [vicksburg, chattanooga]
