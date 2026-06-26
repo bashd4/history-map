@@ -425,39 +425,58 @@ const shiloh: Battle = {
   strengths: { union: '~66,800 men', confederate: '~44,700 men' },
   // Camera stands ENE on the river bluff, looking WSW across the ridges toward Shiloh Church.
   fieldAzimuth: 70,
-  // Grant's command: caught at Savannah downriver at dawn, he steamed up to
-  // Pittsburg Landing, rode the line through Apr 6, steadied the last line at the
-  // Landing at dusk, then led the Apr-7 counterattack forward.
+  // The fight was compact (~2 km core at the Hornet's Nest / Landing) but the
+  // approach marches are long (Lew Wallace's 9 km countermarch, the Confederate
+  // 5-6 km advance from Corinth), which inflate the auto-framing. Pull in so the
+  // core fills the frame; the approach legs trail off-edge.
+  frameScale: 0.6,
   commander: {
     name: 'U. S. Grant',
     side: 'union',
     movements: [
       {
-        phase: 1,
+        phase: 0,
         arrives: true,
-        note: 'Steams up from Savannah; rides to the front',
+        note: 'Steams up from Savannah and rides to the front',
         path: [
           { lat: 35.15100, lng: -88.32400 }, // disembarks at Pittsburg Landing
-          { lat: 35.14600, lng: -88.33300 }, // rides forward (W) into the fight
-          { lat: 35.14000, lng: -88.34000 }, // the centre, by the Hornet's Nest
+          { lat: 35.14550, lng: -88.33200 },
+          { lat: 35.14000, lng: -88.34000 }, // rides the line
+        ],
+      },
+      {
+        phase: 1,
+        note: 'Rides the line through the day-long fight',
+        path: [
+          { lat: 35.14000, lng: -88.34000 },
+          { lat: 35.14300, lng: -88.34600 }, // over to Sherman & McClernand
+          { lat: 35.14100, lng: -88.34100 },
         ],
       },
       {
         phase: 2,
-        note: 'Steadies the last line before the Landing',
+        note: 'Steadies the last line at the Landing',
         path: [
-          { lat: 35.14000, lng: -88.34000 }, // from the centre
-          { lat: 35.14600, lng: -88.33200 }, // falling back NE
-          { lat: 35.14900, lng: -88.32700 }, // the final line covering the Landing
+          { lat: 35.14100, lng: -88.34100 },
+          { lat: 35.14500, lng: -88.33200 },
+          { lat: 35.14650, lng: -88.32600 }, // Webster's guns
         ],
       },
       {
         phase: 3,
-        note: 'Leads the Apr-7 counterattack forward',
+        note: 'Headquarters under a tree at the Landing through the night',
         path: [
-          { lat: 35.14900, lng: -88.32700 }, // from the Landing line
-          { lat: 35.14200, lng: -88.34200 }, // advancing WSW with the army
-          { lat: 35.13700, lng: -88.35200 }, // retaking the ground toward Shiloh Church
+          { lat: 35.14650, lng: -88.32600 },
+          { lat: 35.14700, lng: -88.32250 },
+        ],
+      },
+      {
+        phase: 4,
+        note: 'Leads the Apr-7 counterattack; the ~3 pm charge near the Crossroads',
+        path: [
+          { lat: 35.14700, lng: -88.32250 },
+          { lat: 35.14200, lng: -88.33600 },
+          { lat: 35.13700, lng: -88.34500 }, // Crossroads, left of Sherman / right of McClernand
         ],
       },
     ],
@@ -537,305 +556,136 @@ const shiloh: Battle = {
   phases: [
     {
       caption:
-        "Dawn Apr 6 — Johnston's army bursts from the woods along the Corinth road: Hardee's corps leads the front line NNE into Sherman's camps at Shiloh Church; Bragg's corps follows close, striking the center. Sherman and McClernand are overwhelmed and fall back NE toward the Landing.",
+        "Dawn, Apr 6 — Johnston's army strikes the whole Union front from the south. Hardee's and Bragg's corps lead, Polk and Breckinridge behind, driving into the camps. Sherman holds the right at Shiloh Church, McClernand the center, Prentiss and Stuart the left — a continuous line from Owl Creek to Lick Creek, facing south.",
       duration: 8,
       movements: [
-        {
-          // Hardee's corps: front wave. Bivouacked ~2 miles S of Union camps, advanced NNE
-          // along the Corinth-Pittsburg Landing road into Sherman's position at Shiloh Church.
-          // Start point S of battlefield consistent with Corinth approach bearing (~30° from S).
-          side: 'confederate',
-          style: 'advance',
-          unit: "Hardee — III Corps (front wave)",
-          branch: 'infantry',
-          echelon: 'corps',
-          strength: 6789,
-          path: [
-            { lat: 35.09800, lng: -88.38500 },
-            { lat: 35.11400, lng: -88.37200 },
-            { lat: 35.12600, lng: -88.36200 },
-            { lat: 35.13368, lng: -88.35499 },  // Shiloh Church (OSM confirmed)
-          ],
-        },
-        {
-          // Bragg's corps: second wave, slightly E of Hardee, driving N toward center of
-          // Union camps (Prentiss / W.H.L. Wallace sector).
-          side: 'confederate',
-          style: 'advance',
-          unit: "Bragg — II Corps (second wave)",
-          branch: 'infantry',
-          echelon: 'corps',
-          strength: 16279,
-          path: [
-            { lat: 35.09800, lng: -88.36500 },
-            { lat: 35.11300, lng: -88.35800 },
-            { lat: 35.12300, lng: -88.34700 },
-            { lat: 35.12800, lng: -88.34000 },
-          ],
-        },
-        {
-          // Sherman retreats NE from Shiloh Church toward Pittsburg Landing.
-          // Bearing ~58° (confirmed). He fell back through successive defensive lines.
-          side: 'union',
-          style: 'retreat',
-          unit: 'Sherman — 5th Division',
-          branch: 'infantry',
-          echelon: 'division',
-          strength: 8580,
-          path: [
-            { lat: 35.13368, lng: -88.35499 },  // Shiloh Church
-            { lat: 35.13900, lng: -88.34500 },   // intermediate ridge
-            { lat: 35.14500, lng: -88.33200 },   // Jones Field area
-            { lat: 35.14800, lng: -88.32600 },   // near Landing perimeter
-          ],
-        },
-        {
-          // McClernand (E of Sherman) also retreats NE, parallel to Sherman.
-          // His division was camped E of Shiloh Church, retreated toward the Landing.
-          side: 'union',
-          style: 'retreat',
-          unit: 'McClernand — 1st Division',
-          branch: 'infantry',
-          echelon: 'division',
-          strength: 6941,
-          path: [
-            { lat: 35.13600, lng: -88.34800 },
-            { lat: 35.14000, lng: -88.33800 },
-            { lat: 35.14600, lng: -88.32900 },
-            { lat: 35.14850, lng: -88.32500 },
-          ],
-        },
+        { side: 'confederate', style: 'advance', unit: 'Polk — I Corps', branch: 'infantry', echelon: 'corps', strength: 9400,
+          path: [{ lat: 35.12500, lng: -88.35600 }, { lat: 35.13100, lng: -88.35400 }, { lat: 35.13300, lng: -88.35200 }] },
+        { side: 'confederate', style: 'advance', unit: 'Hardee — III Corps', branch: 'infantry', echelon: 'corps', strength: 6789,
+          path: [{ lat: 35.12400, lng: -88.34700 }, { lat: 35.12900, lng: -88.34550 }, { lat: 35.13200, lng: -88.34450 }] },
+        { side: 'confederate', style: 'advance', unit: 'Bragg — II Corps', branch: 'infantry', echelon: 'corps', strength: 16279,
+          path: [{ lat: 35.12300, lng: -88.33800 }, { lat: 35.12800, lng: -88.33680 }, { lat: 35.13000, lng: -88.33600 }] },
+        { side: 'confederate', style: 'advance', unit: 'Breckinridge — Reserve Corps', branch: 'infantry', echelon: 'corps', strength: 6400,
+          path: [{ lat: 35.11500, lng: -88.34200 }, { lat: 35.12300, lng: -88.34000 }] },
+        { side: 'union', style: 'retreat', unit: 'Sherman — 5th Division', branch: 'infantry', echelon: 'division', strength: 8580,
+          path: [{ lat: 35.13400, lng: -88.35400 }, { lat: 35.13650, lng: -88.35050 }] },
+        { side: 'union', style: 'retreat', unit: 'McClernand — 1st Division', branch: 'infantry', echelon: 'division', strength: 6941,
+          path: [{ lat: 35.13700, lng: -88.34600 }, { lat: 35.13900, lng: -88.34380 }] },
+        { side: 'union', style: 'retreat', unit: 'Prentiss — 6th Division', branch: 'infantry', echelon: 'division', strength: 5400,
+          path: [{ lat: 35.13350, lng: -88.34150 }, { lat: 35.13600, lng: -88.34080 }, { lat: 35.13810, lng: -88.34010 }] },
+        { side: 'union', style: 'feint', unit: 'W.H.L. Wallace — 2nd Division', branch: 'infantry', echelon: 'division', strength: 8400,
+          path: [{ lat: 35.14250, lng: -88.34250 }, { lat: 35.14050, lng: -88.34080 }] },
+        { side: 'union', style: 'feint', unit: 'Hurlbut — 4th Division', branch: 'infantry', echelon: 'division', strength: 7800,
+          path: [{ lat: 35.14000, lng: -88.33700 }, { lat: 35.13750, lng: -88.33480 }] },
+        { side: 'union', style: 'feint', unit: 'Stuart — brigade (extreme left)', branch: 'infantry', echelon: 'brigade', strength: 2000,
+          path: [{ lat: 35.12800, lng: -88.33000 }, { lat: 35.13000, lng: -88.32880 }] },
       ],
     },
     {
       caption:
-        "Mid-morning to dusk Apr 6 — Prentiss and W.H.L. Wallace anchor the Sunken Road / Hornet's Nest, repulsing 11 Confederate charges for ~6 hours. Ruggles masses 62 guns in Duncan Field. Johnston rides personally to direct the Peach Orchard assault on the Confederate right and is mortally wounded.",
+        "Through the morning — the line gives ground but holds together, bending back toward the Landing. The hardest fighting is in front of Sherman and McClernand on the right; W.H.L. Wallace, Prentiss and Hurlbut anchor the Sunken Road — the ‘Hornet’s Nest.’ Johnston is mortally wounded directing the Peach Orchard assault.",
       duration: 9,
       events: [
-        {
-          // NPS Monument M017 confirmed: 35.1302, -88.32953 ("mortally wounded at 2:30 p.m.").
-          // The Peach Orchard was where he was directing the assault; he was hit on his horse
-          // near the orchard, then taken 50 yards SE into a ravine where he died.
-          coords: { lat: 35.13020, lng: -88.32953 },
-          label: "Johnston mortally wounded directing Peach Orchard assault",
-        },
-        {
-          // Hornet's Nest: HMDB marker 35.13810, -88.34008 (confirmed).
-          coords: { lat: 35.13810, lng: -88.34008 },
-          label: "Prentiss & W.H.L. Wallace hold the Hornet's Nest — eleven",
-        },
+        { coords: { lat: 35.13020, lng: -88.32953 }, label: 'Johnston mortally wounded directing Peach Orchard assault' },
+        { coords: { lat: 35.13810, lng: -88.34008 }, label: "W.H.L. Wallace, Prentiss & Hurlbut hold the Hornet’s Nest" },
       ],
       movements: [
-        {
-          // Prentiss holds the Sunken Road. The road ran E-W; show as a short W-to-E line
-          // along the defensive position. 'feint' = static defensive holding action.
-          side: 'union',
-          style: 'feint',
-          unit: "Prentiss — 6th Div. + W.H.L. Wallace",
-          branch: 'infantry',
-          echelon: 'division',
-          path: [
-            { lat: 35.13860, lng: -88.34380 },  // Sunken Road west end (Duncan Field edge)
-            { lat: 35.13810, lng: -88.34008 },  // HMDB marker center
-            { lat: 35.13560, lng: -88.33500 },  // Sunken Road east end (toward Peach Orchard)
-          ],
-        },
-        {
-          // Ruggles assembles 62 guns in Duncan Field (W of Hornet's Nest) and fires E.
-          // Duncan Field is just W/NW of the Sunken Road, bearing ~90° toward the Nest.
-          side: 'confederate',
-          style: 'advance',
-          unit: "Ruggles' massed artillery — 62 guns",
-          branch: 'artillery',
-          echelon: 'brigade', // grand battery of 62 guns ≈ brigade-sized grouping
-          path: [
-            { lat: 35.13900, lng: -88.35000 },  // assembly point (Duncan Field W)
-            { lat: 35.13880, lng: -88.34400 },  // firing position (Duncan Field E edge)
-          ],
-        },
-        {
-          // Chalmers & Jackson brigades: attacked up from the SE (Lick Creek flank),
-          // driving NNW toward the Peach Orchard and the eastern end of the Sunken Road.
-          side: 'confederate',
-          style: 'advance',
-          unit: "Chalmers & Jackson — brigades",
-          branch: 'infantry',
-          echelon: 'brigade',
-          strength: 3779,
-          path: [
-            { lat: 35.11800, lng: -88.31800 },  // start near Lick Creek SE boundary
-            { lat: 35.12500, lng: -88.32000 },
-            { lat: 35.13020, lng: -88.32953 },  // Peach Orchard / Johnston wound site
-          ],
-        },
-        {
-          // Webster's artillery last line: ~50 guns on the ridge above Dill Branch ravine,
-          // running E-W from Tilghman Branch to the river bluff, just S of the Landing.
-          // This is a defensive 'advance' to position, facing S.
-          side: 'union',
-          style: 'advance',
-          unit: "Webster's artillery — Grant's Last Line",
-          branch: 'artillery',
-          echelon: 'brigade', // ~50-gun massed line ≈ brigade-sized grouping
-          path: [
-            { lat: 35.14600, lng: -88.33200 },  // Tilghman Branch / left anchor
-            { lat: 35.14700, lng: -88.32800 },  // center of line
-            { lat: 35.14800, lng: -88.32100 },  // river bluff / right anchor
-          ],
-        },
+        { side: 'confederate', style: 'advance', unit: 'Polk — I Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13300, lng: -88.35200 }, { lat: 35.13950, lng: -88.34900 }] },
+        { side: 'confederate', style: 'advance', unit: 'Hardee — III Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13200, lng: -88.34450 }, { lat: 35.13800, lng: -88.34200 }] },
+        { side: 'confederate', style: 'advance', unit: 'Bragg — II Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13000, lng: -88.33600 }, { lat: 35.13450, lng: -88.33600 }] },
+        { side: 'confederate', style: 'advance', unit: 'Breckinridge — Reserve Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.12300, lng: -88.34000 }, { lat: 35.12900, lng: -88.33600 }, { lat: 35.13100, lng: -88.33400 }] },
+        { side: 'union', style: 'retreat', unit: 'Sherman — 5th Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.13650, lng: -88.35050 }, { lat: 35.14100, lng: -88.34750 }] },
+        { side: 'union', style: 'retreat', unit: 'McClernand — 1st Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.13900, lng: -88.34380 }, { lat: 35.14250, lng: -88.34200 }] },
+        { side: 'union', style: 'feint', unit: 'Prentiss — 6th Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.13860, lng: -88.34380 }, { lat: 35.13810, lng: -88.34010 }, { lat: 35.13560, lng: -88.33500 }] },
+        { side: 'union', style: 'feint', unit: 'W.H.L. Wallace — 2nd Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.14050, lng: -88.34080 }, { lat: 35.13900, lng: -88.34000 }] },
+        { side: 'union', style: 'advance', unit: 'Hurlbut — 4th Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.13750, lng: -88.33480 }, { lat: 35.13500, lng: -88.33350 }, { lat: 35.13300, lng: -88.33200 }] },
+        { side: 'union', style: 'retreat', unit: 'Stuart — brigade (extreme left)', branch: 'infantry', echelon: 'brigade',
+          path: [{ lat: 35.13000, lng: -88.32880 }, { lat: 35.13700, lng: -88.32750 }] },
       ],
     },
     {
       caption:
-        "Dusk Apr 6 — Prentiss surrenders ~2,200 men; Beauregard halts the Confederate advance short of the Landing. Overnight: gunboats Tyler & Lexington shell Confederate positions from the river; Buell's Army of the Ohio crosses the Tennessee at the Landing; Lew Wallace's lost division arrives from the north.",
-      duration: 7,
+        'Late afternoon — the Hornet’s Nest is surrounded; Prentiss and W.H.L. Wallace surrender ~2,200 men at 5:30. The rest re-form Grant’s last line at Pittsburg Landing, where Webster’s massed guns and the gunboats Tyler and Lexington shatter the final Confederate assault at dusk.',
+      duration: 8,
       events: [
-        {
-          coords: { lat: 35.13810, lng: -88.34008 },  // HMDB marker (surrender site)
-          label: "Prentiss surrenders ~2,200 men — dusk, Apr 6",
-        },
+        { coords: { lat: 35.13810, lng: -88.34008 }, label: 'Prentiss & W.H.L. Wallace surrender ~2,200 — 5:30 pm' },
       ],
       movements: [
-        {
-          // Gunboats Tyler & Lexington shelled Confederate positions from the river on the
-          // evening of Apr 6. The river channel at this latitude runs along the east edge
-          // of the field. Path stays on the OSM river centerline (Way 164267067 nodes).
-          // Tyler/Lexington shelled N-to-S positions from the river.
-          side: 'union',
-          style: 'advance',
-          unit: "Gunboats Tyler & Lexington — Tennessee",
-          branch: 'naval',
-          echelon: 'flotilla',
-          path: [
-            { lat: 35.15925, lng: -88.31606 },  // OSM river node (north)
-            { lat: 35.14956, lng: -88.31648 },  // OSM river node (near Landing)
-            { lat: 35.14445, lng: -88.31735 },  // OSM river node (south)
-            { lat: 35.13856, lng: -88.31728 },  // OSM river node (further S)
-          ],
-        },
-        {
-          // Nelson's division (Buell's lead): crossed from east bank to Pittsburg Landing
-          // (west bank). Path starts on the east bank of the river and terminates at
-          // the actual landing site (OSM Way 765321525: 35.14939, -88.31858).
-          // River centerline at this lat: 35.14956,-88.31648 (OSM node).
-          side: 'union',
-          style: 'advance',
-          unit: "Nelson's div. (Buell) — Tennessee River",
-          branch: 'infantry',
-          echelon: 'division',
-          strength: 4500,
-          arrives: true,
-          path: [
-            { lat: 35.14900, lng: -88.30900 },  // east bank (Savannah side) embarkation
-            { lat: 35.14956, lng: -88.31648 },  // OSM river centerline node (midstream)
-            { lat: 35.14939, lng: -88.31858 },  // Pittsburg Landing west bank (OSM confirmed)
-            { lat: 35.14900, lng: -88.32300 },  // staging area inland from the landing
-          ],
-        },
-        {
-          // Lew Wallace's 3rd Division: from Crump's Landing (~5 mi N), he countermarched
-          // and took the River Road INLAND to the NW, crossed the Snake Creek bridge, and
-          // came onto the Union FAR RIGHT by Owl Creek — W of the Landing, not down the
-          // river edge. Arrived after dark, Apr 6.
-          side: 'union',
-          style: 'advance',
-          unit: "Lew Wallace — 3rd Division",
-          branch: 'infantry',
-          echelon: 'division',
-          strength: 7564,
-          arrives: true,
-          path: [
-            { lat: 35.22000, lng: -88.32800 },  // Crump's Landing (~5 miles N of Landing)
-            { lat: 35.19000, lng: -88.34200 },  // River Road bending SW inland
-            { lat: 35.16600, lng: -88.35500 },  // Snake Creek bridge crossing (W of the river)
-            { lat: 35.15200, lng: -88.35200 },  // arrival on the Union far right (Owl/Snake Creek)
-          ],
-        },
-        {
-          // Crittenden & McCook divisions (Buell): followed Nelson's crossing overnight/early
-          // Apr 7. Path mirrors Nelson's crossing then fans out to assembly positions.
-          side: 'union',
-          style: 'advance',
-          unit: "Crittenden & McCook divs. (Buell)",
-          branch: 'infantry',
-          echelon: 'division',
-          strength: 11377,
-          arrives: true,
-          path: [
-            { lat: 35.14700, lng: -88.30900 },  // east bank
-            { lat: 35.14700, lng: -88.31858 },  // Pittsburg Landing west bank
-            { lat: 35.14500, lng: -88.32800 },  // assembly position W of Landing
-          ],
-        },
+        { side: 'confederate', style: 'advance', unit: 'Polk — I Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13950, lng: -88.34900 }, { lat: 35.14400, lng: -88.34750 }] },
+        { side: 'confederate', style: 'advance', unit: 'Hardee — III Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13800, lng: -88.34200 }, { lat: 35.14200, lng: -88.34000 }] },
+        { side: 'confederate', style: 'advance', unit: 'Bragg — II Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13450, lng: -88.33600 }, { lat: 35.13880, lng: -88.33720 }] },
+        { side: 'confederate', style: 'advance', unit: 'Breckinridge — Reserve Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13100, lng: -88.33400 }, { lat: 35.13950, lng: -88.33200 }] },
+        { side: 'union', style: 'retreat', unit: 'Sherman — 5th Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.14100, lng: -88.34750 }, { lat: 35.14600, lng: -88.34600 }] },
+        { side: 'union', style: 'retreat', unit: 'McClernand — 1st Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.14250, lng: -88.34200 }, { lat: 35.14550, lng: -88.34050 }] },
+        { side: 'union', style: 'feint', unit: 'Prentiss — 6th Division', branch: 'infantry', echelon: 'division', departs: true,
+          path: [{ lat: 35.13810, lng: -88.34010 }, { lat: 35.13700, lng: -88.33800 }] },
+        { side: 'union', style: 'feint', unit: 'W.H.L. Wallace — 2nd Division', branch: 'infantry', echelon: 'division', departs: true,
+          path: [{ lat: 35.13900, lng: -88.34000 }, { lat: 35.13830, lng: -88.33930 }] },
+        { side: 'union', style: 'retreat', unit: 'Hurlbut — 4th Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.13300, lng: -88.33200 }, { lat: 35.14000, lng: -88.33350 }, { lat: 35.14400, lng: -88.33400 }] },
+        { side: 'union', style: 'retreat', unit: 'Stuart — brigade (extreme left)', branch: 'infantry', echelon: 'brigade',
+          path: [{ lat: 35.13700, lng: -88.32750 }, { lat: 35.14350, lng: -88.32850 }] },
+        { side: 'union', style: 'advance', unit: "Webster's guns — Last Line", branch: 'artillery', echelon: 'brigade', arrives: true,
+          path: [{ lat: 35.14550, lng: -88.33300 }, { lat: 35.14650, lng: -88.32750 }, { lat: 35.14700, lng: -88.32250 }] },
+        { side: 'union', style: 'advance', unit: 'Gunboats Tyler & Lexington', branch: 'naval', echelon: 'flotilla', arrives: true,
+          path: [{ lat: 35.15930, lng: -88.31610 }, { lat: 35.14500, lng: -88.31700 }, { lat: 35.13860, lng: -88.31730 }] },
       ],
     },
     {
       caption:
-        "Dawn Apr 7 — the full Union line surges WSW: Sherman retakes Shiloh Church; Lew Wallace envelops the Confederate left from the north; Hurlbut and Buell's divisions push the center. By mid-afternoon Beauregard orders a general retreat toward Corinth.",
+        "Night, Apr 6 — Lew Wallace's division finally arrives on the right via the Snake Creek bridge; Buell's Army of the Ohio crosses the Tennessee — Nelson, then Crittenden and McCook — forming a fresh left wing. The gunboats shell the Confederate bivouacs through the night.",
+      duration: 6,
+      movements: [
+        { side: 'union', style: 'advance', unit: 'Lew Wallace — 3rd Division', branch: 'infantry', echelon: 'division', strength: 7564, arrives: true,
+          path: [{ lat: 35.20000, lng: -88.34500 }, { lat: 35.16400, lng: -88.35200 }, { lat: 35.15000, lng: -88.35000 }] },
+        { side: 'union', style: 'advance', unit: "Nelson's div. (Buell)", branch: 'infantry', echelon: 'division', strength: 4500, arrives: true,
+          path: [{ lat: 35.14900, lng: -88.30900 }, { lat: 35.14940, lng: -88.31650 }, { lat: 35.14900, lng: -88.32350 }] },
+        { side: 'union', style: 'advance', unit: 'Crittenden & McCook (Buell)', branch: 'infantry', echelon: 'division', strength: 11377, arrives: true,
+          path: [{ lat: 35.14700, lng: -88.30900 }, { lat: 35.14700, lng: -88.31850 }, { lat: 35.14600, lng: -88.32550 }] },
+        { side: 'union', style: 'advance', unit: 'Gunboats Tyler & Lexington', branch: 'naval', echelon: 'flotilla',
+          path: [{ lat: 35.13860, lng: -88.31730 }, { lat: 35.14800, lng: -88.31650 }] },
+      ],
+    },
+    {
+      caption:
+        "Dawn, Apr 7 — the reinforced Union army counterattacks all along the line: Grant's wing (Lew Wallace, Sherman, McClernand, Hurlbut) on the right, Buell's (Nelson, Crittenden, McCook) on the left, driving SW. Beauregard breaks off toward Corinth; Grant leads the final charge near the Crossroads about 3 p.m.",
       duration: 8,
       movements: [
-        {
-          // Sherman drives WSW back from his rally point near the Landing, retaking Shiloh Church.
-          // Bearing ~238° (confirmed). This reverses his Day-1 retreat path.
-          side: 'union',
-          style: 'advance',
-          unit: 'Sherman — 5th Division',
-          branch: 'infantry',
-          echelon: 'division',
-          strength: 8580,
-          path: [
-            { lat: 35.14800, lng: -88.32600 },  // rally point near Landing
-            { lat: 35.14200, lng: -88.33800 },  // intermediate ridge
-            { lat: 35.13700, lng: -88.34900 },  // approaching church
-            { lat: 35.13368, lng: -88.35499 },  // Shiloh Church (OSM confirmed)
-          ],
-        },
-        {
-          // Lew Wallace: arrived from the N, occupied the Union far right.
-          // On Day 2 he drove WSW, enveloping the Confederate left flank.
-          // Bearing ~245° (confirmed).
-          side: 'union',
-          style: 'advance',
-          unit: "Lew Wallace — 3rd Division",
-          branch: 'infantry',
-          echelon: 'division',
-          strength: 7564,
-          arrives: true,
-          path: [
-            { lat: 35.15200, lng: -88.35200 },  // overnight position (far right, by Snake/Owl Creek)
-            { lat: 35.14800, lng: -88.36500 },  // advancing WSW
-            { lat: 35.14300, lng: -88.37600 },  // enveloping the Confederate left flank
-          ],
-        },
-        {
-          // Hurlbut (Union center) + Buell's divisions push WSW through the recaptured camps.
-          side: 'union',
-          style: 'advance',
-          unit: "Hurlbut & Buell's Army — center push",
-          branch: 'infantry',
-          echelon: 'corps', // mixed Hurlbut division + Buell's Army of the Ohio divisions, army-level grouping
-          arrives: true,
-          path: [
-            { lat: 35.14600, lng: -88.32800 },  // starting line near Landing
-            { lat: 35.14000, lng: -88.34200 },  // retaking mid-battlefield camps
-            { lat: 35.13500, lng: -88.35200 },  // approaching Shiloh Church area
-          ],
-        },
-        {
-          // Beauregard orders retreat SW toward Corinth.
-          // Bearing ~220° from Shiloh Church area toward Corinth (SSW confirmed).
-          side: 'confederate',
-          style: 'retreat',
-          unit: "Beauregard — Army of the Mississippi",
-          branch: 'command', // army-level command marker
-          echelon: 'corps', // "Army of …" → largest available echelon
-          strength: 44699,
-          path: [
-            { lat: 35.13368, lng: -88.35499 },  // Shiloh Church / HQ evening Apr 6
-            { lat: 35.12000, lng: -88.37000 },  // withdrawing SSW
-            { lat: 35.10500, lng: -88.38800 },  // rearguard / Fallen Timbers skirmish
-          ],
-        },
+        { side: 'union', style: 'advance', unit: 'Lew Wallace — 3rd Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.15000, lng: -88.35000 }, { lat: 35.14100, lng: -88.35800 }, { lat: 35.13400, lng: -88.36400 }] },
+        { side: 'union', style: 'advance', unit: 'Sherman — 5th Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.14600, lng: -88.34600 }, { lat: 35.14000, lng: -88.35000 }, { lat: 35.13450, lng: -88.35400 }] },
+        { side: 'union', style: 'advance', unit: 'McClernand — 1st Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.14550, lng: -88.34050 }, { lat: 35.13850, lng: -88.34600 }] },
+        { side: 'union', style: 'advance', unit: 'Hurlbut — 4th Division', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.14400, lng: -88.33400 }, { lat: 35.13650, lng: -88.34200 }] },
+        { side: 'union', style: 'advance', unit: "Nelson's div. (Buell)", branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.14900, lng: -88.32350 }, { lat: 35.14200, lng: -88.33200 }, { lat: 35.13600, lng: -88.33800 }] },
+        { side: 'union', style: 'advance', unit: 'Crittenden & McCook (Buell)', branch: 'infantry', echelon: 'division',
+          path: [{ lat: 35.14600, lng: -88.32550 }, { lat: 35.13900, lng: -88.33400 }] },
+        { side: 'confederate', style: 'retreat', unit: 'Polk — I Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.14400, lng: -88.34750 }, { lat: 35.13100, lng: -88.35600 }] },
+        { side: 'confederate', style: 'retreat', unit: 'Hardee — III Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.14200, lng: -88.34000 }, { lat: 35.12950, lng: -88.34700 }] },
+        { side: 'confederate', style: 'retreat', unit: 'Bragg — II Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13880, lng: -88.33720 }, { lat: 35.13000, lng: -88.34100 }] },
+        { side: 'confederate', style: 'retreat', unit: 'Breckinridge — Reserve Corps', branch: 'infantry', echelon: 'corps',
+          path: [{ lat: 35.13950, lng: -88.33200 }, { lat: 35.12550, lng: -88.34300 }] },
       ],
     },
   ],
