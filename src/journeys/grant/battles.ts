@@ -435,46 +435,48 @@ const shiloh: Battle = {
     side: 'union',
     movements: [
       {
+        // Day 1 he directs from BEHIND the line (toward the Landing), riding to
+        // each division commander — never out in front of his own troops.
         phase: 0,
         arrives: true,
-        note: 'Steams up from Savannah and rides to the front',
+        note: 'Steams up from Savannah and rides up behind the line',
         path: [
           { lat: 35.15100, lng: -88.32400 }, // disembarks at Pittsburg Landing
-          { lat: 35.14550, lng: -88.33200 },
-          { lat: 35.14000, lng: -88.34000 }, // rides the line
+          { lat: 35.14750, lng: -88.33200 },
+          { lat: 35.14350, lng: -88.33800 }, // rear of the centre, behind the line
         ],
       },
       {
         phase: 1,
-        note: 'Rides the line through the day-long fight',
+        note: 'Rides behind the line, directing the divisions',
         path: [
-          { lat: 35.14000, lng: -88.34000 },
-          { lat: 35.14300, lng: -88.34600 }, // over to Sherman & McClernand
-          { lat: 35.14100, lng: -88.34100 },
+          { lat: 35.14350, lng: -88.33800 },
+          { lat: 35.14600, lng: -88.34300 }, // back of Sherman & McClernand
+          { lat: 35.14450, lng: -88.33600 },
         ],
       },
       {
         phase: 2,
-        note: 'Steadies the last line at the Landing',
+        note: 'Falls back to steady the last line at the Landing',
         path: [
-          { lat: 35.14100, lng: -88.34100 },
-          { lat: 35.14500, lng: -88.33200 },
-          { lat: 35.14650, lng: -88.32600 }, // Webster's guns
+          { lat: 35.14450, lng: -88.33600 },
+          { lat: 35.14700, lng: -88.32800 },
+          { lat: 35.14800, lng: -88.32300 }, // behind Webster's guns
         ],
       },
       {
         phase: 3,
         note: 'Headquarters under a tree at the Landing through the night',
         path: [
-          { lat: 35.14650, lng: -88.32600 },
-          { lat: 35.14700, lng: -88.32250 },
+          { lat: 35.14800, lng: -88.32300 },
+          { lat: 35.14850, lng: -88.32150 },
         ],
       },
       {
         phase: 4,
         note: 'Leads the Apr-7 counterattack; the ~3 pm charge near the Crossroads',
         path: [
-          { lat: 35.14700, lng: -88.32250 },
+          { lat: 35.14850, lng: -88.32150 },
           { lat: 35.14200, lng: -88.33600 },
           { lat: 35.13700, lng: -88.34500 }, // Crossroads, left of Sherman / right of McClernand
         ],
