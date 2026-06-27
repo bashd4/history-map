@@ -124,6 +124,31 @@ export function offsetLatLng(origin: LatLng, bearingDeg: number, angularDist: nu
   }
 }
 
+/** Point (unit vector) at arc-length fraction `tt`∈[0,1] along a polyline of unit
+ *  vectors, paced by cumulative great-circle angle so speed is even across uneven
+ *  hops. A 2-vertex input is a plain great-circle slerp. */
+export function sampleArcByLength(verts: THREE.Vector3[], tt: number): THREE.Vector3 {
+  if (verts.length <= 1) return verts[0].clone()
+  const ang: number[] = []
+  let total = 0
+  for (let i = 0; i < verts.length - 1; i++) {
+    const a = verts[i].angleTo(verts[i + 1])
+    ang.push(a)
+    total += a
+  }
+  if (total < 1e-9) return verts[0].clone()
+  const target = Math.min(1, Math.max(0, tt)) * total
+  let acc = 0
+  for (let i = 0; i < ang.length; i++) {
+    if (acc + ang[i] >= target || i === ang.length - 1) {
+      const local = ang[i] < 1e-9 ? 0 : (target - acc) / ang[i]
+      return slerpUnit(verts[i], verts[i + 1], local)
+    }
+    acc += ang[i]
+  }
+  return verts[verts.length - 1].clone()
+}
+
 /** Great-circle arc lifted off the surface; lift scales with arc length. */
 export function greatCirclePoints(from: LatLng, to: LatLng, segments = 64, lift = 0.05): THREE.Vector3[] {
   const a = latLngToVector3(from.lat, from.lng).normalize()

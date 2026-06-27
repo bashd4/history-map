@@ -8,6 +8,7 @@ import {
   offsetLatLng,
   vector3ToGeodetic,
   ellipsoidSceneRadius,
+  sampleArcByLength,
 } from './geo'
 
 /**
@@ -160,5 +161,32 @@ describe('ellipsoidSceneRadius', () => {
     expect(ellipsoidSceneRadius(49)).toBeGreaterThan(0.995)
     // monotonic decrease 0 -> 90
     expect(ellipsoidSceneRadius(90)).toBeLessThan(ellipsoidSceneRadius(45))
+  })
+})
+
+describe('sampleArcByLength', () => {
+  const v = (lat: number, lng: number) => latLngToVector3(lat, lng).normalize()
+
+  it('returns the endpoints at tt=0 and tt=1', () => {
+    const verts = [v(0, 0), v(0, 30), v(0, 90)]
+    expect(sampleArcByLength(verts, 0).angleTo(verts[0])).toBeCloseTo(0, 6)
+    expect(sampleArcByLength(verts, 1).angleTo(verts[2])).toBeCloseTo(0, 6)
+  })
+
+  it('paces by arc length, not by segment count (uneven hops)', () => {
+    // hop A→B is 10°, hop B→C is 90°; total 100°. tt=0.5 → 50° from A (40° past B).
+    const verts = [v(0, 0), v(0, 10), v(0, 100)]
+    const p = sampleArcByLength(verts, 0.5)
+    expect(p.angleTo(verts[0])).toBeCloseTo((50 * Math.PI) / 180, 4)
+  })
+
+  it('handles a 2-point polyline like a plain slerp', () => {
+    const verts = [v(0, 0), v(0, 80)]
+    expect(sampleArcByLength(verts, 0.25).angleTo(verts[0])).toBeCloseTo((20 * Math.PI) / 180, 5)
+  })
+
+  it('degenerate (all coincident) returns the first vertex', () => {
+    const verts = [v(10, 20), v(10, 20)]
+    expect(sampleArcByLength(verts, 0.7).angleTo(verts[0])).toBeCloseTo(0, 6)
   })
 })
