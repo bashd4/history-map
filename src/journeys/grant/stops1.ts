@@ -28,6 +28,10 @@ export const grantStopsVol1: Stop[] = [
     date: '1845',
     story:
       '"We were sent to provoke a fight, but it was essential that Mexico should commence it." Grant describes the Army of Occupation assembling at Corpus Christi.',
+    via: [
+      { lat: 29.95, lng: -90.07 }, // New Orleans (embark — regiment sailed from here in sailing vessels)
+      { lat: 27.80, lng: -97.39 }, // Gulf approach to Corpus Christi Bay
+    ],
   },
   {
     name: 'Ch. 5 — San Antonio Road, Texas',
@@ -63,6 +67,10 @@ export const grantStopsVol1: Stop[] = [
     date: 'March 1847',
     story:
       '"On the 9th of March the troops were landed and the investment of Vera Cruz, from the Gulf of Mexico south of the city to the Gulf again on the north, was soon and easily effected."',
+    via: [
+      { lat: 25.87, lng: -97.50 }, // mouth of the Rio Grande / Brazos Santiago (embarkation point)
+      { lat: 19.05, lng: -96.00 }, // Anton Lizardo anchorage — assembly point south of Vera Cruz
+    ],
   },
   {
     name: 'Ch. 10 — Cerro Gordo, Mexico',
@@ -105,6 +113,14 @@ export const grantStopsVol1: Stop[] = [
     date: '1852–1854',
     story:
       '"I with three other officers concluded that we would raise a crop for ourselves, and by selling the surplus realize something handsome." Life on the Pacific Coast; promotion to captain.',
+    via: [
+      { lat: 32.30, lng: -64.78 },  // Atlantic steamer lane (off Bermuda) — smooth arc south
+      { lat: 9.36,  lng: -79.90 },  // Aspinwall / Colón — Caribbean side of the Isthmus
+      { lat: 8.95,  lng: -79.53 },  // Panama City — Pacific side (the Isthmus crossing)
+      { lat: 15.00, lng: -95.00 },  // Pacific steamer lane up the coast
+      { lat: 37.77, lng: -122.42 }, // San Francisco
+      { lat: 46.25, lng: -124.08 }, // mouth of the Columbia River
+    ],
   },
   {
     name: 'Ch. 16 — Galena, Illinois',
@@ -112,6 +128,14 @@ export const grantStopsVol1: Stop[] = [
     date: '1854–1861',
     story:
       '"In May, 1860, removed to Galena, Illinois, and took a clerkship in my father\'s store." Resignation from the army, farming near St. Louis, and pre-war years in Galena.',
+    via: [
+      { lat: 37.77, lng: -122.42 }, // San Francisco (embark)
+      { lat: 15.00, lng: -95.00 },  // Pacific lane south
+      { lat: 8.95,  lng: -79.53 },  // Panama City
+      { lat: 9.36,  lng: -79.90 },  // Aspinwall / Colón
+      { lat: 32.30, lng: -64.78 },  // Atlantic lane north
+      { lat: 40.71, lng: -74.01 },  // New York (then overland to Galena)
+    ],
   },
   {
     name: 'Ch. 17 — Galena & Springfield, Illinois',
