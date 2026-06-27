@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { cameraAt, DWELL, routeProgressAt } from './journeyCamera'
 
+const stopsViaNorth = [
+  { lat: 0, lng: 0 },
+  { lat: 0, lng: 60, via: [{ lat: 40, lng: 30 }] }, // bend up to 40°N mid-leg
+] as Parameters<typeof cameraAt>[1]
+const stopsStraight = [
+  { lat: 0, lng: 0 },
+  { lat: 0, lng: 60 },
+] as Parameters<typeof cameraAt>[1]
+
 const stops = [
   { lat: 0, lng: 0 },   // A
   { lat: 0, lng: 90 },  // B
@@ -70,5 +79,25 @@ describe('routeProgressAt', () => {
         expect(routeProgressAt(t, n)).toBe(cam.activeStop)
       }
     }
+  })
+})
+
+describe('cameraAt with via', () => {
+  it('passes near the via point mid-travel, not the straight midpoint', () => {
+    const t = (0 + 0.7) / 2 // seg 0, local 0.7 → travel, tt ≈ ease(0.5)=0.5
+    const cam = cameraAt(t, stopsViaNorth)
+    expect(cam.lat).toBeGreaterThan(20) // far north of the 0°-lat straight line
+    expect(cam.activeStop).toBeNull()
+  })
+
+  it('with no via, travel is unchanged (regression)', () => {
+    const t = (0 + 0.7) / 2
+    const cam = cameraAt(t, stopsStraight)
+    expect(cam.lat).toBeCloseTo(0, 1) // stays on the equator
+  })
+
+  it('dwell is unchanged with or without via', () => {
+    const cam = cameraAt(0.1, stopsViaNorth) // local 0.2 < DWELL → dwell at stop 0
+    expect(cam).toMatchObject({ lat: 0, lng: 0, activeStop: 0 })
   })
 })

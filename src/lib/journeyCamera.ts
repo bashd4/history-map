@@ -1,4 +1,4 @@
-import { latLngToVector3, slerpUnit } from './geo'
+import { latLngToVector3, sampleArcByLength } from './geo'
 import type { Journey, LatLng } from '../data/schema'
 
 export const DWELL = 0.4
@@ -26,7 +26,7 @@ const stopsCache = new WeakMap<Journey, Parameters<typeof cameraAt>[1]>()
 export function stopsForCamera(journey: Journey): Parameters<typeof cameraAt>[1] {
   let stops = stopsCache.get(journey)
   if (!stops) {
-    stops = journey.stops.map((s) => ({ ...s.coords, camera: s.camera }))
+    stops = journey.stops.map((s) => ({ ...s.coords, camera: s.camera, via: s.via }))
     stopsCache.set(journey, stops)
   }
   return stops
@@ -51,7 +51,7 @@ export function routeProgressAt(t: number, n: number): number {
 
 export function cameraAt(
   t: number,
-  stops: Array<LatLng & { camera?: { altitude: number } }>,
+  stops: Array<LatLng & { camera?: { altitude: number }; via?: LatLng[] }>,
 ): CameraState {
   const n = stops.length
   const tc = Math.min(1, Math.max(0, t))
@@ -71,11 +71,12 @@ export function cameraAt(
 
   const next = stops[seg + 1]
   const tt = ease((local - DWELL) / (1 - DWELL))
-  const p = slerpUnit(
+  const verts = [
     latLngToVector3(stop.lat, stop.lng).normalize(),
+    ...(next.via ?? []).map((w) => latLngToVector3(w.lat, w.lng).normalize()),
     latLngToVector3(next.lat, next.lng).normalize(),
-    tt,
-  )
+  ]
+  const p = sampleArcByLength(verts, tt)
   const nextAlt = next.camera?.altitude ?? DWELL_ALT
   const base = tt < 0.5 ? dwellAlt : nextAlt
   const altitude = base + (CRUISE_ALT - base) * Math.sin(Math.PI * tt)
