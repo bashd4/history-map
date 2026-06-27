@@ -63,9 +63,16 @@ Backward-compatible: existing stops (no `via`) render identically.
 Rework to build each leg from its polyline:
 - For leg `i`, walk the sub-hops `[A, w1], [w1, w2], …, [wLast, B]`, great-circle
   each, and concatenate (de-duplicating shared endpoints as today's `.slice` does).
-- **Proportional subdivision:** segments per sub-hop ∝ great-circle angle
-  (`clamp(round(angle / STEP), MIN, MAX)`) instead of a flat 48, so dot density
-  stays even on both a 70 km Isthmus hop and a 5,000 km Pacific hop.
+- **Proportional subdivision:** segments per sub-hop ∝ great-circle angle, so dot
+  density stays even on both a 70 km Isthmus hop and a 5,000 km Pacific hop, and so
+  point-index is ≈ arc length within a leg (load-bearing for the fill sync in §4):
+  `segments = clamp(round(angle / STEP), MIN, MAX)` with **`STEP = 0.02` rad
+  (~125 km/segment), `MIN = 2`, `MAX = 96`**. (The `MIN`/`MAX` clamp is what bounds
+  how tightly the §4 sync holds on a very uneven leg — keep `MAX` generous.)
+- **Arc bulge (`lift`):** `greatCirclePoints` bulges each arc by `lift·max(angle,0.15)`,
+  i.e. **per sub-hop**. Decision: keep it — a long hop (the Pacific lane) bulges once,
+  tiny hops (the Isthmus) barely bulge, so a multi-hop leg reads as a natural sequence
+  of travel arcs, not a problem. No change to `greatCirclePoints`.
 - Return **both** the flat `points` array **and** a `legStarts: number[]` — the
   cumulative point index where each leg begins — so the progressive fill (below)
   can map hops → exact point index. Today's single-`points` consumers keep working.
@@ -89,6 +96,14 @@ current uniform `segsPerHop` is wrong. Replace it: from `routeProgressAt` (hops 
 `floor` leg + `frac`), interpolate into `legStarts` →
 `drawn = legStarts[floor] + frac · (legStarts[floor+1] − legStarts[floor])`. This
 keeps the bright tip glued to the camera, including mid-Pacific.
+
+**Why this stays synced (the load-bearing invariant):** the camera tip sits at
+*arc-length* fraction `tt` along the leg, while this fill interpolates `legStarts`
+*linearly in point-index* at `frac = tt`. They coincide **because** §2 subdivides
+each sub-hop proportionally to its angle, making point-index ≈ arc length within a
+leg. If proportional subdivision were dropped or `MAX`-clamped too low on a very
+uneven leg, the tip could drift by up to one sub-hop. The §-Testing sync test guards
+this directly.
 
 ### 5. Camera-follow scope (a deliberate limitation)
 Only the `journeyT`-tween path follows the waypoints: **adjacent** navigation
@@ -115,6 +130,12 @@ each:
   chapters before adding.
 Overland legs (e.g. West Point ↔ Missouri, the close Civil-War moves) stay straight
 unless a chapter clearly describes a major water/rail detour.
+
+The two Panama crossings (Ch.15, Ch.16) are confirmed. The Mexican-War sea legs
+(Ch.4 Corpus Christi; the Veracruz landing) are **research-tasks** in the plan: the
+plan must verify, per chapter, which legs actually went by sea before adding `via`,
+with an explicit acceptance check ("only legs whose chapter describes a sea/water
+detour get waypoints") — don't fabricate detours the source doesn't support.
 
 ## Data flow
 
