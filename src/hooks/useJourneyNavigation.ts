@@ -2,7 +2,23 @@ import gsap from 'gsap'
 import { useEffect, useRef, useState } from 'react'
 import type { Journey } from '../data/schema'
 import { cameraAt, DWELL, DWELL_ALT, stopsForCamera } from '../lib/journeyCamera'
+import { latLngToVector3 } from '../lib/geo'
 import { useAppStore } from '../state/store'
+
+/** Total great-circle angle (radians) of the leg between two adjacent stops, through
+ *  the destination stop's `via` waypoints. Used to pace the flight: long legs (e.g.
+ *  the Panama crossing) travel slower so you can follow the route. */
+function legArcLength(journey: Journey, loIdx: number, hiIdx: number): number {
+  if (loIdx === hiIdx) return 0
+  const dest = journey.stops[hiIdx] // via belongs to the higher-indexed (destination) stop
+  const wpts = [journey.stops[loIdx].coords, ...(dest.via ?? []), dest.coords]
+  let total = 0
+  for (let i = 0; i < wpts.length - 1; i++) {
+    total += latLngToVector3(wpts[i].lat, wpts[i].lng).normalize()
+      .angleTo(latLngToVector3(wpts[i + 1].lat, wpts[i + 1].lng).normalize())
+  }
+  return total
+}
 
 /**
  * Computes the t value at the center of a stop's dwell window.
@@ -96,8 +112,11 @@ export function useJourneyNavigation(journey: Journey) {
     if (delta <= 1) {
       // --- Adjacent move: scenic segment flight via journeyT tween (existing) ---
       proxy.current.t = currentT
-      const diff = Math.abs(targetT - currentT)
-      const duration = Math.min(3.4, 0.85 + 0.9 * diff * n)
+      // Pace by the leg's GEOGRAPHIC arc length (through via waypoints), not the
+      // uniform t-distance: short hops ~1.5 s, long sea legs (Panama ~1.6 rad) ~5 s,
+      // so the camera follows the real route instead of flashing past it.
+      const legAngle = legArcLength(journey, Math.min(currentActiveIndex!, clamped), Math.max(currentActiveIndex!, clamped))
+      const duration = Math.min(6.5, Math.max(1.3, 1.4 + 2.2 * legAngle))
 
       setNavigating(true)
       tweenRef.current = gsap.to(proxy.current, {
