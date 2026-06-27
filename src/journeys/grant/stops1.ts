@@ -106,6 +106,17 @@ export const grantStopsVol1: Stop[] = [
     date: '1848–1852',
     story:
       '"About one-third of the people with me died, either at Cruces or on the way to Panama." Return from Mexico, marriage, and ordering to Pacific Coast via cholera-ridden Isthmus.',
+    // 1848 return from Mexico (Ch.14 text): brigade assembled at Jalapa above the
+    // fever zone, embarked at Vera Cruz, regiment sent by sea to Pascagoula; Grant
+    // took leave to St. Louis (married Julia Dent), visited his parents in Ohio,
+    // then proceeded to his post at Sackett's Harbor.
+    via: [
+      { lat: 19.53, lng: -96.92 },  // Jalapa — assembled above the vomito
+      { lat: 19.17, lng: -96.13 },  // Vera Cruz — embark by sea
+      { lat: 30.37, lng: -88.56 },  // Pascagoula, Mississippi — across the Gulf
+      { lat: 38.63, lng: -90.20 },  // St. Louis — leave; married Julia Dent
+      { lat: 38.96, lng: -84.07 },  // Bethel, Ohio — visited his parents
+    ],
   },
   {
     name: 'Ch. 15 — Fort Vancouver, Washington',
