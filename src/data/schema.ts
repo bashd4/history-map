@@ -128,6 +128,9 @@ const stop = z.object({
   date: z.string().min(1),
   story: z.string().min(1),
   camera: z.object({ altitude: z.number().positive(), pitch: z.number().optional() }).optional(),
+  /** Real intermediate waypoints the route passes through to reach this stop from
+   *  the previous one (e.g. a sea voyage via Panama). Omit for a direct line. */
+  via: z.array(latLng).optional(),
   battle: battle.optional(),
 })
 
