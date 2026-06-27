@@ -3,17 +3,40 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Line } from '@react-three/drei'
 import type { Line2 } from 'three-stdlib'
-import type { Journey } from '../data/schema'
+import type { Journey, LatLng } from '../data/schema'
 import { greatCirclePoints, latLngToVector3 } from '../lib/geo'
 import { cameraAt, routeProgressAt, stopsForCamera } from '../lib/journeyCamera'
 import { screenScale } from '../lib/screenScale'
 import { useAppStore } from '../state/store'
 
-/** Shared geometry builder — returns raw arc points (Vector3[]) for drei <Line>. */
-function useRouteGeometry(journey: Journey): THREE.Vector3[] {
+/** Segments for a sub-hop ∝ great-circle angle (~125 km/segment), clamped [2,96] —
+ *  even dot density and point-index ≈ arc length within a leg (keeps the fill synced). */
+function routeSegs(a: LatLng, b: LatLng): number {
+  const ang = latLngToVector3(a.lat, a.lng).normalize()
+    .angleTo(latLngToVector3(b.lat, b.lng).normalize())
+  return Math.max(2, Math.min(96, Math.round(ang / 0.02)))
+}
+
+/** Route polyline through each leg's [prev, ...via, this] waypoints, plus the
+ *  points-array index of each stop (for the progressive fill). */
+function useRouteGeometry(journey: Journey): { points: THREE.Vector3[]; legStarts: number[] } {
   return useMemo(() => {
-    return journey.stops.slice(0, -1).flatMap((s, i) =>
-      greatCirclePoints(s.coords, journey.stops[i + 1].coords, 48).slice(i ? 1 : 0))
+    const points: THREE.Vector3[] = []
+    const legStarts: number[] = [] // points index of each stop (length = stops.length)
+    legStarts.push(0)
+    for (let i = 0; i < journey.stops.length - 1; i++) {
+      const wpts = [
+        journey.stops[i].coords,
+        ...(journey.stops[i + 1].via ?? []),
+        journey.stops[i + 1].coords,
+      ]
+      for (let h = 0; h < wpts.length - 1; h++) {
+        const sub = greatCirclePoints(wpts[h], wpts[h + 1], routeSegs(wpts[h], wpts[h + 1]))
+        points.push(...(points.length ? sub.slice(1) : sub)) // dedupe shared endpoint
+      }
+      legStarts.push(points.length - 1) // stop i+1 is now the last point
+    }
+    return { points, legStarts }
   }, [journey])
 }
 
@@ -52,7 +75,7 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
   // the battlefield is distracting at battle framing.
   const inBattle = useAppStore((s) => s.mode === 'battle')
   const dim = dimProp ?? hoverDim
-  const pts = useRouteGeometry(journey)
+  const { points: pts } = useRouteGeometry(journey)
   const markerPositions = useMarkerPositions(journey)
 
   // Refs for marker meshes — one per stop
@@ -134,14 +157,12 @@ export function RouteArcs({ journey, dim: dimProp, onStopClick }:
  * at the active stop. Imperative useFrame reads journeyT — no per-frame React props.
  */
 export function RouteArcsProgress({ journey }: { journey: Journey }) {
-  const pts = useRouteGeometry(journey)
+  const { points: pts, legStarts } = useRouteGeometry(journey)
   const markerPositions = useMarkerPositions(journey)
   const lowPerf = useAppStore((s) => s.lowPerf)
   const inBattle = useAppStore((s) => s.mode === 'battle')
   const lineRef = useRef<Line2>(null)
   const pulseRef = useRef<THREE.Mesh>(null)
-  // Total segments = pts.length - 1
-  const totalSegments = pts.length - 1
 
   const stops = useMemo(() => stopsForCamera(journey), [journey])
 
@@ -159,8 +180,10 @@ export function RouteArcsProgress({ journey }: { journey: Journey }) {
     // routeProgressAt holds at each stop through its dwell window (line tip
     // sits exactly on the marker) and eases through travel like the camera.
     if (lineRef.current) {
-      const segsPerHop = totalSegments / (stops.length - 1)
-      const drawn = Math.round(routeProgressAt(safeT, stops.length) * segsPerHop)
+      const hops = routeProgressAt(safeT, stops.length) // seg + travel-fraction
+      const seg = Math.min(legStarts.length - 2, Math.floor(hops))
+      const frac = hops - seg
+      const drawn = Math.round(legStarts[seg] + frac * (legStarts[seg + 1] - legStarts[seg]))
       lineRef.current.geometry.instanceCount = Math.max(0, drawn)
     }
 
